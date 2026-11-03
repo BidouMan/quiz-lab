@@ -34,33 +34,19 @@
 #let sec-size = if compact { body-size + 1pt } else { 15pt }
 #let note-size = if compact { body-size - 2pt } else { 12pt }
 
-// 跨页续标题：每个节标题/题行放一个零尺寸 metadata 标记，记录所在页与节标题。
-// 页眉查询本页第一个标记：若它属于题行（而不是节标题），说明本页从某节中间续排，
-// 页眉补“节标题（续）”。标记随 block(breakable: false) 与题行/节标题一起换页，不会错位。
-#let mark-page(kind, title) = context {
-  let p = counter(page).get().first()
-  [#metadata((kind: kind, title: title, page: p)) <sec-mark>]
-}
-
 // 页面：左右 12.7mm（沿用原 48px ≈ 12.7mm，保证两栏每栏 89.3mm ≈ 原 337px）
 // 上 19mm 留页眉，下 16mm 留页脚；国标只约束字号与行空，页边距沿用原版式
 #set page(
   paper: "a4",
   margin: (x: 12.7mm, top: 19mm, bottom: 16mm),
+  // 主标题只出现在第 1 页；第 2 页起页眉整块留空，只保留页脚页码
   header: context {
-    let p = counter(page).get().first()
-    let marks = query(<sec-mark>).map(it => it.value).filter(v => v.page == p)
-    let first = marks.first(default: none)
-    block(width: 100%, {
-      // 续标题与主标题同一行（左侧），页眉高度不随续排变化，正文版心位置始终一致
-      set par(leading: 0pt, spacing: 0pt, justify: false)
-      align(center, text(size: head-size, weight: "bold")[#cfg.title])
-      if first != none and first.kind == "row" {
-        place(left + top, text(size: sec-size, weight: "bold", fill: luma(40))[#(first.title + "（续）")])
-      }
-      v(1mm)
-      line(length: 100%, stroke: 0.5pt + luma(213))
-    })
+    if counter(page).get().first() == 1 {
+      block(width: 100%, {
+        set par(leading: 0pt, spacing: 0pt, justify: false)
+        align(center, text(size: head-size, weight: "bold")[#cfg.title])
+      })
+    }
   },
   footer: context {
     align(center, text(size: foot-size, fill: luma(150))[
@@ -150,7 +136,8 @@
       #dash-line(59mm)
     ]
   } else if it.kind == "fill" {
-    par(justify: true)[
+    // 填空恒定通栏：不参与半栏配对；左对齐按内容自然延伸，不拉伸行内空白
+    par(justify: false)[
       #for p in it.parts {
         if "t" in p {
           p.t
@@ -186,7 +173,6 @@
 })
 
 #let item-cell(sec, it, no) = block(breakable: false, {
-  mark-page("row", sec.title)
   let b = item-body(it)
   if no != none {
     grid(
@@ -202,7 +188,6 @@
 })
 
 #let section-head(sec) = block(breakable: false, {
-  mark-page("head", sec.title)
   pad(top: sec-above, bottom: sec-below, {
     text(size: sec-size, weight: "bold")[#sec.title]
     if "note" in sec {
@@ -213,12 +198,15 @@
 })
 
 // ---------- 组版：按节、按视觉行排；节标题与本节首行锁在同一块内 ----------
-// 行内两栏用 grid(1fr, 1fr) 保持左右栏宽与列间距；图形题、通栏题单格。
+// 行内两栏用 grid(1fr, 1fr) 保持左右栏宽与列间距；图形题、填空题、通栏题单格。
 #let row-body(row) = if row.full {
   row.cells.at(0)
 } else {
   grid(columns: (1fr, 1fr), column-gutter: 6mm, ..row.cells)
 }
+
+// 恒定通栏的题型：填空整行一题；图形题占满整行
+#let full-width-kind(kind) = kind in ("fill", "geom")
 
 #let section-rows(sec) = {
   let rows = ()
@@ -227,21 +215,21 @@
   for it in sec.items {
     if sec.numbered { n = n + 1 }
     let no = if sec.numbered { n } else { none }
-    if it.kind == "geom" {
+    if full-width-kind(it.kind) {
       if pending != none {
-        rows.push((full: false, cells: (pending,)))
+        rows.push((full: false, gap: row-gap, cells: (pending,)))
         pending = none
       }
-      rows.push((full: true, cells: (item-cell(sec, it, no),)))
+      rows.push((full: true, gap: if it.kind == "fill" { line-gap } else { row-gap }, cells: (item-cell(sec, it, no),)))
     } else if pending == none {
       pending = item-cell(sec, it, no)
     } else {
-      rows.push((full: false, cells: (pending, item-cell(sec, it, no))))
+      rows.push((full: false, gap: row-gap, cells: (pending, item-cell(sec, it, no))))
       pending = none
     }
   }
   if pending != none {
-    rows.push((full: false, cells: (pending,)))
+    rows.push((full: false, gap: row-gap, cells: (pending,)))
   }
   rows
 }
@@ -259,7 +247,7 @@
       row-body(rows.at(0))
     })
     for i in range(1, rows.len()) {
-      v(row-gap, weak: true)
+      v(rows.at(i).gap, weak: true)
       block(breakable: false, {
         row-body(rows.at(i))
       })

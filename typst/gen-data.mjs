@@ -308,8 +308,21 @@ function kousuanItem(q) {
 
 /** 填空文本拆分：$...$ 变数学片段，连续 2 个以上下划线变书写空白 */
 const BLANK_MM = 18
-function splitFill(text, source = 'tiankong') {
+// 通栏后空位按答案内容自然伸缩：1 字 16mm、2 字 20mm、3 字及以上 24mm，分数 22mm
+function blankWidth(answer) {
+  if (!answer) return BLANK_MM
+  const s = answer.trim()
+  if (s.includes('\\frac') || s.includes('\\dfrac')) return 22
+  const n = [...s.replace(/\$/g, '')].length
+  if (n <= 1) return 16
+  if (n === 2) return 20
+  return 24
+}
+
+function splitFill(text, source = 'tiankong', answer = '') {
   const parts = []
+  const answers = answer ? answer.split('；') : []
+  let blankNo = 0
   let buf = ''
   let i = 0
   const flush = () => {
@@ -331,7 +344,7 @@ function splitFill(text, source = 'tiankong') {
       while (text[k] === '_') k++
       if (k - i >= 2) {
         flush()
-        parts.push({ b: BLANK_MM })
+        parts.push({ b: blankWidth(answers[blankNo++]) })
         i = k
         continue
       }
@@ -357,7 +370,7 @@ const TYPE_GROUPS = [
   { type: 'chushi', title: '竖式计算', numbered: false, make: chushiItem },
   { type: 'tuoshi', title: '脱式计算', numbered: false, make: (q) => exprItem(q, 'tuoshi') },
   { type: 'jianbian', title: '简便运算', numbered: false, make: (q) => exprItem(q, 'tuoshi') },
-  { type: 'tiankong', title: '填空', numbered: true, make: (q) => ({ id: q.id, kind: 'fill', parts: splitFill(q.text) }) },
+  { type: 'tiankong', title: '填空', numbered: true, make: (q) => ({ id: q.id, kind: 'fill', parts: splitFill(q.text, 'tiankong', q.answer) }) },
 ]
 
 function sectionsFromBank(bank) {
