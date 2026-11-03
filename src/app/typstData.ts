@@ -27,7 +27,7 @@ const TYPE_LABELS: Record<AppType, string> = {
   tiankong: '填空',
   compare: '比大小',
   geom: '图形与周长',
-  word: '讲讲算算',
+  word: '应用题',
 }
 
 export const TYPE_OPTIONS: { type: AppType; label: string }[] = TYPE_ORDER.map((type) => ({
@@ -91,11 +91,19 @@ export function toMath(source: string): string {
   return out.trim()
 }
 
-/** 填空文本：$...$ 转数学片段，连续 2 个以上下划线转 18mm 留白 */
-export function splitFill(text: string): FillPart[] {
+/** 空位宽度随答案长度伸缩：短答案 12mm，长答案最多 34mm */
+const blankWidth = (answer?: string): number => {
+  if (!answer) return 18
+  const width = answer.replace(/\s+/g, '').length
+  return Math.min(34, Math.max(12, 6 + width * 4))
+}
+
+/** 填空文本：$...$ 转数学片段，连续 2 个以上下划线转留白；传入 answers 时按答案长度定宽 */
+export function splitFill(text: string, answers?: string[]): FillPart[] {
   const parts: FillPart[] = []
   let buffer = ''
   let i = 0
+  let blankIndex = 0
 
   const flush = () => {
     if (buffer) parts.push({ t: buffer })
@@ -117,7 +125,8 @@ export function splitFill(text: string): FillPart[] {
       while (text[end] === '_') end++
       if (end - i >= 2) {
         flush()
-        parts.push({ b: 18 })
+        parts.push({ b: blankWidth(answers?.[blankIndex]) })
+        blankIndex++
         i = end
         continue
       }
@@ -162,20 +171,6 @@ export const STATIC_SAMPLES: Partial<Record<AppType, TypstItem[]>> = {
       fig: 'square',
       text: '左图正方形的边长是 6 cm。它的周长是多少厘米？',
       blank: 15,
-    },
-  ],
-  word: [
-    {
-      id: 'w1',
-      kind: 'word',
-      text: '学校操场一圈长 400 米。小明每天早上沿操场跑 2 圈，从周一到周五天天如此。他这一个星期一共跑了多少米？',
-      workLines: 3,
-    },
-    {
-      id: 'w2',
-      kind: 'word',
-      text: '三年级同学去科技馆参观，每张门票 8 元。李老师带了 200 元，要给 23 名同学每人买一张门票。买完门票后，李老师还剩多少元？',
-      workLines: 3,
     },
   ],
 }

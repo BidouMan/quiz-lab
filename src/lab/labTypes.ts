@@ -11,7 +11,7 @@ export interface LabItem {
   estH: number
   /** 跨两栏独占整行（图形题、长题干、实测超宽题自动提升） */
   wide?: boolean
-  /** 题号（填空/比大小/讲讲算算/图形题，分区内从 1 独立编号；计算类无） */
+  /** 题号（填空/比大小/应用题/图形题，分区内从 1 独立编号；计算类无） */
   no?: number
   /** 题后额外垂直间距（px），计入 estH */
   gapAfter?: number

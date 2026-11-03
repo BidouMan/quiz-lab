@@ -71,7 +71,7 @@ const hasNo = computed(() => props.item.no !== undefined)
           </template>
         </div>
 
-        <!-- 讲讲算算：长题干 + 纯留白作答区（约 3 行高） -->
+        <!-- 应用题：长题干 + 纯留白作答区（约 3 行高） -->
         <div v-else-if="item.kind === 'word'" class="word">
           <p class="word-text" :data-mid="`${item.id}-text`">{{ item.text }}</p>
           <div class="word-blank" :style="{ height: `${wordBlankH}px` }"></div>

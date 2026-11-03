@@ -112,7 +112,10 @@
 }
 
 // ---------- 单题 ----------
-#let item-body(it) = block(breakable: false, {
+// 题号做成行内前导：与题干首行天然同基线（不再用 grid 顶对齐，避免空位框撑高首行后题号抬高 1mm）
+#let qno-mark(no) = box(width: qno-w)[#text(fill: luma(85))[(#no)]]
+
+#let item-body(it, lead: []) = block(breakable: false, {
   let disp = it.at("display", default: false)
   if it.kind == "kousuan" {
     let inner = eq(it.expr, display: disp, pad: 9mm)
@@ -138,6 +141,7 @@
   } else if it.kind == "fill" {
     // 填空恒定通栏：不参与半栏配对；左对齐按内容自然延伸，不拉伸行内空白
     par(justify: false)[
+      #lead
       #for p in it.parts {
         if "t" in p {
           p.t
@@ -148,12 +152,19 @@
         }
       }
     ]
+  } else if it.kind == "word" {
+    // 应用题恒定通栏：题干自然折行，下方纯留白作答（不画横线）
+    [
+      #par(justify: true)[#lead #it.text]
+      #v(1.5mm)
+      #block(height: it.workLines * 8.5mm)
+    ]
   } else if it.kind == "compare" {
     grid(
       columns: (auto, auto, auto),
       column-gutter: 2.4mm,
       align: horizon,
-      eq(it.pre, display: disp),
+      [#eq(it.pre, display: disp)],
       box(width: 4.2mm, height: 4.2mm, radius: 50%, stroke: 0.5pt),
       eq(it.post, display: disp),
     )
@@ -163,7 +174,7 @@
         columns: (1fr, auto),
         column-gutter: 4mm,
         align: horizon,
-        [#it.text],
+        [#lead #it.text],
         [#geom-fig(it.fig)],
       )
       #v(1mm)
@@ -172,20 +183,30 @@
   }
 })
 
-#let item-cell(sec, it, no) = block(breakable: false, {
-  let b = item-body(it)
-  if no != none {
+// 有题号的题型：题号作为行内前导，靠悬挂缩进让折行回到题干起点
+// 比大小首格是块级公式，行内前导会自成一段，仍用二列布局
+#let numbered-kind(kind) = kind in ("fill", "word", "geom")
+
+#let item-cell(sec, it, no) = {
+  let lead = if no == none { [] } else { qno-mark(no) + h(qno-gap) }
+  if no == none {
+    item-body(it)
+  } else if numbered-kind(it.kind) {
+    block(breakable: false, {
+      set par(hanging-indent: indent)
+      item-body(it, lead: lead)
+    })
+  } else {
+    // 计算类正常不编号；万一将来被编号，退回二列布局，避免破坏固定书写区高度
     grid(
       columns: (qno-w, 1fr),
       column-gutter: qno-gap,
       align: (left + top, left + top),
       text(fill: luma(85))[(#no)],
-      b,
+      item-body(it),
     )
-  } else {
-    b
   }
-})
+}
 
 #let section-head(sec) = block(breakable: false, {
   pad(top: sec-above, bottom: sec-below, {
@@ -205,8 +226,8 @@
   grid(columns: (1fr, 1fr), column-gutter: 6mm, ..row.cells)
 }
 
-// 恒定通栏的题型：填空整行一题；图形题占满整行
-#let full-width-kind(kind) = kind in ("fill", "geom")
+// 恒定通栏的题型：填空整行一题；应用题与图形题占满整行
+#let full-width-kind(kind) = kind in ("fill", "geom", "word")
 
 #let section-rows(sec) = {
   let rows = ()

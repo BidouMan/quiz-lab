@@ -84,7 +84,7 @@ const SECTIONS: LabSection[] = [
     ],
   },
   {
-    title: '五、讲讲算算',
+    title: '五、应用题',
     items: [
       // 书写区纯留白约 3 行（不画线）
       {
@@ -117,7 +117,7 @@ const SECTIONS: LabSection[] = [
 
 // ---------- 栏位决策与编号（分页前一次性完成，确定性） ----------
 
-/** 有题号的题型：填空 / 比大小 / 讲讲算算 / 图形；计算类（latex / div）无题号 */
+/** 有题号的题型：填空 / 比大小 / 应用题 / 图形；计算类（latex / div）无题号 */
 const NUMBERED = new Set<LabItem['kind']>(['fill', 'compare', 'word', 'geom'])
 /**
  * 题号列宽：Canvas 实测 '(10)'（半角括号，tabular-nums 下任意两位数字同宽），
