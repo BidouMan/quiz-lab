@@ -775,6 +775,66 @@ export const BUILDERS: Record<FormName, Builder> = {
   dist: buildDist,
 }
 
+// ---------- 口算范围硬限制 ----------
+//
+// 口算没有竖式留白，必须落在“能心算”的范围：
+// - 加减：操作数与结果都是两位/三位整数（≤999）；
+// - 乘法：一位数×两/三位数，或整十/整百数参与（不允许两位数×两位数）；
+// - 除法：除数是一位数或整十除数；除数十位以上必须整除；
+// - 被除数四位及以上一律不许入口算。
+// 该判定供 generate 自检与单元测试共用，避免只靠调参“碰巧”不越界。
+
+const mulWithinMental = (a: number, b: number): boolean => {
+  if (a > 999 || b > 999) return false
+  if (a * b > 9999) return false
+  return a <= 9 || b <= 9 || a % 10 === 0 || b % 10 === 0
+}
+
+const divWithinMental = (dividend: number, divisor: number, remainder: number): boolean => {
+  if (dividend > 999) return false
+  if (divisor <= 9) return true
+  if (divisor > 90 || divisor % 10 !== 0) return false
+  return remainder === 0
+}
+
+function nodeKousuanProblem(node: ExprNode): string | null {
+  if (node.kind === 'num') {
+    return node.value <= 999 ? null : `口算出现四位及以上整数 ${node.value}`
+  }
+  if (node.op === '×') {
+    const a = evalNode(node.left)
+    const b = evalNode(node.right)
+    if (!mulWithinMental(a, b)) return `口算乘法超出心算范围：${a} × ${b}`
+  }
+  if (node.op === '÷') {
+    const dividend = evalNode(node.left)
+    const divisor = evalNode(node.right)
+    const remainder = dividend % divisor
+    if (!divWithinMental(dividend, divisor, remainder)) {
+      return `口算除法超出心算范围：${dividend} ÷ ${divisor}`
+    }
+  }
+  return nodeKousuanProblem(node.left) ?? nodeKousuanProblem(node.right)
+}
+
+/** 返回 null 表示符合口算范围，否则返回具体越界原因 */
+export function kousuanRangeProblem(built: BuiltQuestion): string | null {
+  if (built.node) return nodeKousuanProblem(built.node)
+  if (built.op === 'mul') {
+    const [a, b] = built.operands ?? []
+    if (a == null || b == null) return '缺少乘法操作数'
+    return mulWithinMental(a, b) ? null : `口算乘法超出心算范围：${a} × ${b}`
+  }
+  if (built.op === 'div') {
+    const [dividend, divisor, , rem] = built.values
+    if (dividend == null || divisor == null) return '缺少除法操作数'
+    return divWithinMental(dividend, divisor, rem ?? 0)
+      ? null
+      : `口算除法超出心算范围：${dividend} ÷ ${divisor}`
+  }
+  return null
+}
+
 export function buildOne(
   form: FormName,
   ctx: BuildContext,

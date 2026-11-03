@@ -12,8 +12,9 @@ import type {
 } from './types.ts'
 import { MemoryStore } from './memory.ts'
 import { createRng, pick } from './rng.ts'
-import { buildOne, type BuiltQuestion } from './forms.ts'
+import { buildOne, kousuanRangeProblem, type BuiltQuestion } from './forms.ts'
 import { evalLatex, evalNode } from './expr.ts'
+import { unitGuardProblem } from './unitGuards.ts'
 
 interface Target {
   unit: Unit
@@ -136,10 +137,22 @@ function checkNode(built: BuiltQuestion, c: Constraints): string | null {
   if (c.maxResult != null && value > c.maxResult) return '结果超过约束'
   if (c.minResult != null && value < c.minResult) return '结果低于约束'
   if (c.bracket && !built.latex.includes('(')) return '要求带括号'
+  // 单元核心运算硬约束：例如 3A-U4 的脱式必须含除号
+  const opMap: Record<string, string> = { '÷': '\\div', '×': '\\times', '+': '+', '-': '-' }
+  if (c.requireOp && !built.latex.includes(opMap[c.requireOp])) {
+    return `脱式缺少必须的运算符 ${c.requireOp}`
+  }
   return null
 }
 
-function selfCheck(built: BuiltQuestion, spec: RuleSpec, level: Level, grade: string): string | null {
+function selfCheck(
+  built: BuiltQuestion,
+  spec: RuleSpec,
+  level: Level,
+  grade: string,
+  unitId: string,
+  type: CalcType,
+): string | null {
   const maxNumber = MAX_NUMBERS[grade] ?? 100_000
   for (const value of built.values) {
     if (!Number.isFinite(value) || !Number.isInteger(value)) return '出现非整数'
@@ -148,6 +161,26 @@ function selfCheck(built: BuiltQuestion, spec: RuleSpec, level: Level, grade: st
   }
 
   if (!built.answer) return '缺少答案'
+
+  // 单元级禁算符：教材顺序硬约束，命中即判定本题生成失败
+  const guard = unitGuardProblem(unitId, [built.latex, built.answer, ...(built.answerLines ?? [])])
+  if (guard) return guard
+
+  // 口算范围：没有竖式留白，必须落在心算可及的范围
+  if (type === 'kousuan') {
+    const range = kousuanRangeProblem(built)
+    if (range) return range
+  }
+  // 竖式不练“整十数×整十数”：那类题只需表内乘法再添零，属于口算；
+  // 两位数末尾有 0（40×82）同样退回口算，三位数末尾有 0（340×27）保留为竖式变式。
+  if (type === 'chushi' && spec.form === 'mul2') {
+    const [a, b] = built.values
+    const aZero = a % 10 === 0
+    const bZero = b % 10 === 0
+    if ((aZero && bZero) || (aZero && a < 100) || (bZero && b < 100)) {
+      return '竖式出现整十数乘法，应放进口算'
+    }
+  }
   if (built.answer.includes('……')) {
     const [q, r] = built.answer.split('……').map(Number)
     const [dividend, divisor] = built.values
@@ -209,7 +242,8 @@ function makeQuestion(
     ...(built.op ? { op: built.op } : {}),
     fingerprint: fp,
     values: built.values,
-    features: built.features,
+    // 计算题也写入 form，便于跨题型统计（进位次数、整十数等）与自检复用同一套过滤
+    features: { ...built.features, form: spec.form },
   }
 }
 
@@ -254,7 +288,7 @@ export function generate(options: GenerateOptions): GenerateResult {
       const fp = fingerprint(built, spec.form)
       const exprKey = built.latex.replace(/\s+/g, '')
       if (usedFp.has(fp) || usedExpr.has(exprKey)) continue
-      const problem = selfCheck(built, spec, level, grade)
+      const problem = selfCheck(built, spec, level, grade, target.unit.unitId, type)
       if (problem) {
         if (failures.length < 8) failures.push(problem)
         continue

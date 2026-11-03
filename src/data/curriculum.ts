@@ -1,10 +1,14 @@
 import type {
   Constraints,
   Curriculum,
+  FillFormName,
+  FillRuleSpec,
   FormName,
   KnowledgePoint,
   RuleSpec,
   Unit,
+  WordFormName,
+  WordRuleSpec,
 } from '../quiz/types.ts'
 
 /**
@@ -33,6 +37,9 @@ const kp = (
   note?: string,
 ): KnowledgePoint => ({ kpId, kpName, rules, note })
 
+const tf = (form: FillFormName, note?: string): FillRuleSpec => ({ form, note })
+const wf = (form: WordFormName, note?: string): WordRuleSpec => ({ form, note })
+
 const units: Unit[] = [
   // ==================== 三年级上册 ====================
   {
@@ -51,7 +58,7 @@ const units: Unit[] = [
           L1: r('mix2', { pattern: 'a*b+c', mulDigits: 1, maxOperand: 20, maxResult: 80 }),
           L2: [
             r('mix2', { pattern: 'a*b-c', mulDigits: 1, maxOperand: 100, maxResult: 100 }),
-            r('mix2', { pattern: 'a/b+c', maxOperand: 100, maxResult: 100 }),
+            r('mix2', { pattern: 'a+b*c', mulDigits: 1, maxOperand: 100, maxResult: 100 }),
           ],
           L3: r('mix3', { pattern: 'a*b+c*d', bracket: false, mulDigits: 1, maxResult: 200 }),
         },
@@ -60,7 +67,7 @@ const units: Unit[] = [
         kousuan: {
           L1: r('mix3', { pattern: '(a+b)*c', bracket: true, mulDigits: 1, maxResult: 80 }),
           L2: r('mix3', { pattern: '(a-b)*c', bracket: true, mulDigits: 1, maxResult: 100 }),
-          L3: r('mix3', { pattern: '(a+b)/c', bracket: true, maxResult: 100 }),
+          L3: r('mix3', { pattern: '(a+b)*c-d', bracket: true, mulDigits: 1, maxResult: 100 }),
         },
         tuoshi: {
           L1: r('mix3', { pattern: '(a+b)*c', bracket: true, mulDigits: 1, maxResult: 80 }),
@@ -68,14 +75,26 @@ const units: Unit[] = [
           L3: r('mix3', { pattern: '(a+b)*c-d', bracket: true, mulDigits: 1, maxResult: 200 }),
         },
       }),
-      kp('3A-U1-K3', '乘除与加减混合口算', {
+      kp('3A-U1-K3', '乘加、乘减混合口算', {
         kousuan: {
-          L1: r('mix2', { pattern: 'a*b+c', mulDigits: 1, maxResult: 100 }),
-          L2: r('mix2', { pattern: 'a/b+c', maxResult: 100 }),
-          L3: r('mix2', { pattern: 'a*b-c', maxResult: 200 }),
+          L1: r('mix2', { pattern: 'a*b+c', mulDigits: 1, maxOperand: 20, maxResult: 80 }),
+          L2: r('mix2', { pattern: 'a*b+c', mulDigits: 1, maxResult: 100 }),
+          L3: r('mix2', { pattern: 'a*b-c', mulDigits: 1, maxResult: 100 }),
         },
       }),
-      kp('3A-U1-K4', '应用题', {}, '应用题属 v0.3.0，本版只做计算类，不生成。'),
+      kp(
+        '3A-U1-K4',
+        '应用题',
+        {
+          word: {
+            L1: wf('shopping'),
+            L2: wf('shopping'),
+            // L3 需要“两步以上真正要推理”的形态：两种/三种商品合计、满减、预算判断
+            L3: [wf('shopping'), wf('shop3'), wf('discount'), wf('shopCompare')],
+          },
+        },
+        '购物情境；除法与平均分（含余数分配）在 3A-U4 才学，本单元不出现。L3 覆盖三种商品、满减与预算判断。',
+      ),
     ],
   },
   {
@@ -117,12 +136,7 @@ const units: Unit[] = [
             r('mul1', { digits: 3, zeroMiddle: true, carry: 'any', maxResult: 9999 }),
           ],
         },
-        jianbian: {
-          L1: r('assoc', { roundTo: 100, roundPair: 'a*c', minFactor: 2, maxFactor: 9 }),
-          L2: r('assoc', { roundTo: 1000, roundPair: 'a*c', minFactor: 2, maxFactor: 9 }),
-          L3: r('dist', { pattern: 'a*c+b*c', roundTo: 100, minFactor: 2, maxFactor: 9, maxResult: 9999 }),
-        },
-      }, '简便运算按 25×4、125×8 的凑整思路，教材未单列，作为乘法单元的拓展规则。'),
+      }, '一位数乘三位数；简便运算（结合律/分配律）属四年级内容，本版不再生成。'),
       kp('3A-U2-K4', '估算', {}, '估算题要求写近似过程，属 v0.3.0，本版不生成。'),
     ],
   },
@@ -162,6 +176,12 @@ const units: Unit[] = [
           L2: r('div1', { dividendDigits: 2, quotientDigits: 2, exact: true }),
           L3: r('div1', { dividendDigits: 2, remainder: 'nonzero' }),
         },
+        tuoshi: {
+          // 本单元核心是除法，脱式必须出现除法：先除后加/减、先加后除
+          L1: r('mix2', { pattern: 'a/b+c', requireOp: '÷', maxResult: 100 }),
+          L2: r('mix2', { pattern: 'a/b-c', requireOp: '÷', maxResult: 100 }),
+          L3: r('mix3', { pattern: '(a+b)/c', bracket: true, requireOp: '÷', maxResult: 100 }),
+        },
       }),
       kp('3A-U4-K3', '倍', {
         kousuan: {
@@ -170,9 +190,10 @@ const units: Unit[] = [
           L3: r('mix2', { pattern: 'a*b+c', mulDigits: 1, maxResult: 100 }),
         },
         tuoshi: {
-          L1: r('mix2', { pattern: 'a*b+c', mulDigits: 1, maxResult: 80 }),
-          L2: r('mix2', { pattern: 'a*b-c', mulDigits: 1, maxResult: 100 }),
-          L3: r('mix3', { pattern: '(a+b)*c', bracket: true, mulDigits: 1, maxResult: 200 }),
+          // “倍”的脱式同样落到除法上，避免整节沿用 U1 的乘法混合
+          L1: r('mix2', { pattern: 'a/b+c', requireOp: '÷', maxResult: 100 }),
+          L2: r('mix2', { pattern: 'a/b-c', requireOp: '÷', maxResult: 100 }),
+          L3: r('mix3', { pattern: '(a+b)/c', bracket: true, requireOp: '÷', maxResult: 200 }),
         },
       }),
       kp('3A-U4-K4', '一位数除三位数', {
@@ -190,8 +211,35 @@ const units: Unit[] = [
           ],
         },
       }),
-      kp('3A-U4-K5', '除法的应用', {}, '应用题属 v0.3.0。'),
-      kp('3A-U4-K6', '单价、数量、总价', {}, '情境应用题属 v0.3.0。'),
+      kp(
+        '3A-U4-K5',
+        '除法的应用',
+        {
+          word: {
+            L1: wf('share'),
+            L2: wf('share'),
+            L3: wf('share'),
+          },
+        },
+        '平均分、装袋与“最多买几根”情境。',
+      ),
+      kp(
+        '3A-U4-K6',
+        '单价、数量、总价',
+        {
+          tiankong: {
+            L1: tf('priceQty'),
+            L2: tf('priceQty'),
+            L3: tf('priceQty'),
+          },
+          word: {
+            L1: wf('shopping'),
+            L2: wf('shopping'),
+            L3: wf('shopping'),
+          },
+        },
+        '总价=单价×数量；L3 反求单价并含预算判断。',
+      ),
     ],
   },
   {
@@ -199,10 +247,37 @@ const units: Unit[] = [
     semester: '上',
     unitId: '3A-U5',
     unitName: '年、月、日的秘密',
-    note: '时间与日期内容，四类计算生成器不覆盖。',
+    note: '时间与日期内容，由填空与应用题生成器承接。',
     kps: [
-      kp('3A-U5-K1', '制订作息时间表', {}, '时间情境题，属 v0.3.0。'),
-      kp('3A-U5-K2', '制作月历牌', {}, '日期规律题，属 v0.3.0。'),
+      kp(
+        '3A-U5-K1',
+        '制订作息时间表',
+        {
+          tiankong: {
+            L1: tf('timeHour'),
+            L2: tf('timeHour'),
+            L3: [tf('timeHour'), tf('elapsed')],
+          },
+          word: {
+            L1: wf('timePlan'),
+            L2: wf('timePlan'),
+            L3: wf('timePlan'),
+          },
+        },
+        '12/24 时计时法互化与经过时间；L3 反向求出发时刻（“最迟”）。',
+      ),
+      kp(
+        '3A-U5-K2',
+        '制作月历牌',
+        {
+          tiankong: {
+            L1: tf('leapYear'),
+            L2: [tf('leapYear'), tf('monthDays')],
+            L3: [tf('monthDays'), tf('leapYear')],
+          },
+        },
+        '平年闰年、大月小月与每月天数。',
+      ),
     ],
   },
   {
@@ -210,10 +285,37 @@ const units: Unit[] = [
     semester: '上',
     unitId: '3A-U6',
     unitName: '周长',
-    note: '图形与测量内容，四类计算生成器不覆盖。',
+    note: '图形与测量内容，由填空与应用题生成器承接。',
     kps: [
-      kp('3A-U6-K1', '长度的测量', {}, '测量内容，不属计算类。'),
-      kp('3A-U6-K2', '长方形、正方形的周长', {}, '周长应用题属 v0.3.0。'),
+      kp(
+        '3A-U6-K1',
+        '长度的测量',
+        {
+          tiankong: {
+            L1: tf('lengthUnits'),
+            L2: tf('lengthUnits'),
+            L3: tf('lengthUnits'),
+          },
+        },
+        '米、分米、厘米、毫米之间的换算。',
+      ),
+      kp(
+        '3A-U6-K2',
+        '长方形、正方形的周长',
+        {
+          tiankong: {
+            L1: [tf('rectPerimeter'), tf('squarePerimeter')],
+            L2: [tf('rectPerimeter'), tf('squarePerimeter')],
+            L3: [tf('rectPerimeter'), tf('squarePerimeter')],
+          },
+          word: {
+            L1: wf('perimeter'),
+            L2: wf('perimeter'),
+            L3: wf('perimeter'),
+          },
+        },
+        '周长计算与反向求边长；L3 含“改围成正方形”的中间量。',
+      ),
     ],
   },
   {
@@ -221,11 +323,32 @@ const units: Unit[] = [
     semester: '上',
     unitId: '3A-U7',
     unitName: '马拉松的路线设计',
-    note: '千米认识与路线长度，属情境应用。',
+    note: '千米认识与路线长度，填空承接换乘，路线设计仍为项目式学习。',
     kps: [
-      kp('3A-U7-K1', '千米的认识', {}, '单位换算与情境题，属 v0.3.0。'),
-      kp('3A-U7-K2', '路线的长度', {}, '测量与估算题，属 v0.3.0。'),
-      kp('3A-U7-K3', '上海半程马拉松的路线设计', {}, '项目式学习，不属计算类。'),
+      kp(
+        '3A-U7-K1',
+        '千米的认识',
+        {
+          tiankong: {
+            L1: tf('kmM'),
+            L2: tf('kmM'),
+            L3: tf('kmM'),
+          },
+        },
+        '千米与米的换算，L3 反向拆成“几千米几米”。',
+      ),
+      kp(
+        '3A-U7-K2',
+        '路线的长度',
+        {
+          tiankong: {
+            L2: tf('routeSum'),
+            L3: tf('routeSum'),
+          },
+        },
+        '路线由 2–3 段组成，求和或比较远近；数值控制在万以内。',
+      ),
+      kp('3A-U7-K3', '上海半程马拉松的路线设计', {}, '项目式学习，本版不生成。'),
     ],
   },
   {
@@ -233,10 +356,26 @@ const units: Unit[] = [
     semester: '上',
     unitId: '3A-U8',
     unitName: '数学广场',
-    note: '七巧板、篱笆问题，属图形与开放题。',
+    note: '七巧板、篱笆问题、围正方形最大面积、摆图形找规律；与 3A-U6 的普通周长题错开。',
     kps: [
-      kp('3A-U8-K1', '七巧板', {}, '图形拼搭，属 v0.3.0 之后。'),
-      kp('3A-U8-K2', '篱笆问题', {}, '开放应用题，属 v0.3.0。'),
+      kp('3A-U8-K1', '七巧板', {}, '由 3A-U8-K2 的 tangram 玩法承载，单独知识点不重复出题。'),
+      kp(
+        '3A-U8-K2',
+        '数学广场的图形玩法',
+        {
+          tiankong: {
+            L1: [tf('wallFence'), tf('tangram'), tf('pattern'), tf('maxArea')],
+            L2: [tf('wallFence'), tf('tangram'), tf('pattern'), tf('maxArea')],
+            L3: [tf('wallFence'), tf('tangram'), tf('pattern'), tf('maxArea')],
+          },
+          word: {
+            L1: [wf('wallFence'), wf('tangram'), wf('pattern'), wf('maxArea')],
+            L2: [wf('wallFence'), wf('tangram'), wf('pattern'), wf('maxArea')],
+            L3: [wf('wallFence'), wf('tangram'), wf('pattern'), wf('maxArea')],
+          },
+        },
+        '篱笆靠墙（4 种围法）、七巧板拼摆、小棒摆图形找规律、围成正方形面积最大；普通四周围一圈的周长题归 3A-U6。',
+      ),
     ],
   },
   {
@@ -256,11 +395,6 @@ const units: Unit[] = [
           L1: r('mix3', { pattern: '(a+b)*c', bracket: true, mulDigits: 1, maxResult: 100 }),
           L2: r('mix3', { pattern: '(a-b)*c', bracket: true, mulDigits: 1, maxResult: 200 }),
           L3: r('mix3', { pattern: 'a*b+c*d', bracket: false, mulDigits: 1, maxResult: 300 }),
-        },
-        jianbian: {
-          L1: r('assoc', { roundTo: 100, roundPair: 'a*c', minFactor: 2, maxFactor: 9 }),
-          L2: r('dist', { pattern: 'a*c+b*c', roundTo: 100, minFactor: 2, maxFactor: 9, maxResult: 9999 }),
-          L3: r('dist', { pattern: 'a*c-b*c', roundTo: 100, minFactor: 2, maxFactor: 9, maxResult: 9999 }),
         },
       }),
       kp('3A-U9-K2', '乘除复习', {
@@ -284,7 +418,18 @@ const units: Unit[] = [
           L3: r('mul1', { digits: 3, carry: 'continuous', maxResult: 9999 }),
         },
       }),
-      kp('3A-U9-K3', '周长与年月日复习', {}, '图形与时间内容，不属计算类。'),
+      kp(
+        '3A-U9-K3',
+        '周长与年月日复习',
+        {
+          tiankong: {
+            L1: [tf('leapYear'), tf('rectPerimeter')],
+            L2: [tf('monthDays'), tf('squarePerimeter'), tf('elapsed')],
+            L3: [tf('leapYear'), tf('rectPerimeter'), tf('timeHour')],
+          },
+        },
+        '以填空形式复习年月日与周长，不重复生成应用题。',
+      ),
     ],
   },
 
@@ -316,9 +461,31 @@ const units: Unit[] = [
           L3: r('mix2', { pattern: 'a/b+c', maxResult: 300 }),
         },
       }),
-      kp('3B-U1-K3', '面积的估测（1）', {}, '估测题属 v0.3.0。'),
-      kp('3B-U1-K4', '平方分米', {}, '面积单位内容，不属四类计算。'),
-      kp('3B-U1-K5', '组合图形的面积', {}, '图形面积，属 v0.3.0。'),
+      kp('3B-U1-K3', '面积的估测（1）', {}, '估测题需要开放答案，本版不生成。'),
+      kp(
+        '3B-U1-K4',
+        '长度与周长复习',
+        {
+          tiankong: {
+            L1: [tf('rectPerimeter'), tf('priceQty')],
+            L2: [tf('rectPerimeter'), tf('priceQty'), tf('elapsed')],
+            L3: [tf('rectPerimeter'), tf('priceQty'), tf('timeHour')],
+          },
+        },
+        '复习 3A 的周长、单价数量总价与时间；面积规则统一放在 3B-U6。',
+      ),
+      kp(
+        '3B-U1-K5',
+        '时间与购物复习',
+        {
+          word: {
+            L1: wf('perimeter'),
+            L2: wf('timePlan'),
+            L3: wf('shopping'),
+          },
+        },
+        '复习 3A 的周长、作息时间与购物情境；不提前使用面积。',
+      ),
     ],
   },
   {
@@ -329,44 +496,81 @@ const units: Unit[] = [
     unconfirmed: true,
     note: '三下目录为推定；本单元覆盖两位数乘除与试商。',
     kps: [
-      kp('3B-U2-K1', '速度、时间、路程', {}, '情境应用题属 v0.3.0。'),
+      kp(
+        '3B-U2-K1',
+        '速度、时间、路程',
+        {
+          tiankong: {
+            L1: tf('speed'),
+            L2: tf('speed'),
+            L3: tf('speed'),
+          },
+          word: {
+            L1: wf('trip'),
+            L2: wf('trip'),
+            L3: wf('trip'),
+          },
+        },
+        '路程=速度×时间；L3 含“至少每小时行多少千米”的反向判断。',
+      ),
       kp('3B-U2-K2', '整十数与两位数相乘', {
         kousuan: {
           L1: r('mul2', { aDigits: 2, bDigits: 2, bZeroEnd: true, carry: 'none', maxResult: 9000 }),
           L2: r('mul2', { aZeroEnd: true, bDigits: 2, carry: 'any', maxResult: 9000 }),
-          L3: r('mul2', { aDigits: 3, bZeroEnd: true, carry: 'any', maxResult: 99999 }),
+          L3: r('mul2', { aDigits: 2, bZeroEnd: true, carry: 'any', maxResult: 9000 }),
         },
       }),
       kp('3B-U2-K3', '两位数与两位数相乘', {
         chushi: {
-          L1: r('mul2', { aDigits: 2, bDigits: 2, carry: 'none', maxResult: 9999 }),
-          L2: r('mul2', { aDigits: 2, bDigits: 2, carry: 'once', maxResult: 9999 }),
-          L3: [
-            r('mul2', { aDigits: 2, bDigits: 2, carry: 'continuous', maxResult: 9999 }),
-            r('mul2', { aZeroEnd: true, bDigits: 2, carry: 'any', maxResult: 9999 }),
-          ],
+          L1: r('mul2', { aDigits: 2, bDigits: 2, carry: 'none', aZeroEnd: false, bZeroEnd: false, maxResult: 9999 }),
+          L2: r('mul2', { aDigits: 2, bDigits: 2, carry: 'once', aZeroEnd: false, bZeroEnd: false, maxResult: 9999 }),
+          // L3 只保留连续进位的两位数×两位数；整十数题是口算，不进竖式
+          L3: r('mul2', { aDigits: 2, bDigits: 2, carry: 'continuous', aZeroEnd: false, bZeroEnd: false, maxResult: 9999 }),
         },
         kousuan: {
-          L1: r('mul2', { aDigits: 2, bDigits: 2, carry: 'none', maxResult: 9999 }),
-          L2: r('mul2', { aDigits: 2, bDigits: 2, carry: 'any', maxResult: 9999 }),
-          L3: r('mul2', { aDigits: 2, bZeroEnd: true, carry: 'any', maxResult: 9999 }),
+          // 口算只做“两位数×整十数”：两位数×两位数一律进竖式，避免 53×81 这类题混入口算
+          L1: r('mul2', { aDigits: 2, bZeroEnd: true, carry: 'none', maxResult: 9000 }),
+          L2: r('mul2', { aZeroEnd: true, bDigits: 2, carry: 'any', maxResult: 9000 }),
+          L3: r('mul2', { aDigits: 2, bZeroEnd: true, carry: 'any', maxResult: 9000 }),
+        },
+        tiankong: {
+          L1: tf('mul2x2'),
+          L2: tf('mul2x2'),
+          L3: tf('mul2x2'),
         },
         jianbian: {
+          // 三下只学“凑整”：把能凑成整十/整百/整千的两个因数先乘，不引入结合律、分配律的字母式
           L1: r('assoc', { roundTo: 100, roundPair: 'a*c', minFactor: 2, maxFactor: 9 }),
-          L2: r('dist', { pattern: 'a*c+b*c', roundTo: 100, minFactor: 2, maxFactor: 9, maxResult: 9999 }),
-          L3: r('dist', { pattern: 'a*c+b*c+d*c', roundTo: 100, minFactor: 2, maxFactor: 9, maxResult: 9999 }),
+          L2: r('assoc', { roundTo: 100, roundPair: 'a*c', minFactor: 4, maxFactor: 9 }),
+          L3: r('assoc', { roundTo: 1000, roundPair: 'a*b', minFactor: 2, maxFactor: 9 }),
         },
-      }),
+        word: {
+          L1: wf('shopping2'),
+          L2: wf('shopping2'),
+          L3: wf('shopping2'),
+        },
+      }, '两位数乘两位数的购物情境；L3 为两种商品合计与预算判断。'),
       kp('3B-U2-K4', '两位数与三位数相乘', {
         chushi: {
           L1: r('mul2', { aDigits: 3, bDigits: 2, carry: 'none', maxResult: 99999 }),
           L2: r('mul2', { aDigits: 3, bDigits: 2, carry: 'normal', maxResult: 99999 }),
           L3: [
-            r('mul2', { aDigits: 3, bDigits: 2, carry: 'continuous', maxResult: 99999 }),
-            r('mul2', { aZeroEnd: true, bDigits: 2, carry: 'any', maxResult: 99999 }),
+            r('mul2', { aDigits: 3, bDigits: 2, carry: 'continuous', maxResult: 9999 }),
+            // 末尾有 0 的三位数×两位数（如 340×27）；a 必须仍是三位数
+            r('mul2', { aDigits: 3, aZeroEnd: true, bDigits: 2, carry: 'any', maxResult: 9999 }),
           ],
         },
-      }),
+        tiankong: {
+          L1: tf('mul2x3'),
+          L2: tf('mul2x3'),
+          L3: tf('mul2x3'),
+        },
+        word: {
+          L1: wf('bulk'),
+          L2: wf('bulk'),
+          L3: wf('bulk'),
+        },
+      }, '三位数乘两位数：口算不涉及，填空与应用题都要出现两位数乘三位数。'),
       kp('3B-U2-K5', '整十数除两、三位数', {
         kousuan: {
           L1: r('div2', {
@@ -391,11 +595,22 @@ const units: Unit[] = [
             divisorMax: 90,
             divisorStep: 10,
             quotientDigits: 2,
-            remainder: 'nonzero',
+            quotientZero: 'end',
+            exact: true,
           }),
         },
       }),
       kp('3B-U2-K6', '两位数除两、三位数', {
+        tiankong: {
+          L1: tf('div2x2'),
+          L2: tf('div2x2'),
+          L3: tf('div2x2'),
+        },
+        word: {
+          L1: wf('pack'),
+          L2: wf('pack'),
+          L3: wf('pack'),
+        },
         chushi: {
           L1: r('div2', { dividendDigits: 2, divisorMin: 11, divisorMax: 99, quotientDigits: 1, exact: true }),
           L2: r('div2', { dividendDigits: 3, divisorMin: 11, divisorMax: 99, quotientDigits: 2, exact: true }),
@@ -448,9 +663,40 @@ const units: Unit[] = [
     unconfirmed: true,
     note: '三下目录为推定。分数只到初步认识：几分之一、几分之几、同分母比较，不做异分母加减。',
     kps: [
-      kp('3B-U4-K1', '整体与部分', {}, '分数概念，v0.3.0 用填空/比大小承接。'),
-      kp('3B-U4-K2', '几分之一', {}, '分数比较属 v0.3.0 比大小题型。'),
-      kp('3B-U4-K3', '几分之几', {}, '同分母比较属 v0.3.0，不做加减。'),
+      kp(
+        '3B-U4-K1',
+        '整体与部分',
+        {
+          tiankong: {
+            L1: tf('fraction'),
+            L2: tf('fraction'),
+          },
+        },
+        '平均分与“每份是整体的几分之一”。',
+      ),
+      kp(
+        '3B-U4-K2',
+        '几分之一',
+        {
+          tiankong: {
+            L1: tf('fractionUnit'),
+            L2: tf('fractionUnit'),
+            L3: tf('fractionUnit'),
+          },
+        },
+        '只出“几分之一”：L1 直接认读，L2 换情境与更大分母，L3 反求平均分成的份数。',
+      ),
+      kp(
+        '3B-U4-K3',
+        '几分之几',
+        {
+          tiankong: {
+            L2: tf('fractionPart'),
+            L3: tf('fractionPart'),
+          },
+        },
+        '几分之几与同分母比大小；L2 起分子至少为 2，不做异分母加减。',
+      ),
     ],
   },
   {
@@ -474,9 +720,36 @@ const units: Unit[] = [
     unconfirmed: true,
     note: '按“面积在三下、周长在三上”的 2024 修订版口径推定。',
     kps: [
-      kp('3B-U6-K1', '面积与面积单位', {}, '面积概念与单位，不属四类计算。'),
-      kp('3B-U6-K2', '长方形、正方形的面积', {}, '面积应用题属 v0.3.0。'),
-      kp('3B-U6-K3', '组合图形的面积', {}, '图形面积，属 v0.3.0。'),
+      kp(
+        '3B-U6-K1',
+        '面积与面积单位',
+        {
+          tiankong: {
+            L1: tf('areaUnit'),
+            L2: tf('areaUnit'),
+            L3: tf('areaUnit'),
+          },
+        },
+        '平方米、平方分米、平方厘米的进率换算。',
+      ),
+      kp(
+        '3B-U6-K2',
+        '长方形、正方形的面积',
+        {
+          tiankong: {
+            L1: [tf('rectArea'), tf('squareArea')],
+            L2: [tf('rectArea'), tf('squareArea')],
+            L3: [tf('rectArea'), tf('squareArea')],
+          },
+          word: {
+            L1: wf('area'),
+            L2: wf('area'),
+            L3: wf('area'),
+          },
+        },
+        '面积计算、反求边长与铺砖问题；L3 含草皮总价与预算判断。',
+      ),
+      kp('3B-U6-K3', '组合图形的面积', {}, '需要割补的组合图形暂不生成。'),
     ],
   },
   {
@@ -489,18 +762,32 @@ const units: Unit[] = [
     kps: [
       kp('3B-U7-K1', '乘与除', {
         kousuan: {
-          L1: [
-            r('mul2', { aDigits: 2, bDigits: 2, carry: 'none', maxResult: 9999 }),
-            r('div2', { dividendDigits: 2, divisorMin: 11, divisorMax: 99, quotientDigits: 1, exact: true }),
-          ],
-          L2: [
-            r('mul2', { aDigits: 2, bDigits: 2, carry: 'any', maxResult: 9999 }),
-            r('div2', { dividendDigits: 3, divisorMin: 11, divisorMax: 99, quotientDigits: 2, exact: true }),
-          ],
-          L3: [
-            r('mul2', { aDigits: 3, bDigits: 2, carry: 'any', maxResult: 99999 }),
-            r('div2', { dividendDigits: 4, divisorMin: 11, divisorMax: 99, remainder: 'nonzero' }),
-          ],
+          // 口算只做整十数除法；两位数乘两位数、四位数除法一律进竖式
+          L1: r('div2', {
+            dividendDigits: 2,
+            divisorMin: 10,
+            divisorMax: 90,
+            divisorStep: 10,
+            quotientDigits: 1,
+            exact: true,
+          }),
+          L2: r('div2', {
+            dividendDigits: 3,
+            divisorMin: 10,
+            divisorMax: 90,
+            divisorStep: 10,
+            quotientDigits: 2,
+            exact: true,
+          }),
+          L3: r('div2', {
+            dividendDigits: 3,
+            divisorMin: 10,
+            divisorMax: 90,
+            divisorStep: 10,
+            quotientDigits: 2,
+            quotientZero: 'end',
+            exact: true,
+          }),
         },
         chushi: {
           L1: r('mul2', { aDigits: 2, bDigits: 2, carry: 'none', maxResult: 9999 }),
@@ -508,13 +795,41 @@ const units: Unit[] = [
           L3: r('mul2', { aDigits: 3, bDigits: 2, carry: 'continuous', maxResult: 99999 }),
         },
         jianbian: {
+          // 三下只学“凑整”：把能凑成整十/整百/整千的两个因数先乘，不引入结合律、分配律的字母式
           L1: r('assoc', { roundTo: 100, roundPair: 'a*c', minFactor: 2, maxFactor: 9 }),
-          L2: r('dist', { pattern: 'a*c+b*c', roundTo: 100, minFactor: 2, maxFactor: 9, maxResult: 9999 }),
-          L3: r('dist', { pattern: 'a*c+b*c+d*c', roundTo: 100, minFactor: 2, maxFactor: 9, maxResult: 9999 }),
+          L2: r('assoc', { roundTo: 100, roundPair: 'a*c', minFactor: 4, maxFactor: 9 }),
+          L3: r('assoc', { roundTo: 1000, roundPair: 'a*b', minFactor: 2, maxFactor: 9 }),
         },
       }),
-      kp('3B-U7-K2', '分数', {}, '分数复习属 v0.3.0 填空/比大小。'),
-      kp('3B-U7-K3', '周长与面积', {}, '图形应用题属 v0.3.0。'),
+      kp(
+        '3B-U7-K2',
+        '分数',
+        {
+          tiankong: {
+            L1: tf('fraction'),
+            L2: tf('fraction'),
+            L3: tf('fraction'),
+          },
+        },
+        '分数意义与同分母比较的复习。',
+      ),
+      kp(
+        '3B-U7-K3',
+        '周长与面积',
+        {
+          tiankong: {
+            L1: [tf('rectPerimeter'), tf('rectArea')],
+            L2: [tf('squarePerimeter'), tf('squareArea')],
+            L3: [tf('rectPerimeter'), tf('rectArea')],
+          },
+          word: {
+            L1: [wf('perimeter'), wf('area')],
+            L2: [wf('perimeter'), wf('area')],
+            L3: [wf('perimeter'), wf('area')],
+          },
+        },
+        '周长与面积综合复习，应用题覆盖围栏、铺砖与预算。',
+      ),
     ],
   },
 ]

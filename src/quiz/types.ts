@@ -50,6 +50,8 @@ export interface Constraints {
   roundPair?: 'a*b' | 'a*c' | 'b*c'
   maxFactor?: number
   minFactor?: number
+  /** 混合算式必须包含的运算符，例如 3A-U4 的脱式必须含 ÷ */
+  requireOp?: '÷' | '×' | '+' | '-'
 }
 
 export interface RuleSpec {
@@ -60,11 +62,73 @@ export interface RuleSpec {
 
 export type LevelSpecs = Partial<Record<Level, RuleSpec | RuleSpec[]>>
 
+/** 填空题型（tiankong）的知识点形态；每个形态自己处理 L1/L2/L3 的差别 */
+export type FillFormName =
+  | 'leapYear'
+  | 'monthDays'
+  | 'timeHour'
+  | 'elapsed'
+  | 'lengthUnits'
+  | 'kmM'
+  | 'rectPerimeter'
+  | 'squarePerimeter'
+  | 'priceQty'
+  | 'areaUnit'
+  | 'rectArea'
+  | 'squareArea'
+  | 'fraction'
+  | 'speed'
+  | 'mul2x2'
+  | 'mul2x3'
+  | 'div2x2'
+  | 'routeSum'
+  | 'wallFence'
+  | 'fractionUnit'
+  | 'fractionPart'
+  | 'pattern'
+  | 'maxArea'
+  | 'tangram'
+
+/** 应用题的场景形态 */
+export type WordFormName =
+  | 'shopping'
+  | 'trip'
+  | 'timePlan'
+  | 'perimeter'
+  | 'area'
+  | 'share'
+  | 'shopping2'
+  | 'bulk'
+  | 'pack'
+  | 'wallFence'
+  | 'shop3'
+  | 'shopCompare'
+  | 'discount'
+  | 'pattern'
+  | 'maxArea'
+  | 'tangram'
+
+export interface FillRuleSpec {
+  form: FillFormName
+  note?: string
+}
+
+export type FillLevelSpecs = Partial<Record<Level, FillRuleSpec | FillRuleSpec[]>>
+
+export interface WordRuleSpec {
+  form: WordFormName
+  note?: string
+}
+
+export type WordLevelSpecs = Partial<Record<Level, WordRuleSpec | WordRuleSpec[]>>
+
 export interface KpRules {
   kousuan?: LevelSpecs
   chushi?: LevelSpecs
   tuoshi?: LevelSpecs
   jianbian?: LevelSpecs
+  tiankong?: FillLevelSpecs
+  word?: WordLevelSpecs
 }
 
 export interface KnowledgePoint {
@@ -134,3 +198,93 @@ export interface GenerateResult {
   /** 目标知识点 */
   targets: { unitId: string; kpId: string; kpName: string }[]
 }
+
+/** 填空题：题干用 $...$ 表示数学片段、连续下划线表示空位，answer 用“；”分隔 */
+export interface FillQuestion {
+  id: string
+  grade: Grade
+  unitId: string
+  unitName: string
+  kpId: string
+  kpName: string
+  type: 'tiankong'
+  level: Level
+  /** 题干：空位写成连续 2 个以上下划线 */
+  stem: string
+  /** 每个空位一个答案，顺序与题干空位一致 */
+  answers: string[]
+  /** 参考答案行：answers.join('；') */
+  answer: string
+  /** 生成参数，供独立求值复核（不是答案本身） */
+  params: ParamMap
+  fingerprint: string
+  values: number[]
+  features: Record<string, number | string | boolean>
+}
+
+/** 应用题的一步解答：算式 + 结果 */
+export interface WordStep {
+  /** 算式文本，例如 “3 × 6”（不含等号与结果） */
+  expr: string
+  /** 该步结果（判断类步骤用 0/1 表示不成立/成立） */
+  result: number
+  /** 参考解答里的完整一行，例如 “3 × 6 = 18（元）” */
+  line: string
+  /** 是否为“够不够/至少”这类判断步骤（不做算式求值） */
+  judge?: boolean
+  /** 该步骤对应第几个小问（从 1 开始），自检要求每步都能落到某个小问 */
+  q?: number
+  /** 带余数除法的余数；有值时按 “a ÷ b = 商……余” 校验 */
+  remainder?: number
+}
+
+/** 应用题：场景化题干 + 分步解答 */
+export interface WordQuestion {
+  id: string
+  grade: Grade
+  unitId: string
+  unitName: string
+  kpId: string
+  kpName: string
+  type: 'word'
+  level: Level
+  /** 场景化题干（1–3 句，问句在题干末尾或分①②列出） */
+  stem: string
+  /** 逐问的小问句 */
+  questions: string[]
+  /** 与 questions 一一对应的最终答案（判断类为“够/不够”等） */
+  answers: string[]
+  /** 参考解答全文（多行，供参考页使用） */
+  answer: string
+  steps: WordStep[]
+  /** 作答留白行数 2–4 */
+  workLines: number
+  params: ParamMap
+  fingerprint: string
+  values: number[]
+  features: Record<string, number | string | boolean>
+}
+
+/** 生成参数键值；允许缺省键（分支形态只填用到的参数） */
+export type ParamMap = Record<string, number | string | undefined>
+
+export interface GenerateFillOptions {
+  grade: Grade
+  unitId?: string
+  kpId?: string
+  level: Level
+  count: number
+  seed?: number
+  memory?: import('./memory.ts').MemoryStore
+}
+
+export interface GenerateWordOptions {
+  grade: Grade
+  unitId?: string
+  kpId?: string
+  level: Level
+  count: number
+  seed?: number
+  memory?: import('./memory.ts').MemoryStore
+}
+
