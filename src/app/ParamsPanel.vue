@@ -2,9 +2,9 @@
 import { computed } from 'vue'
 import type { Level } from '../quiz/types.ts'
 import {
-  defaultUnitIds,
+  panelUnits,
+  recommendedCount,
   typeAvailability,
-  unitsForGrade,
 } from './paperBuilder'
 import type { AppConfig, AppType, TemplateInfo, TypstInfo } from './types'
 import { TYPE_OPTIONS } from './typstData'
@@ -25,25 +25,37 @@ const LEVELS: { level: Level; label: string; hint: string }[] = [
   { level: 'L3', label: 'L3', hint: '易错' },
 ]
 
-const units = computed(() => unitsForGrade(props.config.grade))
+const units = computed(() => panelUnits())
 const availability = computed(() => typeAvailability(props.config, props.template))
 const allSelected = computed(() => props.config.unitIds.length === units.value.length)
+
+const SOURCE_LABELS: Record<string, string> = {
+  skeleton: '骨架包',
+  rule: '规则库',
+  legacy: '旧生成器',
+  static: '静态题库',
+}
+
+function sourceLabel(type: AppType): string {
+  const source = availability.value[type].source
+  return source ? SOURCE_LABELS[source] : ''
+}
+
+function syncCount() {
+  props.config.count = recommendedCount(props.config, props.config.pages)
+}
 
 function toggleType(type: AppType, checked: boolean) {
   const list = props.config.types
   const index = list.indexOf(type)
   if (checked && index < 0) list.push(type)
   if (!checked && index >= 0) list.splice(index, 1)
-}
-
-function setGrade(grade: '3A' | '3B') {
-  if (props.config.grade === grade) return
-  props.config.grade = grade
-  props.config.unitIds = defaultUnitIds(grade)
+  syncCount()
 }
 
 function setLevel(level: Level) {
   props.config.level = level
+  syncCount()
 }
 
 function toggleUnit(unitId: string, checked: boolean) {
@@ -51,10 +63,12 @@ function toggleUnit(unitId: string, checked: boolean) {
   const index = list.indexOf(unitId)
   if (checked && index < 0) list.push(unitId)
   if (!checked && index >= 0) list.splice(index, 1)
+  syncCount()
 }
 
 function toggleAll(checked: boolean) {
   props.config.unitIds = checked ? units.value.map((unit) => unit.unitId) : []
+  syncCount()
 }
 
 function clampInt(raw: string, min: number, max: number, fallback: number) {
@@ -69,23 +83,10 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
     <section class="group">
       <h2>年级</h2>
       <label class="row">
-        <input
-          type="radio"
-          name="grade"
-          :checked="config.grade === '3A'"
-          @change="setGrade('3A')"
-        />
-        <span>三年级上册</span>
+        <input type="radio" name="grade" checked disabled />
+        <span>三年级上册（成品范围）</span>
       </label>
-      <label class="row">
-        <input
-          type="radio"
-          name="grade"
-          :checked="config.grade === '3B'"
-          @change="setGrade('3B')"
-        />
-        <span>三年级下册</span>
-      </label>
+      <p class="hint">三下及后续年级已暂停，本轮只做三上成品。</p>
     </section>
 
     <section class="group">
@@ -104,8 +105,8 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
         <span>{{ unit.unitName }}</span>
         <em v-if="unit.unconfirmed" class="tag">推定</em>
       </label>
-      <p v-if="config.grade === '3B'" class="hint">三下目录尚未公开发布，单元结构为推定。</p>
-      <p v-else-if="config.unitIds.length === 0" class="hint">至少选择一个单元才能出题。</p>
+      <p v-if="config.unitIds.length === 0" class="hint">至少选择一个单元才能出题。</p>
+      <p v-else class="hint">只列三上已建骨架包的 8 个单元（图形单元 U3 暂未建包）。</p>
     </section>
 
     <section class="group">
@@ -122,7 +123,9 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
           <em>{{ item.hint }}</em>
         </label>
       </div>
-      <p class="hint">L1 基础、L2 常规进位退位、L3 连续进位/末尾有 0/带括号三步。</p>
+      <p class="hint">
+        计算类：L1 基础、L2 常规进位退位、L3 连续进位/末尾有 0/带括号三步。填空与应用题：L1 直接套用、L2 换算或两步、L3 反向求/多步判断。
+      </p>
     </section>
 
     <section class="group">
@@ -136,6 +139,13 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
             @change="toggleType(option.type, ($event.target as HTMLInputElement).checked)"
           />
           <span :class="{ muted: !availability[option.type].enabled }">{{ option.label }}</span>
+          <em
+            v-if="availability[option.type].enabled && sourceLabel(option.type)"
+            class="src"
+            :class="availability[option.type].source"
+          >
+            {{ sourceLabel(option.type) }}
+          </em>
         </label>
         <p
           v-if="availability[option.type].reason"
@@ -262,6 +272,32 @@ input:disabled {
   font-size: 11px;
   line-height: 1.5;
   color: #666;
+}
+.src {
+  margin-left: auto;
+  font-size: 10px;
+  font-style: normal;
+  padding: 1px 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  color: #555;
+  white-space: nowrap;
+}
+.src.skeleton {
+  border-color: #4a7a4a;
+  color: #2f5f2f;
+}
+.src.rule {
+  border-color: #4a6f8a;
+  color: #2f4f6a;
+}
+.src.legacy {
+  border-color: #b08230;
+  color: #7a5410;
+}
+.src.static {
+  border-color: #999;
+  color: #555;
 }
 .type-reason.off {
   color: #8a4b00;

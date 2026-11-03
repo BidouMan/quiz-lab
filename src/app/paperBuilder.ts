@@ -1,10 +1,23 @@
 import { CURRICULUM, findUnit } from '../data/curriculum.ts'
-import type { CalcType, GeneratedQuestion, Level, Unit } from '../quiz/types.ts'
+import type {
+  CalcType,
+  FillQuestion,
+  GeneratedQuestion,
+  Level,
+  Unit,
+  WordQuestion,
+} from '../quiz/types.ts'
 import type { MemoryStore } from '../quiz/memory.ts'
 import { generate } from '../quiz/generate.ts'
+import { fillLevelsFor, fillSupports, generateFill } from '../quiz/fill.ts'
+import { generateWord, wordLevelsFor, wordSupports } from '../quiz/word.ts'
+import { buildComboPaper, createUsedSets, type UsedSets } from '../quiz/skeleton/index.ts'
+import type { Combo } from '../quiz/skeleton/types.ts'
+import { skeletonCombo, skeletonLevels, skeletonUnits, type GeneratedType } from './skeletonSource.ts'
 import { latexToTypst } from '../quiz/typst.ts'
 import {
   CALC_TYPES,
+  splitFill,
   STATIC_SAMPLES,
   staticCountFor,
   staticItemsFor,
@@ -29,10 +42,10 @@ const WEIGHTS: Record<AppType, number> = {
   chushi: 0.2,
   tuoshi: 0.2,
   jianbian: 0.15,
-  tiankong: 0.15,
+  tiankong: 0.18,
   compare: 0.04,
   geom: 0.03,
-  word: 0.03,
+  word: 0.12,
 }
 
 const LEVELS: Level[] = ['L1', 'L2', 'L3']
@@ -40,6 +53,8 @@ const LEVELS: Level[] = ['L1', 'L2', 'L3']
 export interface Availability {
   enabled: boolean
   reason: string
+  /** 题目来源：骨架包 / 规则库 / 旧生成器 / 静态题库；界面据此标明而不是静默混用 */
+  source?: 'skeleton' | 'rule' | 'legacy' | 'static'
 }
 
 export function isCalcType(type: AppType): type is CalcType {
@@ -48,6 +63,12 @@ export function isCalcType(type: AppType): type is CalcType {
 
 export function unitsForGrade(grade: Grade): Unit[] {
   return CURRICULUM.units.filter((unit) => unit.grade === grade)
+}
+
+/** 参数面板只列三上已建骨架包的 8 个单元（U3 暂无填空/应用题包，不进入列表） */
+export function panelUnits(): Unit[] {
+  const ids = new Set(skeletonUnits('3A').map((unit) => unit.unitId))
+  return unitsForGrade('3A').filter((unit) => ids.has(unit.unitId))
 }
 
 /** 有任意计算类规则的第一个单元，作为年级默认选中项 */
@@ -103,7 +124,7 @@ export function typeAvailability(
       }
       const supporting = units.filter((unit) => unitSupports(unit.unitId, type, config.level))
       if (supporting.length > 0) {
-        result[type] = { enabled: true, reason: '' }
+        result[type] = { enabled: true, reason: '', source: 'rule' }
         continue
       }
       const levels = levelsFor(
@@ -124,23 +145,106 @@ export function typeAvailability(
       )
       result[type] =
         fallback > 0
-          ? { enabled: true, reason: `无生成规则，旧题库可兜底 ${fallback} 题` }
+          ? { enabled: true, reason: `无生成规则，旧题库可兜底 ${fallback} 题`, source: 'static' }
           : { enabled: false, reason: `所选单元在本版没有${label}生成规则` }
       continue
     }
 
     if (type === 'tiankong') {
+      if (units.length === 0) {
+        result[type] = { enabled: false, reason: '请先选择单元' }
+        continue
+      }
+      const bySkeleton = units.filter((unit) => skeletonCombo(unit.unitId, 'tiankong', config.level) != null)
+      if (bySkeleton.length > 0) {
+        result[type] = { enabled: true, reason: '', source: 'skeleton' }
+        continue
+      }
+      const skeletonLevelsAvailable = units.flatMap((unit) => skeletonLevels(unit.unitId, 'tiankong'))
+      if (skeletonLevelsAvailable.length > 0) {
+        result[type] = {
+          enabled: false,
+          reason: `所选单元在 ${config.level} 没有骨架填空题，可切到 ${[...new Set(skeletonLevelsAvailable)].join('/')}`,
+        }
+        continue
+      }
+      const supporting = units.filter((unit) => fillSupports(unit.unitId, config.level))
+      if (supporting.length > 0) {
+        result[type] = {
+          enabled: true,
+          reason: `所选单元无骨架填空包，使用旧填空生成器（兜底）`,
+          source: 'legacy',
+        }
+        continue
+      }
+      const levels = units.flatMap((unit) => fillLevelsFor(unit.unitId))
+      if (levels.length > 0) {
+        result[type] = {
+          enabled: false,
+          reason: `所选单元在 ${config.level} 没有填空规则，可切到 ${[...new Set(levels)].join('/')}`,
+        }
+        continue
+      }
       const fallback = staticCountFor(
         config.grade,
         units.map((unit) => unit.unitId),
         type,
       )
       result[type] =
-        units.length === 0
-          ? { enabled: false, reason: '请先选择单元' }
-          : fallback > 0
-            ? { enabled: true, reason: `本版不生成填空，旧题库兜底 ${fallback} 题` }
-            : { enabled: false, reason: '本版只做计算类，填空属 0.3.0' }
+        fallback > 0
+          ? {
+              enabled: true,
+              reason: `所选单元没有填空生成规则，旧题库兜底 ${fallback} 题`,
+              source: 'static',
+            }
+          : { enabled: false, reason: '所选单元本版没有填空生成规则' }
+      continue
+    }
+
+    if (type === 'word') {
+      if (template == null) {
+        result[type] = { enabled: false, reason: '正在读取模板…' }
+        continue
+      }
+      if (!template.word) {
+        result[type] = { enabled: false, reason: '当前排版模板未接入应用题' }
+        continue
+      }
+      if (units.length === 0) {
+        result[type] = { enabled: false, reason: '请先选择单元' }
+        continue
+      }
+      const bySkeleton = units.filter((unit) => skeletonCombo(unit.unitId, 'word', config.level) != null)
+      if (bySkeleton.length > 0) {
+        result[type] = { enabled: true, reason: '', source: 'skeleton' }
+        continue
+      }
+      const skeletonLevelsAvailable = units.flatMap((unit) => skeletonLevels(unit.unitId, 'word'))
+      if (skeletonLevelsAvailable.length > 0) {
+        result[type] = {
+          enabled: false,
+          reason: `所选单元在 ${config.level} 没有骨架应用题，可切到 ${[...new Set(skeletonLevelsAvailable)].join('/')}`,
+        }
+        continue
+      }
+      const supporting = units.filter((unit) => wordSupports(unit.unitId, config.level))
+      if (supporting.length > 0) {
+        result[type] = {
+          enabled: true,
+          reason: `所选单元无骨架应用题包，使用旧应用题生成器（兜底）`,
+          source: 'legacy',
+        }
+        continue
+      }
+      const levels = units.flatMap((unit) => wordLevelsFor(unit.unitId))
+      if (levels.length > 0) {
+        result[type] = {
+          enabled: false,
+          reason: `所选单元在 ${config.level} 没有应用题规则，可切到 ${[...new Set(levels)].join('/')}`,
+        }
+        continue
+      }
+      result[type] = { enabled: false, reason: '所选单元本版没有应用题生成规则' }
       continue
     }
 
@@ -154,7 +258,7 @@ export function typeAvailability(
       template == null
         ? { enabled: false, reason: '正在读取模板…' }
         : templateFlag
-          ? { enabled: true, reason: '静态示例题，非生成器' }
+          ? { enabled: true, reason: '静态示例题，非生成器', source: 'static' }
           : { enabled: false, reason: '当前排版模板未接入此题型' }
   }
 
@@ -196,6 +300,28 @@ function allocate(count: number, types: AppType[]): Map<AppType, number> {
   return quotas
 }
 
+/**
+ * 2 页内的默认题量（按题型与难度动态估算）。
+ * 实测 A4 compact=1、body=14：填空单题 ≈29pt；应用题 L1≈90pt、L2≈155pt、L3≈230pt；
+ * 每页正文 ≈738pt，2 页约 1476pt。L3 混合 16 题约需 1850pt，会排到第 3 页，故默认 12。
+ */
+const MIXED_COUNT: Record<Level, number> = { L1: 20, L2: 16, L3: 12 }
+
+export function recommendedCount(config: AppConfig, pages = 2): number {
+  const types = TYPE_ORDER.filter(
+    (type) => config.types.includes(type) && (type === 'tiankong' || type === 'word'),
+  )
+  if (types.length === 0) return config.count
+  if (pages <= 1) {
+    if (types.length === 1 && types[0] === 'tiankong') return 16
+    if (types.length === 1) return 4
+    return Math.max(6, Math.floor(MIXED_COUNT[config.level] / 2))
+  }
+  if (types.length === 1 && types[0] === 'tiankong') return 30
+  if (types.length === 1) return config.level === 'L3' ? 6 : 8
+  return MIXED_COUNT[config.level]
+}
+
 /** 某题型在当前单元下的容量上限（生成器视为无限，兜底题按静态题库数量封顶） */
 function capacityOf(type: AppType, config: AppConfig): number {
   const unitIds = selectedUnits(config).map((unit) => unit.unitId)
@@ -204,7 +330,23 @@ function capacityOf(type: AppType, config: AppConfig): number {
     if (supporting.length > 0) return Number.POSITIVE_INFINITY
     return staticCountFor(config.grade, unitIds, type)
   }
-  if (type === 'tiankong') return staticCountFor(config.grade, unitIds, type)
+  if (type === 'tiankong') {
+    const unitIds = selectedUnits(config).map((unit) => unit.unitId)
+    if (unitIds.some((unitId) => skeletonCombo(unitId, 'tiankong', config.level) != null)) {
+      return Number.POSITIVE_INFINITY
+    }
+    const supporting = unitIds.filter((unitId) => fillSupports(unitId, config.level))
+    if (supporting.length > 0) return Number.POSITIVE_INFINITY
+    return staticCountFor(config.grade, unitIds, type)
+  }
+  if (type === 'word') {
+    const unitIds = selectedUnits(config).map((unit) => unit.unitId)
+    if (unitIds.some((unitId) => skeletonCombo(unitId, 'word', config.level) != null)) {
+      return Number.POSITIVE_INFINITY
+    }
+    const supporting = unitIds.filter((unitId) => wordSupports(unitId, config.level))
+    return supporting.length > 0 ? Number.POSITIVE_INFINITY : 0
+  }
   return (STATIC_SAMPLES[type] ?? []).length
 }
 
@@ -243,8 +385,37 @@ function splitQuota(total: number, parts: number): number[] {
 
 // ---------- 题目转换 ----------
 
-const itemKey = (item: TypstItem): string =>
-  item.kind === 'fill' ? `fill:${item.id}` : `expr:${(item.expr ?? '').replace(/\s+/g, '')}`
+const itemKey = (item: TypstItem): string => {
+  if (item.kind === 'fill') {
+    const text = (item.parts ?? [])
+      .map((part) => ('t' in part ? part.t : 'm' in part ? part.m : '_'))
+      .join('')
+    return `fill:${text.replace(/\s+/g, '')}`
+  }
+  if (item.kind === 'word') return `word:${(item.text ?? '').replace(/\s+/g, '')}`
+  return `expr:${(item.expr ?? '').replace(/\s+/g, '')}`
+}
+
+function fillQuestionToItem(question: FillQuestion): TypstItem {
+  return {
+    id: question.id,
+    kind: 'fill',
+    parts: splitFill(question.stem, question.answers),
+    answers: question.answers,
+    solution: [question.answer],
+  }
+}
+
+function wordQuestionToItem(question: WordQuestion): TypstItem {
+  return {
+    id: question.id,
+    kind: 'word',
+    text: question.stem,
+    workLines: question.workLines,
+    answers: question.answers,
+    solution: question.answer.split('\n'),
+  }
+}
 
 function questionToItem(question: GeneratedQuestion): TypstItem {
   const expr = latexToTypst(question.latex)
@@ -260,6 +431,10 @@ function questionToItem(question: GeneratedQuestion): TypstItem {
 
 interface TypeBuild {
   items: TypstItem[]
+  /** 骨架包出题数 */
+  skeleton: number
+  /** 旧生成器出题数 */
+  legacy: number
   generated: number
   fallback: number
   duplicates: number
@@ -268,7 +443,16 @@ interface TypeBuild {
 }
 
 function emptyBuild(): TypeBuild {
-  return { items: [], generated: 0, fallback: 0, duplicates: 0, kpNames: [], notes: [] }
+  return {
+    items: [],
+    skeleton: 0,
+    legacy: 0,
+    generated: 0,
+    fallback: 0,
+    duplicates: 0,
+    kpNames: [],
+    notes: [],
+  }
 }
 
 /** 计算类：生成器出题；无规则的单元用旧题库兜底 */
@@ -384,35 +568,220 @@ function buildCalcType(
   return build
 }
 
-/** 旧题库兜底（填空，或整套都没有生成规则时） */
-function buildFallbackType(
-  type: AppType,
-  quota: number,
-  config: AppConfig,
-  used: Set<string>,
-): TypeBuild {
+interface GeneratedPiece {
+  item: TypstItem
+  kpName: string
+}
+
+/** 骨架包出题：单包最多 30 条骨架，超额部分截断并提示 */
+function skeletonPieces(
+  combo: Combo,
+  count: number,
+  seed: number,
+  used: UsedSets,
+  kpName: string,
+): GeneratedPiece[] {
+  const limited = Math.min(count, 30)
+  const paper = buildComboPaper(combo, { count: limited, seed, used })
+  return paper.data.sections
+    .flatMap((section) => section.items)
+    .map((item) => ({ item: item as TypstItem, kpName }))
+}
+
+/**
+ * 填空/应用题的通用组装：
+ * 1. 有骨架包（单元+题型+难度）→ 优先骨架；
+ * 2. 骨架不可用而旧生成器支持 → 旧生成器兜底，并在 notes 里标明；
+ * 3. 都没有 → 旧题库静态题兜底。
+ */
+function buildGeneratedType(input: {
+  type: GeneratedType
+  label: string
+  quota: number
+  config: AppConfig
+  seed: number
+  used: Set<string>
+  skeletonUsed: UsedSets
+  runLegacy: (unit: Unit, count: number, seed: number) => GeneratedPiece[]
+}): TypeBuild {
+  const { type, label, quota, config, seed, used, skeletonUsed, runLegacy } = input
   const build = emptyBuild()
-  for (const unit of selectedUnits(config)) {
-    if (build.items.length >= quota) break
-    const pool = staticItemsFor(config.grade, unit.unitId, type)
-    let countFromUnit = 0
-    for (const item of pool) {
-      if (build.items.length >= quota) break
-      const key = itemKey(item)
-      if (used.has(key)) {
-        build.duplicates++
-        continue
-      }
-      used.add(key)
-      build.items.push(item)
-      countFromUnit++
+  if (quota <= 0) return build
+
+  const units = selectedUnits(config)
+  const add = (item: TypstItem, source: 'skeleton' | 'legacy' | 'static', kpName: string): boolean => {
+    const key = itemKey(item)
+    if (used.has(key)) {
+      build.duplicates++
+      return false
     }
-    if (countFromUnit > 0) {
-      build.fallback += countFromUnit
-      build.notes.push(`${unit.unitName}：本版无生成规则，旧题库兜底 ${countFromUnit} 题`)
+    used.add(key)
+    build.items.push(item)
+    if (source === 'skeleton') {
+      build.skeleton++
+      build.generated++
+    } else if (source === 'legacy') {
+      build.legacy++
+      build.generated++
+    } else {
+      build.fallback++
+    }
+    if (source !== 'static' && kpName && !build.kpNames.includes(kpName)) build.kpNames.push(kpName)
+    return true
+  }
+
+  const generative = units.filter(
+    (unit) => skeletonCombo(unit.unitId, type, config.level) != null || supportsLegacy(unit.unitId, type, config.level),
+  )
+  const staticOnly = units.filter(
+    (unit) => skeletonCombo(unit.unitId, type, config.level) == null && !supportsLegacy(unit.unitId, type, config.level),
+  )
+
+  const takeSkeleton = (unit: Unit, count: number, unitSeed: number): number => {
+    const combo = skeletonCombo(unit.unitId, type, config.level)
+    if (combo == null) return 0
+    try {
+      const pieces = skeletonPieces(combo, count, unitSeed, skeletonUsed, `${unit.unitName}·${label}`)
+      let added = 0
+      for (const piece of pieces) {
+        if (build.items.length >= quota) break
+        if (add(piece.item, 'skeleton', piece.kpName)) added++
+      }
+      return added
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      build.notes.push(`${unit.unitName}：骨架${label}生成失败（${reason}）`)
+      return 0
     }
   }
+
+  const takeLegacy = (unit: Unit, count: number, unitSeed: number): number => {
+    try {
+      const pieces = runLegacy(unit, count, unitSeed)
+      let added = 0
+      for (const piece of pieces) {
+        if (build.items.length >= quota) break
+        if (add(piece.item, 'legacy', piece.kpName)) added++
+      }
+      return added
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      build.notes.push(`${unit.unitName}：旧${label}生成器失败（${reason}）`)
+      return 0
+    }
+  }
+
+  if (generative.length > 0) {
+    const quotas = splitQuota(quota, generative.length)
+    for (const [index, unit] of generative.entries()) {
+      if (quotas[index] <= 0) continue
+      const unitSeed = seed + index * 131
+      const hasSkeleton = skeletonCombo(unit.unitId, type, config.level) != null
+      let added = 0
+      if (hasSkeleton) added = takeSkeleton(unit, quotas[index], unitSeed)
+      if (added === 0 && supportsLegacy(unit.unitId, type, config.level)) {
+        added = takeLegacy(unit, quotas[index], unitSeed)
+        if (added > 0) {
+          const why = hasSkeleton ? '骨架不可用' : '无骨架包'
+          build.notes.push(`${unit.unitName}：${why}，旧${label}生成器兜底 ${added} 题`)
+        }
+      }
+    }
+
+    for (let round = 1; round <= 3 && build.items.length < quota; round++) {
+      const before = build.items.length
+      const quotas = splitQuota(Math.max(quota - before, generative.length), generative.length)
+      for (const [index, unit] of generative.entries()) {
+        if (quotas[index] <= 0) continue
+        if (skeletonCombo(unit.unitId, type, config.level) != null) continue
+        if (!supportsLegacy(unit.unitId, type, config.level)) continue
+        takeLegacy(unit, quotas[index], seed + round * 977 + index * 131)
+      }
+      if (build.items.length === before) break
+    }
+  }
+
+  if (build.items.length < quota && staticOnly.length > 0) {
+    for (const unit of staticOnly) {
+      if (build.items.length >= quota) break
+      let countFromUnit = 0
+      for (const item of staticItemsFor(config.grade, unit.unitId, type)) {
+        if (build.items.length >= quota) break
+        if (add(item, 'static', '')) countFromUnit++
+      }
+      if (countFromUnit > 0) {
+        build.notes.push(`${unit.unitName}：无${label}生成规则，旧题库兜底 ${countFromUnit} 题`)
+      }
+    }
+  }
+
+  for (const unit of staticOnly) {
+    if (!build.notes.some((note) => note.startsWith(unit.unitName))) {
+      build.notes.push(`${unit.unitName}：本版没有${label}生成规则`)
+    }
+  }
+
   return build
+}
+
+function supportsLegacy(unitId: string, type: GeneratedType, level: Level): boolean {
+  return type === 'tiankong' ? fillSupports(unitId, level) : type === 'word' ? wordSupports(unitId, level) : false
+}
+
+function buildFillType(
+  quota: number,
+  config: AppConfig,
+  seed: number,
+  memory: MemoryStore,
+  used: Set<string>,
+  skeletonUsed: UsedSets,
+): TypeBuild {
+  return buildGeneratedType({
+    type: 'tiankong',
+    label: '填空',
+    quota,
+    config,
+    seed,
+    used,
+    skeletonUsed,
+    runLegacy: (unit, count, unitSeed) =>
+      generateFill({
+        grade: config.grade,
+        unitId: unit.unitId,
+        level: config.level,
+        count,
+        seed: unitSeed,
+        memory,
+      }).questions.map((question) => ({ item: fillQuestionToItem(question), kpName: question.kpName })),
+  })
+}
+
+function buildWordType(
+  quota: number,
+  config: AppConfig,
+  seed: number,
+  memory: MemoryStore,
+  used: Set<string>,
+  skeletonUsed: UsedSets,
+): TypeBuild {
+  return buildGeneratedType({
+    type: 'word',
+    label: '应用题',
+    quota,
+    config,
+    seed,
+    used,
+    skeletonUsed,
+    runLegacy: (unit, count, unitSeed) =>
+      generateWord({
+        grade: config.grade,
+        unitId: unit.unitId,
+        level: config.level,
+        count,
+        seed: unitSeed,
+        memory,
+      }).questions.map((question) => ({ item: wordQuestionToItem(question), kpName: question.kpName })),
+  })
 }
 
 function buildSampleType(type: AppType, quota: number, used: Set<string>): TypeBuild {
@@ -450,6 +819,7 @@ export function buildPaper(input: {
   memory.beginPaper()
 
   const used = new Set<string>()
+  const skeletonUsed = createUsedSets()
   const quotas = allocate(requested, active)
   capQuotas(quotas, active, config)
   const builds = new Map<AppType, TypeBuild>()
@@ -459,7 +829,9 @@ export function buildPaper(input: {
     if (isCalcType(type)) {
       builds.set(type, buildCalcType(type, quota, config, seed, memory, used))
     } else if (type === 'tiankong') {
-      builds.set(type, buildFallbackType(type, quota, config, used))
+      builds.set(type, buildFillType(quota, config, seed, memory, used, skeletonUsed))
+    } else if (type === 'word') {
+      builds.set(type, buildWordType(quota, config, seed, memory, used, skeletonUsed))
     } else {
       builds.set(type, buildSampleType(type, quota, used))
     }
@@ -481,6 +853,8 @@ export function buildPaper(input: {
   const stats: BuildStats = {
     requested,
     generated: 0,
+    skeleton: 0,
+    legacy: 0,
     fallback: 0,
     duplicates: 0,
     kpNames: [],
@@ -489,6 +863,8 @@ export function buildPaper(input: {
   const notes: string[] = []
   for (const build of builds.values()) {
     stats.generated += build.generated
+    stats.skeleton += build.skeleton
+    stats.legacy += build.legacy
     stats.fallback += build.fallback
     stats.duplicates += build.duplicates
     for (const name of build.kpNames) {
@@ -514,7 +890,9 @@ export function buildPaper(input: {
   const title =
     singleUnit && singleType
       ? `三年级数学 · ${singleUnit} · ${singleType}`
-      : `三年级数学 · ${config.grade === '3A' ? '三上' : '三下'}计算练习`
+      : singleUnit
+        ? `三年级数学 · ${singleUnit} · 练习`
+        : `三年级数学 · ${config.grade === '3A' ? '三上' : '三下'}练习`
 
   return {
     data: { title, sections },

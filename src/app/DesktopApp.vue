@@ -15,7 +15,7 @@ import {
 } from './api'
 import ParamsPanel from './ParamsPanel.vue'
 import PdfPreview from './PdfPreview.vue'
-import { buildPaper, defaultUnitIds } from './paperBuilder'
+import { buildPaper, defaultUnitIds, panelUnits } from './paperBuilder'
 import { TYPE_OPTIONS } from './typstData'
 import {
   DEFAULT_CONFIG,
@@ -100,7 +100,14 @@ const paperSummary = computed(() => {
   if (!build || !result.value) return ''
   const s = build.stats
   const kps = s.kpNames.length > 0 ? s.kpNames.join('、') : '无'
-  return `本次 ${build.count} 题 · 生成 ${s.generated} · 兜底 ${s.fallback} · 去重命中 ${s.duplicates} · 知识点：${kps}`
+  const calc = Math.max(0, s.generated - s.skeleton - s.legacy)
+  const parts = [`本次 ${build.count} 题`]
+  if (s.skeleton > 0) parts.push(`骨架 ${s.skeleton}`)
+  if (s.legacy > 0) parts.push(`旧生成器 ${s.legacy}`)
+  if (calc > 0) parts.push(`计算生成 ${calc}`)
+  if (s.fallback > 0) parts.push(`静态兜底 ${s.fallback}`)
+  parts.push(`去重命中 ${s.duplicates}`, `知识点：${kps}`)
+  return parts.join(' · ')
 })
 
 const pageCompare = computed(() => {
@@ -232,17 +239,21 @@ watch(config, scheduleSave, { deep: true })
 onMounted(async () => {
   try {
     const stored = await loadConfig()
-    const grade: AppConfig['grade'] = stored.grade === '3B' ? '3B' : '3A'
+    // 范围锁定三上：旧配置里的三下年级/单元一律钳回三上 8 个包单元
+    const grade: AppConfig['grade'] = '3A'
+    const allowedUnits = new Set(panelUnits().map((unit) => unit.unitId))
     const types = Array.isArray(stored.types) ? stored.types.filter(isAppType) : []
     const storedUnits = Array.isArray(stored.unitIds)
-      ? stored.unitIds.filter((id): id is string => typeof id === 'string' && findUnit(id)?.grade === grade)
+      ? stored.unitIds.filter(
+          (id): id is string => typeof id === 'string' && allowedUnits.has(id) && findUnit(id)?.grade === grade,
+        )
       : null
     const level: AppConfig['level'] =
       stored.level === 'L1' || stored.level === 'L3' ? stored.level : 'L2'
     Object.assign(config, {
       grade,
       level,
-      unitIds: storedUnits ?? defaultUnitIds(grade),
+      unitIds: storedUnits && storedUnits.length > 0 ? storedUnits : defaultUnitIds(grade),
       types: types.length > 0 ? types : [...DEFAULT_CONFIG.types],
       count: typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count,
       pages: typeof stored.pages === 'number' ? stored.pages : DEFAULT_CONFIG.pages,

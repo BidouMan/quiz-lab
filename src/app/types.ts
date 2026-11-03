@@ -87,6 +87,10 @@ export interface TypstItem {
   fig?: 'rect' | 'square'
   text?: string
   workLines?: number
+  /** 填空/应用题的答案（模板不渲染，供参考页与导出使用） */
+  answers?: string[]
+  /** 应用题的完整解答步骤（逐行） */
+  solution?: string[]
 }
 
 export interface TypstSection {
@@ -107,6 +111,10 @@ export interface BuildStats {
   requested: number
   /** 由生成器算出的题量 */
   generated: number
+  /** 其中骨架包出题数 */
+  skeleton: number
+  /** 其中旧生成器出题数（骨架无组合时兜底） */
+  legacy: number
   /** 回退到旧静态题库的题量 */
   fallback: number
   /** 同卷去重命中（候选被丢弃）的题量 */
