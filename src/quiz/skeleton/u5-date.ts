@@ -1,0 +1,360 @@
+/**
+ * 3A-U5 年、月、日 · 填空 · L2
+ * 6 个做法 × 5 条句式 = 30 条骨架。
+ *
+ * 约定：模板自带空位（连续 4 个下划线），ask 置空；空位数量必须与 formulas 一一对应。
+ * 同一题多个空单位不同时，unit 置空、单位写在模板里，答案只填数字。
+ * 时间题不跨零点；出发时刻用“最迟”，行程时间用“至少”。
+ */
+import type { Skeleton } from './types.ts'
+import { isLeap, monthDays, yearDays, daysBetween, elapsedMinutes } from './expr.ts'
+
+export const U5_DATE_SKELETONS: Skeleton[] = [
+  // ---------- 直接求 ----------
+  {
+    id: 'u5-d1',
+    practice: 'direct',
+    template: '{m} 月有 ____ 天。',
+    asks: [],
+    formulas: ['monthDays(m)'],
+    unit: '天',
+    slots: { m: { min: 1, max: 12 } },
+    guard: (p) => p.m !== 2,
+  },
+  {
+    id: 'u5-d2',
+    practice: 'direct',
+    template: '{y} 年全年有 ____ 天。',
+    asks: [],
+    formulas: ['yearDays(y)'],
+    unit: '天',
+    slots: { y: { min: 1990, max: 2030 } },
+  },
+  {
+    id: 'u5-d3',
+    practice: 'direct',
+    template: '下午 {h} 时用 24 时记时法表示是 ____ 时。',
+    asks: [],
+    formulas: ['h+12'],
+    unit: '时',
+    slots: { h: { min: 1, max: 11 } },
+  },
+  {
+    id: 'u5-d4',
+    practice: 'direct',
+    template: '一场{item}从 {h1} 时 {m1} 分到 {h2} 时 {m2} 分，共 ____ 分钟。',
+    asks: [],
+    formulas: ['elapsedMinutes(h1,m1,h2,m2)'],
+    unit: '分',
+    slots: {
+      h1: { min: 8, max: 19 },
+      m1: { min: 0, max: 55, step: 5 },
+      h2: { min: 9, max: 21, gt: 'h1' },
+      m2: { min: 0, max: 55, step: 5 },
+    },
+    guard: (p) => {
+      const total = elapsedMinutes(p.h1, p.m1, p.h2, p.m2)
+      return total >= 20 && total <= 180
+    },
+  },
+  {
+    id: 'u5-d5',
+    practice: 'direct',
+    template: '{m1} 月 {d1} 日到 {m2} 月 {d2} 日，共 ____ 天。',
+    asks: [],
+    formulas: ['daysBetween(m1,d1,m2,d2)'],
+    unit: '天',
+    slots: {
+      m1: { min: 3, max: 11 },
+      d1: { min: 1, max: 28 },
+      m2: { min: 4, max: 12, gt: 'm1' },
+      d2: { min: 1, max: 28 },
+    },
+    guard: (p) => daysBetween(p.m1, p.d1, p.m2, p.d2) >= 3,
+  },
+
+  // ---------- 逆向求 ----------
+  {
+    id: 'u5-i1',
+    practice: 'inverse',
+    template: '{h1} 时 {m1} 分开始，{n} 分钟后是 ____ 时 ____ 分。',
+    asks: [],
+    formulas: ['hourOf(h1*60+m1+n)', 'minuteOf(h1*60+m1+n)'],
+    unit: '',
+    slots: {
+      h1: { min: 8, max: 18 },
+      m1: { min: 0, max: 55, step: 5 },
+      n: { min: 20, max: 120, step: 5 },
+    },
+    guard: (p) => p.h1 * 60 + p.m1 + p.n <= 23 * 60 + 59,
+  },
+  {
+    id: 'u5-i2',
+    practice: 'inverse',
+    template: '一场{item} {n} 分钟前开始，现在是 {h2} 时 {m2} 分，开始时是 ____ 时 ____ 分。',
+    asks: [],
+    formulas: ['hourOf(h2*60+m2-n)', 'minuteOf(h2*60+m2-n)'],
+    unit: '',
+    slots: {
+      h2: { min: 10, max: 20 },
+      m2: { min: 0, max: 55, step: 5 },
+      n: { min: 20, max: 120, step: 5 },
+    },
+    guard: (p) => p.h2 * 60 + p.m2 - p.n >= 7 * 60,
+  },
+  {
+    id: 'u5-i3',
+    practice: 'inverse',
+    template: '{n} 天合 ____ 个星期零 ____ 天。',
+    asks: [],
+    formulas: ['wholeWeeks(n)', 'restDays(n)'],
+    unit: '',
+    slots: { n: { min: 10, max: 40 } },
+    guard: (p) => p.n % 7 !== 0,
+  },
+  {
+    id: 'u5-i4',
+    practice: 'inverse',
+    template: '{m1} 月到 {m2} 月，一共经过了 ____ 个月。',
+    asks: [],
+    formulas: ['m2-m1'],
+    unit: '个月',
+    slots: { m1: { min: 1, max: 11 }, m2: { min: 2, max: 12, gt: 'm1' } },
+    guard: (p) => p.m2 - p.m1 >= 2,
+  },
+  {
+    id: 'u5-i5',
+    practice: 'inverse',
+    template: '{n} 分钟是 ____ 时 ____ 分。',
+    asks: [],
+    formulas: ['hourOf(n)', 'minuteOf(n)'],
+    unit: '',
+    slots: { n: { min: 75, max: 200 } },
+    guard: (p) => p.n % 60 !== 0,
+  },
+
+  // ---------- 比较与最值 ----------
+  {
+    id: 'u5-c1',
+    practice: 'compare',
+    template: '{m1} 月和 {m2} 月一共有 ____ 天，{m2} 月比 {m1} 月多 ____ 天。',
+    asks: [],
+    formulas: ['monthDays(m1)+monthDays(m2)', 'monthDays(m2)-monthDays(m1)'],
+    unit: '天',
+    slots: { m1: { min: 1, max: 11 }, m2: { min: 2, max: 12, gt: 'm1' } },
+    guard: (p) =>
+      p.m1 !== 2 && p.m2 !== 2 && monthDays(p.m2) > monthDays(p.m1),
+  },
+  {
+    id: 'u5-c2',
+    practice: 'compare',
+    template: '{y1} 年和 {y2} 年的全年天数相差 ____ 天。',
+    asks: [],
+    formulas: ['yearDays(y2)-yearDays(y1)'],
+    unit: '天',
+    slots: { y1: { min: 1990, max: 2030 }, y2: { min: 1991, max: 2030, gt: 'y1' } },
+    guard: (p) => yearDays(p.y2) > yearDays(p.y1),
+  },
+  {
+    id: 'u5-c3',
+    practice: 'compare',
+    template: '第一场{item}用了 {n1} 分钟，第二场用了 {n2} 分钟，第一场比第二场少 ____ 分钟。',
+    asks: [],
+    formulas: ['n2-n1'],
+    unit: '分',
+    slots: { n1: { min: 20, max: 90, step: 5 }, n2: { min: 25, max: 120, step: 5, gt: 'n1' } },
+    guard: (p) => p.n2 - p.n1 >= 5,
+  },
+  {
+    id: 'u5-c4',
+    practice: 'compare',
+    template: '{m1} 月比 {m2} 月多 ____ 天。',
+    asks: [],
+    formulas: ['monthDays(m1)-monthDays(m2)'],
+    unit: '天',
+    slots: { m1: { min: 1, max: 12 }, m2: { min: 1, max: 12 } },
+    guard: (p) => p.m1 !== 2 && p.m2 !== 2 && monthDays(p.m1) > monthDays(p.m2),
+  },
+  {
+    id: 'u5-c5',
+    practice: 'compare',
+    template: '上午 {h1} 时到 12 时共 ____ 小时，下午 1 时到下午 {h} 时共 ____ 小时。',
+    asks: [],
+    formulas: ['12-h1', 'h-1'],
+    unit: '小时',
+    slots: { h1: { min: 8, max: 11 }, h: { min: 2, max: 6 } },
+  },
+
+  // ---------- 组合与拆分 ----------
+  {
+    id: 'u5-p1',
+    practice: 'compose',
+    template: '{a} 时 {b} 分一共是 ____ 分钟。',
+    asks: [],
+    formulas: ['a*60+b'],
+    unit: '分',
+    slots: { a: { min: 1, max: 3 }, b: { min: 5, max: 55, step: 5 } },
+  },
+  {
+    id: 'u5-p2',
+    practice: 'compose',
+    template: '一个星期有 7 天，{n} 个星期一共 ____ 天。',
+    asks: [],
+    formulas: ['n*7'],
+    unit: '天',
+    slots: { n: { min: 3, max: 12 } },
+  },
+  {
+    id: 'u5-p3',
+    practice: 'compose',
+    template: '{y} 年第一季度共有 ____ 天。',
+    asks: [],
+    formulas: ['monthDays(1)+febDays(y)+monthDays(3)'],
+    unit: '天',
+    slots: { y: { min: 1990, max: 2030 } },
+  },
+  {
+    id: 'u5-p4',
+    practice: 'compose',
+    template: '{m} 月有 ____ 个星期零 ____ 天。',
+    asks: [],
+    formulas: ['wholeWeeks(monthDays(m))', 'restDays(monthDays(m))'],
+    unit: '',
+    slots: { m: { min: 1, max: 12 } },
+    guard: (p) => p.m !== 2,
+  },
+  {
+    id: 'u5-p5',
+    practice: 'compose',
+    template: '{y} 年有 ____ 个星期零 ____ 天。',
+    asks: [],
+    formulas: ['wholeWeeks(yearDays(y))', 'restDays(yearDays(y))'],
+    unit: '',
+    slots: { y: { min: 1990, max: 2030 } },
+  },
+
+  // ---------- 多步合成 ----------
+  {
+    id: 'u5-m1',
+    practice: 'multistep',
+    template: '{person}要在 {h2} 时 {m2} 分前到达{place}，路上要走 {n} 分钟，最迟 ____ 时 ____ 分出发。',
+    asks: [],
+    formulas: ['hourOf(h2*60+m2-n)', 'minuteOf(h2*60+m2-n)'],
+    unit: '',
+    slots: {
+      h2: { min: 10, max: 18 },
+      m2: { min: 0, max: 55, step: 5 },
+      n: { min: 20, max: 90, step: 5 },
+    },
+    guard: (p) => p.h2 * 60 + p.m2 - p.n >= 8 * 60,
+  },
+  {
+    id: 'u5-m2',
+    practice: 'multistep',
+    template: '{item}下午 {h} 时开始，{person}要提前 {n} 分钟到，最迟下午 ____ 时 ____ 分到。',
+    asks: [],
+    formulas: ['hourOf(h*60+720-n)-12', 'minuteOf(h*60+720-n)'],
+    unit: '',
+    slots: { h: { min: 2, max: 5 }, n: { min: 15, max: 45, step: 5 } },
+    guard: (p) => {
+      const arrive = (p.h + 12) * 60 - p.n
+      return arrive >= 13 * 60 && arrive <= 17 * 60 + 55
+    },
+  },
+  {
+    id: 'u5-m3',
+    practice: 'multistep',
+    template: '{m1} 月 {d1} 日到 {m2} 月 {d2} 日，{person}每天读 {b} 页，一共读 ____ 页。',
+    asks: [],
+    formulas: ['daysBetween(m1,d1,m2,d2)*b'],
+    unit: '页',
+    slots: {
+      m1: { min: 3, max: 10 },
+      d1: { min: 1, max: 20 },
+      m2: { min: 4, max: 12, gt: 'm1' },
+      d2: { min: 1, max: 20 },
+      b: { min: 8, max: 20 },
+    },
+    guard: (p) => {
+      const days = daysBetween(p.m1, p.d1, p.m2, p.d2)
+      return days >= 4 && days <= 21
+    },
+  },
+  {
+    id: 'u5-m4',
+    practice: 'multistep',
+    template: '{person}每天跳绳 {b} 分钟，{c} 天一共跳 ____ 分钟。',
+    asks: [],
+    formulas: ['b*c'],
+    unit: '分钟',
+    slots: { b: { min: 10, max: 35, step: 5 }, c: { min: 4, max: 10 } },
+  },
+  {
+    id: 'u5-m5',
+    practice: 'multistep',
+    template: '一场{item}从 {h1} 时 {m1} 分到 {h2} 时 {m2} 分，中间休息 {n} 分钟，实际用了 ____ 分钟。',
+    asks: [],
+    formulas: ['elapsedMinutes(h1,m1,h2,m2)-n'],
+    unit: '分',
+    slots: {
+      h1: { min: 8, max: 17 },
+      m1: { min: 0, max: 55, step: 5 },
+      h2: { min: 10, max: 20, gt: 'h1' },
+      m2: { min: 0, max: 55, step: 5 },
+      n: { min: 10, max: 40, step: 5 },
+    },
+    guard: (p) => elapsedMinutes(p.h1, p.m1, p.h2, p.m2) > p.n + 20,
+  },
+
+  // ---------- 判断与验证 ----------
+  {
+    id: 'u5-j1',
+    practice: 'judge',
+    template: '{y} 年是闰年，全年有 ____ 天。',
+    asks: [],
+    formulas: ['yearDays(y)'],
+    unit: '天',
+    slots: { y: { min: 1990, max: 2030 } },
+    guard: (p) => isLeap(p.y),
+  },
+  {
+    id: 'u5-j2',
+    practice: 'judge',
+    template: '{m} 月是大月，有 ____ 天。',
+    asks: [],
+    formulas: ['monthDays(m)'],
+    unit: '天',
+    slots: { m: { min: 1, max: 12 } },
+    guard: (p) => monthDays(p.m) === 31,
+  },
+  {
+    id: 'u5-j3',
+    practice: 'judge',
+    template: '{m} 月是小月，有 ____ 天。',
+    asks: [],
+    formulas: ['monthDays(m)'],
+    unit: '天',
+    slots: { m: { min: 1, max: 12 } },
+    guard: (p) => monthDays(p.m) === 30,
+  },
+  {
+    id: 'u5-j4',
+    practice: 'judge',
+    template: '{person}要在 {h2} 时前到达{place}，现在 {h1} 时，还有 ____ 小时。',
+    asks: [],
+    formulas: ['h2-h1'],
+    unit: '小时',
+    slots: { h1: { min: 8, max: 16 }, h2: { min: 11, max: 20, gt: 'h1' } },
+    guard: (p) => p.h2 - p.h1 >= 1,
+  },
+  {
+    id: 'u5-j5',
+    practice: 'judge',
+    template: '{y} 年的二月有 ____ 天。',
+    asks: [],
+    formulas: ['febDays(y)'],
+    unit: '天',
+    slots: { y: { min: 1990, max: 2030 } },
+    guard: (p) => isLeap(p.y),
+  },
+]
