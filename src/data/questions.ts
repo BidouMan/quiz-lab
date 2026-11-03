@@ -1,4 +1,4 @@
-import type { Question, Unit } from '../types'
+import type { Question, Unit } from '../types.ts'
 
 /**
  * 单元目录（沪教版五四学制 2024 修订版）。
