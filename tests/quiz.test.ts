@@ -237,14 +237,20 @@ test('规则元数据：每个规则都写明 form 与数值约束对象', () =>
   }
 })
 
-test('简便运算：L1 凑整 100，L2 凑整 1000，L3 分配律三步', () => {
-  const l1 = generate({ grade: '3A', unitId: '3A-U2', type: 'jianbian', level: 'L1', count: 10, seed: 501 }).questions
-  const l2 = generate({ grade: '3A', unitId: '3A-U2', type: 'jianbian', level: 'L2', count: 10, seed: 502 }).questions
-  const l3 = generate({ grade: '3B', unitId: '3B-U2', type: 'jianbian', level: 'L3', count: 10, seed: 503 }).questions
-  assert.ok(l1.every((q) => Number(q.features.roundTo) === 100))
-  assert.ok(l2.every((q) => Number(q.features.roundTo) === 1000))
-  assert.ok(l3.every((q) => Number(q.features.steps) === 3))
-  for (const q of [...l1, ...l2, ...l3]) {
+test('简便运算：三上移除，三下只保留 25×4/125×8 凑整', () => {
+  // P1-A1：三上不再生成简便运算（乘法结合律/分配律属四年级内容）
+  assert.throws(
+    () => generate({ grade: '3A', unitId: '3A-U2', type: 'jianbian', level: 'L1', count: 5, seed: 501 }),
+    /没有 jianbian\/L1 的生成规则/,
+  )
+  assert.throws(
+    () => generate({ grade: '3A', unitId: '3A-U9', type: 'jianbian', level: 'L1', count: 5, seed: 502 }),
+    /没有 jianbian\/L1 的生成规则/,
+  )
+  // 三下保留的简便运算仍只走 25×4/125×8 凑整
+  const l3 = generate({ grade: '3B', unitId: '3B-U2', type: 'jianbian', level: 'L1', count: 10, seed: 503 }).questions
+  assert.ok(l3.every((q) => Number(q.features.roundTo) === 100))
+  for (const q of l3) {
     assert.ok(q.answerLines?.length)
     assert.equal(q.answerLines?.at(-1), `= ${q.answer}`)
   }
