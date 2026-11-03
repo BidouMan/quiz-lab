@@ -1,9 +1,22 @@
-export type AppType = 'kousuan' | 'chushi' | 'tuoshi' | 'tiankong' | 'compare' | 'geom' | 'word'
+import type { Level } from '../quiz/types.ts'
+
+export type AppType =
+  | 'kousuan'
+  | 'chushi'
+  | 'tuoshi'
+  | 'jianbian'
+  | 'tiankong'
+  | 'compare'
+  | 'geom'
+  | 'word'
 
 export type Grade = '3A' | '3B'
 
 export interface AppConfig {
   grade: Grade
+  /** 已选单元；空数组表示“未选”，生成前会提示 */
+  unitIds: string[]
+  level: Level
   types: AppType[]
   count: number
   pages: number
@@ -13,7 +26,9 @@ export interface AppConfig {
 
 export const DEFAULT_CONFIG: AppConfig = {
   grade: '3A',
-  types: ['kousuan', 'chushi', 'tuoshi', 'tiankong'],
+  unitIds: [],
+  level: 'L2',
+  types: ['kousuan', 'chushi', 'tuoshi'],
   count: 20,
   pages: 1,
   typstPath: '',
@@ -87,12 +102,30 @@ export interface TypstPaperData {
   sections: TypstSection[]
 }
 
+/** 出卷统计，供界面一行摘要使用 */
+export interface BuildStats {
+  requested: number
+  /** 由生成器算出的题量 */
+  generated: number
+  /** 回退到旧静态题库的题量 */
+  fallback: number
+  /** 同卷去重命中（候选被丢弃）的题量 */
+  duplicates: number
+  /** 本次用到的知识点名称（去重） */
+  kpNames: string[]
+  /** 实际覆盖的单元名称 */
+  unitNames: string[]
+}
+
 export interface BuildResult {
   data: TypstPaperData
   /** 实际写入卷面的题目数量 */
   count: number
-  /** 因题库容量不足而没达到目标题量时给出的提示 */
+  /** 因容量不足而没达到目标题量时给出的提示 */
   shortage: boolean
-  /** 已勾选但当前模板不支持、被跳过的题型 */
+  /** 已勾选但当前不可用、被跳过的题型 */
   skipped: AppType[]
+  /** 兜底 / 跳过 / 生成失败等需要向用户解释的说明 */
+  notes: string[]
+  stats: BuildStats
 }

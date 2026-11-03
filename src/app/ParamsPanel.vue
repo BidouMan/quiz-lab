@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { Level } from '../quiz/types.ts'
+import {
+  defaultUnitIds,
+  typeAvailability,
+  unitsForGrade,
+} from './paperBuilder'
 import type { AppConfig, AppType, TemplateInfo, TypstInfo } from './types'
 import { TYPE_OPTIONS } from './typstData'
 
@@ -13,20 +19,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{ checkTypst: [] }>()
 
-const wordSupported = computed(() => props.template?.word === true)
-const templateKnown = computed(() => props.template !== null)
+const LEVELS: { level: Level; label: string; hint: string }[] = [
+  { level: 'L1', label: 'L1', hint: '基础' },
+  { level: 'L2', label: 'L2', hint: '常规' },
+  { level: 'L3', label: 'L3', hint: '易错' },
+]
 
-function isDisabled(type: AppType): boolean {
-  if (type !== 'word') return false
-  return !templateKnown.value || !wordSupported.value
-}
-
-function typeHint(type: AppType): string {
-  if (type !== 'word') return ''
-  if (!templateKnown.value) return '正在读取模板…'
-  if (!wordSupported.value) return '当前模板未接入'
-  return ''
-}
+const units = computed(() => unitsForGrade(props.config.grade))
+const availability = computed(() => typeAvailability(props.config, props.template))
+const allSelected = computed(() => props.config.unitIds.length === units.value.length)
 
 function toggleType(type: AppType, checked: boolean) {
   const list = props.config.types
@@ -36,7 +37,24 @@ function toggleType(type: AppType, checked: boolean) {
 }
 
 function setGrade(grade: '3A' | '3B') {
+  if (props.config.grade === grade) return
   props.config.grade = grade
+  props.config.unitIds = defaultUnitIds(grade)
+}
+
+function setLevel(level: Level) {
+  props.config.level = level
+}
+
+function toggleUnit(unitId: string, checked: boolean) {
+  const list = props.config.unitIds
+  const index = list.indexOf(unitId)
+  if (checked && index < 0) list.push(unitId)
+  if (!checked && index >= 0) list.splice(index, 1)
+}
+
+function toggleAll(checked: boolean) {
+  props.config.unitIds = checked ? units.value.map((unit) => unit.unitId) : []
 }
 
 function clampInt(raw: string, min: number, max: number, fallback: number) {
@@ -71,17 +89,62 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
     </section>
 
     <section class="group">
-      <h2>题型</h2>
-      <label v-for="option in TYPE_OPTIONS" :key="option.type" class="row">
+      <h2>
+        单元
+        <button class="link" type="button" @click="toggleAll(!allSelected)">
+          {{ allSelected ? '清空' : '全选' }}
+        </button>
+      </h2>
+      <label v-for="unit in units" :key="unit.unitId" class="row unit">
         <input
           type="checkbox"
-          :checked="config.types.includes(option.type)"
-          :disabled="isDisabled(option.type)"
-          @change="toggleType(option.type, ($event.target as HTMLInputElement).checked)"
+          :checked="config.unitIds.includes(unit.unitId)"
+          @change="toggleUnit(unit.unitId, ($event.target as HTMLInputElement).checked)"
         />
-        <span :class="{ muted: isDisabled(option.type) }">{{ option.label }}</span>
-        <em v-if="typeHint(option.type)" class="tag">{{ typeHint(option.type) }}</em>
+        <span>{{ unit.unitName }}</span>
+        <em v-if="unit.unconfirmed" class="tag">推定</em>
       </label>
+      <p v-if="config.grade === '3B'" class="hint">三下目录尚未公开发布，单元结构为推定。</p>
+      <p v-else-if="config.unitIds.length === 0" class="hint">至少选择一个单元才能出题。</p>
+    </section>
+
+    <section class="group">
+      <h2>难度</h2>
+      <div class="levels">
+        <label v-for="item in LEVELS" :key="item.level" class="level">
+          <input
+            type="radio"
+            name="level"
+            :checked="config.level === item.level"
+            @change="setLevel(item.level)"
+          />
+          <span>{{ item.label }}</span>
+          <em>{{ item.hint }}</em>
+        </label>
+      </div>
+      <p class="hint">L1 基础、L2 常规进位退位、L3 连续进位/末尾有 0/带括号三步。</p>
+    </section>
+
+    <section class="group">
+      <h2>题型</h2>
+      <template v-for="option in TYPE_OPTIONS" :key="option.type">
+        <label class="row">
+          <input
+            type="checkbox"
+            :checked="config.types.includes(option.type)"
+            :disabled="!availability[option.type].enabled"
+            @change="toggleType(option.type, ($event.target as HTMLInputElement).checked)"
+          />
+          <span :class="{ muted: !availability[option.type].enabled }">{{ option.label }}</span>
+        </label>
+        <p
+          v-if="availability[option.type].reason"
+          class="type-reason"
+          :class="{ off: !availability[option.type].enabled }"
+        >
+          {{ availability[option.type].reason }}
+        </p>
+      </template>
     </section>
 
     <section class="group">
@@ -150,6 +213,10 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
   margin-bottom: 20px;
 }
 h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin: 0 0 8px;
   font-size: 13px;
   font-weight: 700;
@@ -163,6 +230,11 @@ h2 {
   gap: 8px;
   padding: 4px 0;
   cursor: pointer;
+}
+.row.unit span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 input[type='checkbox'],
 input[type='radio'] {
@@ -178,11 +250,41 @@ input:disabled {
   color: #999;
 }
 .tag {
+  flex: none;
   margin-left: auto;
   font-size: 11px;
   font-style: normal;
   color: #888;
   white-space: nowrap;
+}
+.type-reason {
+  margin: 0 0 6px 23px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #666;
+}
+.type-reason.off {
+  color: #8a4b00;
+}
+.levels {
+  display: flex;
+  gap: 8px;
+}
+.level {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+.level em {
+  font-style: normal;
+  font-size: 11px;
+  color: #888;
 }
 .field {
   justify-content: space-between;
@@ -202,6 +304,19 @@ input:disabled {
   font-size: 11px;
   line-height: 1.6;
   color: #888;
+}
+.link {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 400;
+  border: none;
+  background: none;
+  color: #777;
+  cursor: pointer;
+  padding: 0;
+}
+.link:hover {
+  color: #000;
 }
 .stack {
   display: block;

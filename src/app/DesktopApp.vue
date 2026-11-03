@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { save } from '@tauri-apps/plugin-dialog'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { MemoryStore } from '../quiz/memory.ts'
+import { findUnit } from '../data/curriculum.ts'
 import {
   checkTypst,
   errorText,
@@ -13,21 +15,46 @@ import {
 } from './api'
 import ParamsPanel from './ParamsPanel.vue'
 import PdfPreview from './PdfPreview.vue'
-import { buildTypstPaper, TYPE_OPTIONS } from './typstData'
+import { buildPaper, defaultUnitIds } from './paperBuilder'
+import { TYPE_OPTIONS } from './typstData'
 import {
   DEFAULT_CONFIG,
   type AppConfig,
   type AppType,
+  type BuildResult,
   type GenerateResult,
   type TemplateInfo,
   type TypstInfo,
 } from './types'
 
+const MEMORY_KEY = 'quizlab:quiz-memory.v1'
+
+function loadMemory(): MemoryStore {
+  try {
+    const raw = localStorage.getItem(MEMORY_KEY)
+    if (raw) return MemoryStore.fromJSON(raw)
+  } catch {
+    // 记忆文件损坏时从空记忆开始
+  }
+  return new MemoryStore()
+}
+
+function persistMemory(store: MemoryStore) {
+  try {
+    localStorage.setItem(MEMORY_KEY, store.toJSON())
+  } catch {
+    // localStorage 不可用时仅本进程生效
+  }
+}
+
 const config = reactive<AppConfig>({
   ...DEFAULT_CONFIG,
+  unitIds: defaultUnitIds(DEFAULT_CONFIG.grade),
   types: [...DEFAULT_CONFIG.types],
 })
 
+const memory = loadMemory()
+const lastBuild = ref<BuildResult | null>(null)
 const template = ref<TemplateInfo | null>(null)
 const typst = ref<TypstInfo | null>(null)
 const typstError = ref('')
@@ -66,6 +93,14 @@ const layoutFailed = computed(
 const layoutSkippedNote = computed(() => {
   if (!result.value || !result.value.layout.skipped) return ''
   return `版面校验已跳过：${result.value.layout.output.split('\n')[0]}`
+})
+
+const paperSummary = computed(() => {
+  const build = lastBuild.value
+  if (!build || !result.value) return ''
+  const s = build.stats
+  const kps = s.kpNames.length > 0 ? s.kpNames.join('、') : '无'
+  return `本次 ${build.count} 题 · 生成 ${s.generated} · 兜底 ${s.fallback} · 去重命中 ${s.duplicates} · 知识点：${kps}`
 })
 
 const pageCompare = computed(() => {
@@ -117,33 +152,27 @@ async function generate() {
   try {
     await refreshTemplate()
 
-    const supported: Record<AppType, boolean> = {
-      kousuan: true,
-      chushi: true,
-      tuoshi: true,
-      tiankong: true,
-      compare: template.value?.compare ?? false,
-      geom: template.value?.geom ?? false,
-      word: template.value?.word ?? false,
-    }
-
     seed++
-    const built = buildTypstPaper(config, supported, seed)
+    const built = buildPaper({
+      config,
+      template: template.value,
+      seed,
+      memory,
+    })
+    lastBuild.value = built
 
     if (built.count === 0) {
-      errorMessage.value = '当前条件下没有题目。请至少选择一种题型，并确认题库里有该年级的题目。'
+      const reasons = built.notes.length > 0 ? `：${built.notes.join('；')}` : '，请选择单元与题型。'
+      errorMessage.value = `当前条件下没有可生成的题目${reasons}`
       return
     }
 
-    const notes: string[] = []
-    if (built.skipped.length > 0) {
-      const labels = built.skipped.map((type) => typeLabels.get(type) ?? type).join('、')
-      notes.push(`${labels}：当前排版模板未接入，本次已跳过`)
-    }
+    const notes = [...built.notes]
     if (built.shortage) {
-      notes.push(`题库容量不足，实际排入 ${built.count} 题（目标 ${config.count} 题）`)
+      notes.push(`题量不足：实际 ${built.count} 题（目标 ${config.count} 题）`)
     }
     notice.value = notes.join('；')
+    persistMemory(memory)
 
     const generated = await generatePaper(built.data, config.typstPath)
     result.value = generated
@@ -203,9 +232,17 @@ watch(config, scheduleSave, { deep: true })
 onMounted(async () => {
   try {
     const stored = await loadConfig()
+    const grade: AppConfig['grade'] = stored.grade === '3B' ? '3B' : '3A'
     const types = Array.isArray(stored.types) ? stored.types.filter(isAppType) : []
+    const storedUnits = Array.isArray(stored.unitIds)
+      ? stored.unitIds.filter((id): id is string => typeof id === 'string' && findUnit(id)?.grade === grade)
+      : null
+    const level: AppConfig['level'] =
+      stored.level === 'L1' || stored.level === 'L3' ? stored.level : 'L2'
     Object.assign(config, {
-      grade: stored.grade === '3B' ? '3B' : '3A',
+      grade,
+      level,
+      unitIds: storedUnits ?? defaultUnitIds(grade),
       types: types.length > 0 ? types : [...DEFAULT_CONFIG.types],
       count: typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count,
       pages: typeof stored.pages === 'number' ? stored.pages : DEFAULT_CONFIG.pages,
@@ -265,6 +302,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="notice" class="notice">{{ notice }}</div>
+      <div v-if="paperSummary" class="summary">{{ paperSummary }}</div>
       <div v-if="layoutSkippedNote" class="notice">{{ layoutSkippedNote }}</div>
 
       <div v-if="warnings.length > 0" class="banner warn">
@@ -403,6 +441,14 @@ onBeforeUnmount(() => {
   color: #444;
   background: #f6f6f6;
   border-bottom: 1px solid #e0e0e0;
+}
+.summary {
+  flex: none;
+  padding: 7px 16px;
+  font-size: 12px;
+  color: #222;
+  background: #fff;
+  border-bottom: 1px solid #d8d8d8;
 }
 .error,
 .banner {
