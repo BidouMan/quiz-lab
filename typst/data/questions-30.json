@@ -1,0 +1,302 @@
+{
+  "title": "三年级数学每日一练",
+  "sections": [
+    {
+      "title": "一、口算",
+      "kind": "kousuan",
+      "numbered": false,
+      "items": [
+        {
+          "id": "3A-U1-K1",
+          "kind": "kousuan",
+          "expr": "45 + 8 times 5 =",
+          "display": false
+        },
+        {
+          "id": "3A-U1-K2",
+          "kind": "kousuan",
+          "expr": "81 div 9 - 6 =",
+          "display": false
+        },
+        {
+          "id": "3A-U2-K1",
+          "kind": "kousuan",
+          "expr": "30 times 6 =",
+          "display": false
+        },
+        {
+          "id": "3A-U2-K2",
+          "kind": "kousuan",
+          "expr": "400 times 5 =",
+          "display": false
+        },
+        {
+          "id": "3A-U2-K3",
+          "kind": "kousuan",
+          "expr": "12 times 4 =",
+          "display": false
+        },
+        {
+          "id": "3A-U3-K1",
+          "kind": "kousuan",
+          "expr": "240 div 6 =",
+          "display": false
+        },
+        {
+          "id": "3A-U3-K2",
+          "kind": "kousuan",
+          "expr": "96 div 3 =",
+          "display": false
+        },
+        {
+          "id": "3A-U3-K3",
+          "kind": "kousuan",
+          "expr": "720 div 8 =",
+          "display": false
+        },
+        {
+          "id": "3B-U1-K1",
+          "kind": "kousuan",
+          "expr": "13 times 30 =",
+          "display": false
+        },
+        {
+          "id": "3B-U1-K2",
+          "kind": "kousuan",
+          "expr": "480 div 12 =",
+          "display": false
+        },
+        {
+          "id": "3B-U2-K1",
+          "kind": "kousuan",
+          "expr": "display(frac(2, 7)) + display(frac(3, 7)) =",
+          "display": true
+        },
+        {
+          "id": "3B-U2-K2",
+          "kind": "kousuan",
+          "expr": "display(frac(7, 9)) - display(frac(2, 9)) =",
+          "display": true
+        }
+      ]
+    },
+    {
+      "title": "二、竖式计算",
+      "kind": "chushi",
+      "numbered": false,
+      "items": [
+        {
+          "id": "3A-U2-C1",
+          "kind": "chushi",
+          "expr": "234 times 3 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "用一位数乘"
+          }
+        },
+        {
+          "id": "3A-U2-C2",
+          "kind": "chushi",
+          "expr": "406 times 7 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "用一位数乘"
+          }
+        },
+        {
+          "id": "3A-U2-C3",
+          "kind": "chushi",
+          "expr": "68 times 5 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "用一位数乘"
+          }
+        },
+        {
+          "id": "3A-U3-C1",
+          "kind": "chushi",
+          "expr": "96 div 4 =",
+          "blank": 30,
+          "meta": {
+            "op": "除法",
+            "unit": "用一位数除"
+          }
+        },
+        {
+          "id": "3A-U3-C2",
+          "kind": "chushi",
+          "expr": "705 div 5 =",
+          "blank": 30,
+          "meta": {
+            "op": "除法",
+            "unit": "用一位数除"
+          }
+        },
+        {
+          "id": "3A-U3-C3",
+          "kind": "chushi",
+          "expr": "847 div 7 =",
+          "blank": 30,
+          "meta": {
+            "op": "除法",
+            "unit": "用一位数除"
+          }
+        },
+        {
+          "id": "3B-U1-C1",
+          "kind": "chushi",
+          "expr": "23 times 12 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "两位数乘除（推定）"
+          }
+        },
+        {
+          "id": "3B-U1-C2",
+          "kind": "chushi",
+          "expr": "45 times 24 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "两位数乘除（推定）"
+          }
+        }
+      ]
+    },
+    {
+      "title": "三、脱式计算",
+      "kind": "tuoshi",
+      "numbered": false,
+      "items": [
+        {
+          "id": "3A-U1-T1",
+          "kind": "tuoshi",
+          "expr": "72 - 36 div 4",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U1-T2",
+          "kind": "tuoshi",
+          "expr": "6 times 8 + 15",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U1-T3",
+          "kind": "tuoshi",
+          "expr": "(100 - 28) div 8",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U1-T4",
+          "kind": "tuoshi",
+          "expr": "54 div 6 times 7",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U4-T1",
+          "kind": "tuoshi",
+          "expr": "31 times 7 + 30 times 4 + 28",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U5-T1",
+          "kind": "tuoshi",
+          "expr": "(12 + 8) times 2",
+          "lines": 3,
+          "display": false
+        }
+      ]
+    },
+    {
+      "title": "四、简便运算",
+      "kind": "jianbian",
+      "numbered": false,
+      "items": [
+        {
+          "id": "3A-U2-J1",
+          "kind": "tuoshi",
+          "expr": "25 times 7 times 4",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3B-U1-J1",
+          "kind": "tuoshi",
+          "expr": "12 times 25",
+          "lines": 3,
+          "display": false
+        }
+      ]
+    },
+    {
+      "title": "五、填空",
+      "kind": "tiankong",
+      "numbered": true,
+      "items": [
+        {
+          "id": "3A-U1-F1",
+          "kind": "fill",
+          "parts": [
+            {
+              "t": "在没有括号的算式里，既有乘除法又有加减法，要先算"
+            },
+            {
+              "b": 18
+            },
+            {
+              "t": "法，再算"
+            },
+            {
+              "b": 18
+            },
+            {
+              "t": "法。"
+            }
+          ]
+        },
+        {
+          "id": "3A-U2-F1",
+          "kind": "fill",
+          "parts": [
+            {
+              "t": "口算 "
+            },
+            {
+              "m": "200 times 3"
+            },
+            {
+              "t": " 时，可以先算 "
+            },
+            {
+              "m": "2 times 3 ="
+            },
+            {
+              "t": " "
+            },
+            {
+              "b": 18
+            },
+            {
+              "t": "，再在积的末尾添上"
+            },
+            {
+              "b": 18
+            },
+            {
+              "t": "个 0。"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

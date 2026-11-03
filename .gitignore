@@ -1,0 +1,42 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Tauri 运行时产物（题目 JSON / 编译后的 PDF）
+.quizlab
+# 旧运行时目录，仅用于首次启动迁移
+.leomath
+
+# 构建产物
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# 本地截图与分享包等临时产物
+.screenshots/
+.trae-html-share-packages/
+
+# 样张目录：只收录代表性样张 PDF，排除临时导出、字号试验与截图
+samples/app-输出.pdf
+samples/字号对比-*.pdf
+samples/*.png
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

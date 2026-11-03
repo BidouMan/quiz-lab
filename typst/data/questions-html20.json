@@ -1,0 +1,176 @@
+{
+  "title": "三年级数学每日一练",
+  "sections": [
+    {
+      "title": "一、口算",
+      "kind": "kousuan",
+      "numbered": false,
+      "items": [
+        {
+          "id": "3A-U1-K1",
+          "kind": "kousuan",
+          "expr": "45 + 8 times 5 =",
+          "display": false
+        },
+        {
+          "id": "3A-U1-K2",
+          "kind": "kousuan",
+          "expr": "81 div 9 - 6 =",
+          "display": false
+        },
+        {
+          "id": "3A-U2-K1",
+          "kind": "kousuan",
+          "expr": "30 times 6 =",
+          "display": false
+        },
+        {
+          "id": "3A-U2-K2",
+          "kind": "kousuan",
+          "expr": "400 times 5 =",
+          "display": false
+        },
+        {
+          "id": "3A-U2-K3",
+          "kind": "kousuan",
+          "expr": "12 times 4 =",
+          "display": false
+        },
+        {
+          "id": "3A-U3-K1",
+          "kind": "kousuan",
+          "expr": "240 div 6 =",
+          "display": false
+        },
+        {
+          "id": "3A-U3-K2",
+          "kind": "kousuan",
+          "expr": "96 div 3 =",
+          "display": false
+        },
+        {
+          "id": "3A-U3-K3",
+          "kind": "kousuan",
+          "expr": "720 div 8 =",
+          "display": false
+        }
+      ]
+    },
+    {
+      "title": "二、竖式计算",
+      "kind": "chushi",
+      "numbered": false,
+      "items": [
+        {
+          "id": "3A-U2-C1",
+          "kind": "chushi",
+          "expr": "234 times 3 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "用一位数乘"
+          }
+        },
+        {
+          "id": "3A-U2-C2",
+          "kind": "chushi",
+          "expr": "406 times 7 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "用一位数乘"
+          }
+        },
+        {
+          "id": "3A-U2-C3",
+          "kind": "chushi",
+          "expr": "68 times 5 =",
+          "blank": 30,
+          "meta": {
+            "op": "乘法",
+            "unit": "用一位数乘"
+          }
+        },
+        {
+          "id": "3A-U3-C1",
+          "kind": "chushi",
+          "expr": "96 div 4 =",
+          "blank": 30,
+          "meta": {
+            "op": "除法",
+            "unit": "用一位数除"
+          }
+        },
+        {
+          "id": "3A-U3-C2",
+          "kind": "chushi",
+          "expr": "705 div 5 =",
+          "blank": 30,
+          "meta": {
+            "op": "除法",
+            "unit": "用一位数除"
+          }
+        },
+        {
+          "id": "3A-U3-C3",
+          "kind": "chushi",
+          "expr": "847 div 7 =",
+          "blank": 30,
+          "meta": {
+            "op": "除法",
+            "unit": "用一位数除"
+          }
+        }
+      ]
+    },
+    {
+      "title": "三、脱式计算",
+      "kind": "tuoshi",
+      "numbered": false,
+      "items": [
+        {
+          "id": "3A-U1-T1",
+          "kind": "tuoshi",
+          "expr": "72 - 36 div 4",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U1-T2",
+          "kind": "tuoshi",
+          "expr": "6 times 8 + 15",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U1-T3",
+          "kind": "tuoshi",
+          "expr": "(100 - 28) div 8",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U1-T4",
+          "kind": "tuoshi",
+          "expr": "54 div 6 times 7",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U4-T1",
+          "kind": "tuoshi",
+          "expr": "31 times 7 + 30 times 4 + 28",
+          "lines": 3,
+          "display": false
+        },
+        {
+          "id": "3A-U5-T1",
+          "kind": "tuoshi",
+          "expr": "(12 + 8) times 2",
+          "lines": 3,
+          "display": false
+        }
+      ]
+    }
+  ]
+}

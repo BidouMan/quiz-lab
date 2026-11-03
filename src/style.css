@@ -1,0 +1,100 @@
+/* 全局样式：黑白灰、系统字体，面向打印优化 */
+
+:root {
+  font-family:
+    -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Songti SC', serif;
+  color: #000;
+  background: #ececec;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  height: 100vh;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* ============ 打印：只输出试卷区 ============ */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  #app {
+    height: auto;
+  }
+
+  .app {
+    display: block !important;
+    height: auto !important;
+    background: #fff !important;
+  }
+
+  /* 隐藏工具栏与参数面板 */
+  .topbar,
+  .side,
+  .empty {
+    display: none !important;
+  }
+
+  .body,
+  .main {
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .pages {
+    display: block !important;
+  }
+
+  /* 取消屏幕预览的缩放与阴影，每张纸占一页 A4 */
+  .sheet-outer {
+    transform: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    width: 210mm !important;
+    height: 296.8mm !important;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .sheet-outer:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .sheet-outer .sheet {
+    width: 210mm !important;
+    height: 296.8mm !important;
+  }
+
+  /* 题目行与节标题不跨页截断 */
+  .q,
+  .row,
+  .section-title,
+  .answer-line {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
