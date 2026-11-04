@@ -102,7 +102,7 @@ const paperSummary = computed(() => {
   const kps = s.kpNames.length > 0 ? s.kpNames.join('、') : '无'
   const calc = Math.max(0, s.generated - s.skeleton - s.legacy)
   const parts = [`本次 ${build.count} 题`]
-  if (s.skeleton > 0) parts.push(`骨架 ${s.skeleton}`)
+  if (s.skeleton > 0) parts.push(`骨架 ${s.skeleton}${s.reused > 0 ? `（复用 ${s.reused}）` : ''}`)
   if (s.legacy > 0) parts.push(`旧生成器 ${s.legacy}`)
   if (calc > 0) parts.push(`计算生成 ${calc}`)
   if (s.fallback > 0) parts.push(`静态兜底 ${s.fallback}`)
@@ -179,7 +179,7 @@ async function generate() {
 
     const notes = [...built.notes]
     if (built.shortage) {
-      notes.push(`题量不足：实际 ${built.count} 题（目标 ${config.count} 题）`)
+      notes.push(`未达目标题量：实际 ${built.count} 题 / 目标 ${built.stats.requested} 题（已尽量补足）`)
     }
     notice.value = notes.join('；')
     persistMemory(memory)

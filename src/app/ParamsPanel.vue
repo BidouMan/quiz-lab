@@ -42,8 +42,10 @@ function sourceLabel(type: AppType): string {
   return source ? SOURCE_LABELS[source] : ''
 }
 
-function syncCount() {
-  props.config.count = recommendedCount(props.config, props.config.pages)
+const suggestedCount = computed(() => recommendedCount(props.config, props.config.pages))
+
+function adoptSuggestion() {
+  props.config.count = suggestedCount.value
 }
 
 function toggleType(type: AppType, checked: boolean) {
@@ -51,12 +53,10 @@ function toggleType(type: AppType, checked: boolean) {
   const index = list.indexOf(type)
   if (checked && index < 0) list.push(type)
   if (!checked && index >= 0) list.splice(index, 1)
-  syncCount()
 }
 
 function setLevel(level: Level) {
   props.config.level = level
-  syncCount()
 }
 
 function toggleUnit(unitId: string, checked: boolean) {
@@ -64,12 +64,10 @@ function toggleUnit(unitId: string, checked: boolean) {
   const index = list.indexOf(unitId)
   if (checked && index < 0) list.push(unitId)
   if (!checked && index >= 0) list.splice(index, 1)
-  syncCount()
 }
 
 function toggleAll(checked: boolean) {
   props.config.unitIds = checked ? units.value.map((unit) => unit.unitId) : []
-  syncCount()
 }
 
 function clampInt(raw: string, min: number, max: number, fallback: number) {
@@ -172,6 +170,10 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
           "
         />
       </label>
+      <p class="hint">
+        建议 {{ suggestedCount }} 题（按当前题型与目标页数估算，仅供参考）
+        <button class="link" type="button" @click="adoptSuggestion">采用建议</button>
+      </p>
       <label class="row field">
         <span>目标页数</span>
         <input

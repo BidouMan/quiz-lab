@@ -128,6 +128,8 @@ export interface BuildStats {
   generated: number
   /** 其中骨架包出题数 */
   skeleton: number
+  /** 其中骨架复用题数（题量超过单包骨架数时，同骨架换场景/数字复用） */
+  reused: number
   /** 其中旧生成器出题数（骨架无组合时兜底） */
   legacy: number
   /** 回退到旧静态题库的题量 */

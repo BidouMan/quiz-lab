@@ -212,6 +212,8 @@ export interface PilotQuestion {
   fig?: FigureSpec
   answerUnits: string[]
   workLines: number
+  /** 题量超过骨架数时，该题由同骨架换场景/数字复用而来 */
+  reused?: boolean
 }
 
 /** 与 typst/paper.typ 对齐的卷面数据（title / sections / items） */
@@ -238,4 +240,6 @@ export interface PilotPaper {
   title: string
   data: { title: string; sections: PilotSection[] }
   questions: PilotQuestion[]
+  /** 其中骨架复用题数（题量超过骨架数时产生） */
+  reused: number
 }

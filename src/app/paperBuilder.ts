@@ -483,6 +483,8 @@ interface TypeBuild {
   items: TypstItem[]
   /** 骨架包出题数 */
   skeleton: number
+  /** 其中骨架复用题数（题量超过骨架数时同骨架换场景/数字） */
+  reused: number
   /** 旧生成器出题数 */
   legacy: number
   generated: number
@@ -498,6 +500,7 @@ function emptyBuild(): TypeBuild {
   return {
     items: [],
     skeleton: 0,
+    reused: 0,
     legacy: 0,
     generated: 0,
     fallback: 0,
@@ -754,6 +757,7 @@ function buildGeneratedType(input: {
               used: skeletonUsed,
             })
             if (!question) return null
+            question.reused = piece.question.reused
             return { item: toPilotItem(question, combo), kpName: piece.kpName, question, combo }
           },
           onReject: (candidate) => releaseQuestion(candidate.question, skeletonUsed),
@@ -762,6 +766,7 @@ function buildGeneratedType(input: {
         if (outcome.accepted == null) continue
         if (add(outcome.accepted.item, 'skeleton', outcome.accepted.kpName)) {
           added++
+          if (outcome.accepted.question.reused) build.reused++
         }
       }
       return added
@@ -824,7 +829,6 @@ function buildGeneratedType(input: {
       const quotas = splitQuota(Math.max(quota - before, generative.length), generative.length)
       for (const [index, unit] of generative.entries()) {
         if (quotas[index] <= 0) continue
-        if (skeletonCombo(unit.unitId, type, config.level) != null) continue
         if (!supportsLegacy(unit.unitId, type, config.level)) continue
         takeLegacy(unit, quotas[index], seed + round * 977 + index * 131)
       }
@@ -1000,6 +1004,7 @@ export function buildPaper(input: {
     requested,
     generated: 0,
     skeleton: 0,
+    reused: 0,
     legacy: 0,
     fallback: 0,
     duplicates: 0,
@@ -1012,6 +1017,7 @@ export function buildPaper(input: {
   for (const build of builds.values()) {
     stats.generated += build.generated
     stats.skeleton += build.skeleton
+    stats.reused += build.reused
     stats.legacy += build.legacy
     stats.fallback += build.fallback
     stats.duplicates += build.duplicates
@@ -1041,6 +1047,9 @@ export function buildPaper(input: {
   }
 
   const count = sections.reduce((sum, section) => sum + section.items.length, 0)
+  if (stats.reused > 0) {
+    notes.push(`本卷 ${count} 题，其中 ${stats.reused} 题为骨架复用（同骨架换场景/数字）`)
+  }
   const units = selectedUnits(config)
   stats.unitNames = units.map((unit) => unit.unitName)
 

@@ -305,6 +305,77 @@ function selectSkeletons(skeletons: Skeleton[], count: number, rng: () => number
   return shuffle(rng, selected.slice(0, count))
 }
 
+function paramsKey(params: Params): string {
+  return Object.keys(params)
+    .sort()
+    .map((name) => params[name])
+    .join(',')
+}
+
+interface PickInput {
+  combo: Combo
+  skeleton: Skeleton
+  scenePool: Scene[]
+  rng: () => number
+  index: number
+  used: UsedSets
+  takenScenes: Set<string>
+  exactStems: Set<string>
+  /** 复用轮次：允许场景重复，只要求题干（含数字）与卷内已有题不同 */
+  allowReuse: boolean
+}
+
+/**
+ * 为一套骨架找场景与参数。
+ * 首轮（allowReuse=false）保持既有强约束：卷内场景、数值、句式都不重复；
+ * 复用轮（allowReuse=true）允许场景/句式重复，但数值必须不同、题干必须与卷内已有题逐字不同。
+ */
+function pickQuestion(input: PickInput): { question: PilotQuestion; scene: Scene } | null {
+  const { combo, skeleton, scenePool, rng, index, used, takenScenes, exactStems, allowReuse } = input
+  const all = compatibleScenes(combo, skeleton, scenePool)
+  const fresh = all.filter((scene) => !takenScenes.has(scene.id) && !used.scenes.has(sceneKey(scene)))
+  const candidates = allowReuse
+    ? [...shuffle(rng, fresh), ...shuffle(rng, all.filter((scene) => !fresh.includes(scene)))]
+    : fresh
+  for (const scene of candidates) {
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const params = generateParams(skeleton, rng)
+      if (!params) continue
+      if (used.values.has(paramsKey(params))) continue
+      let question: PilotQuestion
+      try {
+        question = buildQuestion(skeleton, scene, params, combo, index)
+      } catch {
+        continue
+      }
+      if (stemChars(question.stem) > MAX_STEM_CHARS) continue
+      if (exactStems.has(question.stem)) continue
+      if (!allowReuse && used.texts.has(question.stem.replace(/\d+/g, '#'))) continue
+      return { question, scene }
+    }
+  }
+  return null
+}
+
+function commitQuestion(input: {
+  question: PilotQuestion
+  scene: Scene
+  combo: Combo
+  used: UsedSets
+  takenScenes: Set<string>
+  exactStems: Set<string>
+  reuse: boolean
+}): void {
+  const { question, scene, combo, used, takenScenes, exactStems, reuse } = input
+  used.values.add(paramsKey(question.params))
+  used.scenes.add(sceneKey(scene))
+  takenScenes.add(scene.id)
+  used.skeletons.add(`${combo.id}|${question.skeletonId}`)
+  exactStems.add(question.stem)
+  // 复用题本身就是「重复句式」，不再登记句式键，否则同骨架第二次复用会被自己挡住
+  if (!reuse) used.texts.add(question.stem.replace(/\d+/g, '#'))
+}
+
 function compatibleScenes(combo: Combo, skeleton: Skeleton, pool: Scene[]): Scene[] {
   const tags = skeleton.sceneTags
   return pool.filter((scene) => {
@@ -406,118 +477,84 @@ export function releaseQuestion(question: PilotQuestion, used: UsedSets): void {
 export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper {
   const rng = createRng(options.seed)
   const used = options.used ?? createUsedSets()
+  const target = Math.max(1, Math.round(options.count))
   // 包模型：同一份骨架按当前难度档取数值域，句式与场景不变
   const leveled = combo.skeletons.map((skeleton) => resolveSkeleton(skeleton, combo.level))
-  const skeletons = selectSkeletons(leveled, options.count, rng)
-  if (skeletons.length < options.count) {
-    throw new Error(`${combo.id} 骨架不足：需要 ${options.count}，只有 ${skeletons.length}`)
-  }
+  if (leveled.length === 0) throw new Error(`${combo.id} 没有可用骨架`)
+
+  // 首轮每套骨架一题；题量超过骨架数时进入复用轮，不再截断
+  const skeletons = selectSkeletons(leveled, Math.min(target, leveled.length), rng)
+  const exactStems = new Set<string>()
+  const scenePool = shuffle(rng, combo.scenes)
+  const takenScenes = new Set<string>()
+  const questions: PilotQuestion[] = []
   // 标签受限的骨架先配场景：可用场景越少越先占，避免“稀缺场景被宽泛骨架抢走”
   const ordered = [...skeletons].sort(
     (a, b) => compatibleScenes(combo, a, combo.scenes).length - compatibleScenes(combo, b, combo.scenes).length,
   )
 
-  const scenePool = shuffle(rng, combo.scenes)
-  const takenScenes = new Set<string>()
-  const questions: PilotQuestion[] = []
-
+  let reused = 0
   for (const skeleton of ordered) {
     if (used.skeletons.has(`${combo.id}|${skeleton.id}`)) throw new Error(`骨架重复: ${skeleton.id}`)
-    const candidates = compatibleScenes(combo, skeleton, scenePool).filter(
-      (scene) => !takenScenes.has(scene.id) && !used.scenes.has(sceneKey(scene)),
-    )
-    let built: PilotQuestion | null = null
-    const skip = { params: 0, values: 0, build: 0, length: 0, text: 0 }
-    for (const scene of candidates) {
-      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        const params = generateParams(skeleton, rng)
-        if (!params) {
-          skip.params++
-          continue
-        }
-        const valuesKey = Object.keys(params)
-          .sort()
-          .map((name) => params[name])
-          .join(',')
-        if (used.values.has(valuesKey)) {
-          skip.values++
-          continue
-        }
-        let question: PilotQuestion
-        try {
-          question = buildQuestion(skeleton, scene, params, combo, questions.length)
-        } catch {
-          skip.build++
-          continue
-        }
-        if (stemChars(question.stem) > MAX_STEM_CHARS) {
-          skip.length++
-          continue
-        }
-        const textKey = question.stem.replace(/\d+/g, '#')
-        if (used.texts.has(textKey)) {
-          skip.text++
-          continue
-        }
-        built = question
-        used.values.add(valuesKey)
-        used.texts.add(textKey)
-        break
-      }
-      if (built) {
-        takenScenes.add(scene.id)
-        used.scenes.add(sceneKey(scene))
-        used.skeletons.add(`${combo.id}|${skeleton.id}`)
-        questions.push(built)
-        break
-      }
-    }
-    if (!built) {
-      throw new Error(
-        `${combo.id} 无法为骨架 ${skeleton.id} 组题：可用场景 ${candidates.length}，跳过统计 ${JSON.stringify(skip)}`,
-      )
-    }
+    const picked = pickQuestion({
+      combo,
+      skeleton,
+      scenePool,
+      rng,
+      index: questions.length,
+      used,
+      takenScenes,
+      exactStems,
+      allowReuse: false,
+    })
+    if (!picked) continue
+    questions.push(picked.question)
+    commitQuestion({ ...picked, combo, used, takenScenes, exactStems, reuse: false })
   }
 
-  const sections: PilotSection[] =
-    combo.type === 'tiankong'
-      ? [
-          {
-            title: '一、填空题',
-            kind: 'tiankong',
-            numbered: true,
-            items: questions.map((question) => ({
-              id: question.id,
-              kind: 'fill' as const,
-              parts: splitFillLocal(question.stem, question.answers),
-              answers: question.answers,
-              solution: [question.answers.join('；')],
-              fig: question.fig,
-            })),
-          },
-        ]
-      : [
-          {
-            title: '一、应用题',
-            kind: 'word',
-            numbered: true,
-            items: questions.map((question) => ({
-              id: question.id,
-              kind: 'word' as const,
-              text: question.stem,
-              workLines: question.workLines,
-              answers: question.answers,
-              solution: question.steps,
-              fig: question.fig,
-            })),
-          },
-        ]
+  // 骨架复用：同包同骨架换场景/换数字，题干逐字不同；仍不足时如实保留缺口交给上层补
+  while (questions.length < target) {
+    let progressed = false
+    for (const skeleton of shuffle(rng, skeletons)) {
+      if (questions.length >= target) break
+      const picked = pickQuestion({
+        combo,
+        skeleton,
+        scenePool,
+        rng,
+        index: questions.length,
+        used,
+        takenScenes,
+        exactStems,
+        allowReuse: true,
+      })
+      if (!picked) continue
+      picked.question.reused = true
+      questions.push(picked.question)
+      commitQuestion({ ...picked, combo, used, takenScenes, exactStems, reuse: true })
+      reused++
+      progressed = true
+    }
+    if (!progressed) break
+  }
+
+  if (questions.length === 0) throw new Error(`${combo.id} 无法组题`)
+
+  const sections: PilotSection[] = [
+    {
+      title: combo.type === 'tiankong' ? '一、填空题' : '一、应用题',
+      kind: combo.type,
+      numbered: true,
+      items: questions.map((question) => toPilotItem(question, combo)),
+    },
+  ]
 
   const title = options.title ?? `${combo.unitName} · ${combo.level} 专项练习`
   return {
     title,
     data: { title, sections },
     questions,
+    reused,
   }
 }
 
