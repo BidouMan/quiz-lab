@@ -71,11 +71,6 @@ if (result.count !== count) {
   console.error(`题量不足：目标 ${count}，实际 ${result.count}；${result.notes.join(' / ')}`)
   process.exit(1)
 }
-if (result.stats.fallback > 0) {
-  console.error(`本卷出现旧题库兜底 ${result.stats.fallback} 题，不应作为 0.3.0 样张`)
-  process.exit(1)
-}
-
 writeFileSync(jsonPath, JSON.stringify(result.data, null, 2) + '\n')
 writeFileSync(
   answersPath,
@@ -102,7 +97,7 @@ writeFileSync(memoryPath, memory.toJSON())
 
 const relJson = jsonPath.slice(root.length + 1)
 const relPdf = pdfPath.slice(root.length + 1)
-console.log(`题目 ${result.count} 题；生成 ${result.stats.generated}，兜底 ${result.stats.fallback}`)
+console.log(`题目 ${result.count} 题；生成 ${result.stats.generated}`)
 console.log(`知识点：${result.stats.kpNames.join('、')}`)
 for (const section of result.data.sections) {
   console.log(`  ${section.title}：${section.items.length} 题`)

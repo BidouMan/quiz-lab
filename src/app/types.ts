@@ -132,8 +132,6 @@ export interface BuildStats {
   reused: number
   /** 其中旧生成器出题数（骨架无组合时兜底） */
   legacy: number
-  /** 回退到旧静态题库的题量 */
-  fallback: number
   /** 同卷去重命中（候选被丢弃）的题量 */
   duplicates: number
   /** 本次用到的知识点名称（去重） */

@@ -1,12 +1,5 @@
-import { QUESTIONS } from '../data/questions.ts'
-import type { Question, QuestionType } from '../types.ts'
 import type { CalcType } from '../quiz/types.ts'
-import type { AppType, FillPart, Grade, TypstItem } from './types'
-
-/**
- * 旧静态题库 → Typst 题目。仅作为兜底：当选中单元在本版没有生成规则时，
- * 才从这里取题，并在界面说明“旧题库兜底”。
- */
+import type { AppType, FillPart, TypstItem } from './types'
 
 export const TYPE_ORDER: AppType[] = [
   'kousuan',
@@ -175,84 +168,4 @@ export const STATIC_SAMPLES: Partial<Record<AppType, TypstItem[]>> = {
   ],
 }
 
-// ---------- 旧题库兜底 ----------
 
-/** 旧题库单元 ID → 2024 修订版单元 ID（两套目录编号不同） */
-const LEGACY_UNIT_MAP: Record<string, string> = {
-  '3A-U1': '3A-U1',
-  '3A-U2': '3A-U2',
-  '3A-U3': '3A-U4', // 旧“用一位数除” → 新 3A-U4
-  '3A-U4': '3A-U5', // 旧“年、月、日” → 新 3A-U5
-  '3A-U5': '3A-U6', // 旧“周长” → 新 3A-U6
-  '3B-U1': '3B-U2', // 旧“两位数乘除” → 新 3B-U2
-  '3B-U2': '3B-U4', // 旧“分数” → 新 3B-U4
-  '3B-U3': '3B-U6', // 旧“面积” → 新 3B-U6
-}
-
-const VERT_SYMBOL: Record<string, string> = {
-  add: '+',
-  sub: '-',
-  mul: 'times',
-  div: 'div',
-}
-
-function toStaticItem(source: Question, type: QuestionType, index: number): TypstItem | null {
-  if (type === 'kousuan') {
-    if (!source.latex) return null
-    const expr = toMath(source.latex)
-    return {
-      id: `${source.id}-f${index}`,
-      kind: 'kousuan',
-      expr,
-      display: expr.includes('display(frac'),
-      answers: [source.answer],
-    }
-  }
-
-  if (type === 'chushi') {
-    if (!source.operands || !source.op) return null
-    const [left, right] = source.operands
-    const expr = `${left} ${VERT_SYMBOL[source.op]} ${right} =`
-    return { id: `${source.id}-f${index}`, kind: 'chushi', expr, blank: 30, answers: [source.answer] }
-  }
-
-  if (type === 'tuoshi' || type === 'jianbian') {
-    if (!source.latex) return null
-    return {
-      id: `${source.id}-f${index}`,
-      kind: 'tuoshi',
-      expr: toMath(source.latex),
-      lines: 3,
-      answers: [source.answer],
-      solution: source.answerLines,
-    }
-  }
-
-  if (type === 'tiankong') {
-    if (!source.text) return null
-    // 旧题库答案用“；”分隔，与生成器一致；保留答案供运行时复核做非空/数量校验
-    const answers = source.answer ? source.answer.split('；') : []
-    return { id: `${source.id}-f${index}`, kind: 'fill', parts: splitFill(source.text, answers), answers }
-  }
-
-  return null
-}
-
-/** 某单元可用的旧题库兜底题（按 2024 修订版单元 ID 对齐） */
-export function staticItemsFor(grade: Grade, unitId: string, type: AppType): TypstItem[] {
-  if (!['kousuan', 'chushi', 'tuoshi', 'jianbian', 'tiankong'].includes(type)) return []
-  const items: TypstItem[] = []
-  for (const [index, question] of QUESTIONS.entries()) {
-    if (question.grade !== grade) continue
-    if (LEGACY_UNIT_MAP[question.unitId] !== unitId) continue
-    if (question.type !== type) continue
-    const item = toStaticItem(question, question.type, index)
-    if (item) items.push(item)
-  }
-  return items
-}
-
-/** 旧题库某题型是否有题（用于界面提示是否可兜底） */
-export function staticCountFor(grade: Grade, unitIds: string[], type: AppType): number {
-  return unitIds.reduce((sum, unitId) => sum + staticItemsFor(grade, unitId, type).length, 0)
-}

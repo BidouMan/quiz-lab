@@ -131,7 +131,7 @@ def char_collisions(chars, cell_mm=3.0):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     force_compact = "--compact" in sys.argv
-    pdf = args[0] if args else "samples/字号对比-14pt.pdf"
+    pdf = args[0] if args else "samples/app-final-mixed.pdf"
     doc, lines, spans, chars = extract(pdf)
     body_spans = [s for s in spans if s["zone"] == "body"]
     errors = []

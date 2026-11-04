@@ -27,7 +27,6 @@ import {
   verifyCalcQuestion,
   verifyItemStructure,
   verifySkeletonQuestion,
-  verifyStaticItem,
 } from './runtimeCheck.ts'
 import { skeletonCombo, skeletonLevels, skeletonUnits, type GeneratedType } from './skeletonSource.ts'
 import { latexToTypst } from '../quiz/typst.ts'
@@ -35,8 +34,6 @@ import {
   CALC_TYPES,
   splitFill,
   STATIC_SAMPLES,
-  staticCountFor,
-  staticItemsFor,
   typeLabel,
   TYPE_ORDER,
 } from './typstData.ts'
@@ -84,6 +81,9 @@ const NOT_APPLICABLE_CALC: Record<string, Partial<Record<CalcType, string>>> = {
   '3A-U8': {
     kousuan: '数学广场是活动与图形玩法单元，教材不设口算',
     tuoshi: '活动单元，教材不设脱式；图形玩法由填空/应用题承载',
+  },
+  '3B-U4': {
+    kousuan: '本版未建分数口算规则，可出的分数题不足一页，按不适用处理',
   },
 }
 
@@ -186,15 +186,7 @@ export function typeAvailability(
         }
         continue
       }
-      const fallback = staticCountFor(
-        config.grade,
-        units.map((unit) => unit.unitId),
-        type,
-      )
-      result[type] =
-        fallback > 0
-          ? { enabled: true, reason: `无生成规则，旧题库可兜底 ${fallback} 题`, source: 'static' }
-          : { enabled: false, reason: `所选单元在本版没有${label}生成规则` }
+      result[type] = { enabled: false, reason: `所选单元在本版没有${label}生成规则` }
       continue
     }
 
@@ -233,19 +225,7 @@ export function typeAvailability(
         }
         continue
       }
-      const fallback = staticCountFor(
-        config.grade,
-        units.map((unit) => unit.unitId),
-        type,
-      )
-      result[type] =
-        fallback > 0
-          ? {
-              enabled: true,
-              reason: `所选单元没有填空生成规则，旧题库兜底 ${fallback} 题`,
-              source: 'static',
-            }
-          : { enabled: false, reason: '所选单元本版没有填空生成规则' }
+      result[type] = { enabled: false, reason: '所选单元本版没有填空生成规则' }
       continue
     }
 
@@ -370,15 +350,13 @@ export function recommendedCount(config: AppConfig, pages = 2): number {
   return MIXED_COUNT[config.level]
 }
 
-/** 某题型在当前单元下的容量上限（生成器视为无限，兜底题按静态题库数量封顶） */
+/** 某题型在当前单元下的容量上限（有生成器视为无限，没有生成器则为 0） */
 function capacityOf(type: AppType, config: AppConfig): number {
   const unitIds = selectedUnits(config).map((unit) => unit.unitId)
   if (isCalcType(type)) {
     const supporting = unitIds.filter((unitId) => unitSupports(unitId, type, config.level))
     if (supporting.length > 0) return Number.POSITIVE_INFINITY
-    const notApplicable = unitIds.some((unitId) => NOT_APPLICABLE_CALC[unitId]?.[type] != null)
-    if (notApplicable) return 0
-    return staticCountFor(config.grade, unitIds, type)
+    return 0
   }
   if (type === 'tiankong') {
     const unitIds = selectedUnits(config).map((unit) => unit.unitId)
@@ -387,7 +365,7 @@ function capacityOf(type: AppType, config: AppConfig): number {
     }
     const supporting = unitIds.filter((unitId) => fillSupports(unitId, config.level))
     if (supporting.length > 0) return Number.POSITIVE_INFINITY
-    return staticCountFor(config.grade, unitIds, type)
+    return 0
   }
   if (type === 'word') {
     const unitIds = selectedUnits(config).map((unit) => unit.unitId)
@@ -488,7 +466,6 @@ interface TypeBuild {
   /** 旧生成器出题数 */
   legacy: number
   generated: number
-  fallback: number
   duplicates: number
   kpNames: string[]
   notes: string[]
@@ -503,7 +480,6 @@ function emptyBuild(): TypeBuild {
     reused: 0,
     legacy: 0,
     generated: 0,
-    fallback: 0,
     duplicates: 0,
     kpNames: [],
     notes: [],
@@ -525,7 +501,6 @@ function buildCalcType(
 
   const units = selectedUnits(config)
   const supporting = units.filter((unit) => unitSupports(unit.unitId, type, config.level))
-  const fallbackUnits = units.filter((unit) => !unitSupports(unit.unitId, type, config.level))
 
   const add = (item: TypstItem): boolean => {
     const key = itemKey(item)
@@ -536,35 +511,6 @@ function buildCalcType(
     used.add(key)
     build.items.push(item)
     return true
-  }
-
-  const takeFallback = (limit: number): number => {
-    let added = 0
-    for (const unit of fallbackUnits) {
-      if (added >= limit) break
-      const pool = staticItemsFor(config.grade, unit.unitId, type)
-      let countFromUnit = 0
-      for (const item of pool) {
-        if (added >= limit) break
-        // 静态兜底不重生成：只做结构与答案非空校验，不合格直接剔除并如实少题
-        const outcome = admitWithRetry<TypstItem>({
-          initial: item,
-          verify: verifyStaticItem,
-          regenerate: () => null,
-        })
-        recordCheck(build.check, outcome, `${unit.unitName}·旧题库${typeLabel(type)}`)
-        if (outcome.accepted == null) continue
-        if (add(outcome.accepted)) {
-          added++
-          countFromUnit++
-        }
-      }
-      if (countFromUnit > 0) {
-        build.fallback += countFromUnit
-        build.notes.push(`${unit.unitName}：无生成规则，旧题库兜底 ${countFromUnit} 题`)
-      }
-    }
-    return added
   }
 
   /** 规则库计算题：生成后独立用 evalLatex 重算；失败有限次重生成，仍失败则剔除 */
@@ -650,10 +596,6 @@ function buildCalcType(
     }
   }
 
-  if (build.items.length < quota && fallbackUnits.length > 0) {
-    takeFallback(quota - build.items.length)
-  }
-
   return build
 }
 
@@ -707,7 +649,7 @@ function buildGeneratedType(input: {
   if (quota <= 0) return build
 
   const units = selectedUnits(config)
-  const add = (item: TypstItem, source: 'skeleton' | 'legacy' | 'static', kpName: string): boolean => {
+  const add = (item: TypstItem, source: 'skeleton' | 'legacy', kpName: string): boolean => {
     const key = itemKey(item)
     if (used.has(key)) {
       build.duplicates++
@@ -718,13 +660,11 @@ function buildGeneratedType(input: {
     if (source === 'skeleton') {
       build.skeleton++
       build.generated++
-    } else if (source === 'legacy') {
+    } else {
       build.legacy++
       build.generated++
-    } else {
-      build.fallback++
     }
-    if (source !== 'static' && kpName && !build.kpNames.includes(kpName)) build.kpNames.push(kpName)
+    if (kpName && !build.kpNames.includes(kpName)) build.kpNames.push(kpName)
     return true
   }
 
@@ -836,27 +776,6 @@ function buildGeneratedType(input: {
     }
   }
 
-  if (build.items.length < quota && staticOnly.length > 0) {
-    for (const unit of staticOnly) {
-      if (build.items.length >= quota) break
-      let countFromUnit = 0
-      for (const item of staticItemsFor(config.grade, unit.unitId, type)) {
-        if (build.items.length >= quota) break
-        const outcome = admitWithRetry<TypstItem>({
-          initial: item,
-          verify: verifyStaticItem,
-          regenerate: () => null,
-        })
-        recordCheck(build.check, outcome, `${unit.unitName}·旧题库${label}`)
-        if (outcome.accepted == null) continue
-        if (add(outcome.accepted, 'static', '')) countFromUnit++
-      }
-      if (countFromUnit > 0) {
-        build.notes.push(`${unit.unitName}：无${label}生成规则，旧题库兜底 ${countFromUnit} 题`)
-      }
-    }
-  }
-
   for (const unit of staticOnly) {
     if (!build.notes.some((note) => note.startsWith(unit.unitName))) {
       build.notes.push(`${unit.unitName}：本版没有${label}生成规则`)
@@ -943,7 +862,6 @@ function buildSampleType(type: AppType, quota: number, used: Set<string>): TypeB
     if (used.has(key)) continue
     used.add(key)
     build.items.push(outcome.accepted)
-    build.fallback++
   }
   if (build.items.length > 0) {
     build.notes.push(`${typeLabel(type)}：当前为静态示例题（非生成器）`)
@@ -1006,7 +924,6 @@ export function buildPaper(input: {
     skeleton: 0,
     reused: 0,
     legacy: 0,
-    fallback: 0,
     duplicates: 0,
     kpNames: [],
     unitNames: [],
@@ -1019,7 +936,6 @@ export function buildPaper(input: {
     stats.skeleton += build.skeleton
     stats.reused += build.reused
     stats.legacy += build.legacy
-    stats.fallback += build.fallback
     stats.duplicates += build.duplicates
     check.checked += build.check.checked
     check.failed += build.check.failed

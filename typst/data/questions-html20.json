@@ -1,5 +1,5 @@
 {
-  "title": "三年级数学每日一练",
+  "title": "三年级数学 · 三上练习",
   "sections": [
     {
       "title": "一、口算",
@@ -7,51 +7,51 @@
       "numbered": false,
       "items": [
         {
-          "id": "3A-U1-K1",
+          "id": "3A-U1-3A-U1-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "45 + 8 times 5 =",
+          "expr": "2 times 8 - 13 =",
           "display": false
         },
         {
-          "id": "3A-U1-K2",
+          "id": "3A-U1-3A-U1-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "81 div 9 - 6 =",
+          "expr": "(98 - 82) times 6 =",
           "display": false
         },
         {
-          "id": "3A-U2-K1",
+          "id": "3A-U1-3A-U1-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "30 times 6 =",
+          "expr": "5 times 8 + 14 =",
           "display": false
         },
         {
-          "id": "3A-U2-K2",
+          "id": "3A-U2-3A-U2-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "400 times 5 =",
+          "expr": "70 times 4 =",
           "display": false
         },
         {
-          "id": "3A-U2-K3",
+          "id": "3A-U2-3A-U2-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "12 times 4 =",
+          "expr": "50 times 7 =",
           "display": false
         },
         {
-          "id": "3A-U3-K1",
+          "id": "3A-U2-3A-U2-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "240 div 6 =",
+          "expr": "454 times 2 =",
           "display": false
         },
         {
-          "id": "3A-U3-K2",
+          "id": "3A-U4-3A-U4-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "96 div 3 =",
+          "expr": "100 div 5 =",
           "display": false
         },
         {
-          "id": "3A-U3-K3",
+          "id": "3A-U4-3A-U4-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "720 div 8 =",
+          "expr": "84 div 2 =",
           "display": false
         }
       ]
@@ -62,64 +62,46 @@
       "numbered": false,
       "items": [
         {
-          "id": "3A-U2-C1",
+          "id": "3A-U2-3A-U2-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "234 times 3 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "90 times 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U2-C2",
+          "id": "3A-U2-3A-U2-K3-chushi-L2-02",
           "kind": "chushi",
-          "expr": "406 times 7 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "510 times 4 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U2-C3",
+          "id": "3A-U2-3A-U2-K2-chushi-L2-03",
           "kind": "chushi",
-          "expr": "68 times 5 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "46 times 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U3-C1",
+          "id": "3A-U4-3A-U4-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "96 div 4 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "94 div 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U3-C2",
+          "id": "3A-U4-3A-U4-K4-chushi-L2-02",
           "kind": "chushi",
-          "expr": "705 div 5 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "164 div 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U3-C3",
+          "id": "3A-U9-3A-U9-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "847 div 7 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "345 div 5 =",
+          "display": false,
+          "blank": 30
         }
       ]
     },
@@ -129,46 +111,46 @@
       "numbered": false,
       "items": [
         {
-          "id": "3A-U1-T1",
+          "id": "3A-U1-3A-U1-K1-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "72 - 36 div 4",
-          "lines": 3,
-          "display": false
+          "expr": "2 times 4 - 6",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U1-T2",
+          "id": "3A-U1-3A-U1-K2-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "6 times 8 + 15",
-          "lines": 3,
-          "display": false
+          "expr": "(98 - 95) times 3",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U1-T3",
+          "id": "3A-U4-3A-U4-K2-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "(100 - 28) div 8",
-          "lines": 3,
-          "display": false
+          "expr": "52 div 2 - 12",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U1-T4",
+          "id": "3A-U4-3A-U4-K3-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "54 div 6 times 7",
-          "lines": 3,
-          "display": false
+          "expr": "60 div 2 - 21",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U4-T1",
+          "id": "3A-U6-3A-U6-K2-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "31 times 7 + 30 times 4 + 28",
-          "lines": 3,
-          "display": false
+          "expr": "(21 + 28) times 2",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U5-T1",
+          "id": "3A-U6-3A-U6-K2-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "(12 + 8) times 2",
-          "lines": 3,
-          "display": false
+          "expr": "(20 + 36) times 2",
+          "display": false,
+          "lines": 3
         }
       ]
     }

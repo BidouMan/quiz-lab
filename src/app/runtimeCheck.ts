@@ -197,16 +197,6 @@ export function verifyItemStructure(item: TypstItem): string[] {
   return issues
 }
 
-/** 静态兜底题：结构之外，计算题还必须有非空答案（旧题库条目已带答案） */
-export function verifyStaticItem(item: TypstItem): string[] {
-  const issues = verifyItemStructure(item)
-  if (item.kind === 'kousuan' || item.kind === 'chushi' || item.kind === 'tuoshi' || item.kind === 'jianbian') {
-    if (!item.answers || item.answers.length === 0) issues.push('静态兜底题缺少答案')
-    else if (item.answers.some((answer) => !String(answer).trim())) issues.push('静态兜底题答案为空')
-  }
-  return issues
-}
-
 /** 骨架题：走 verify.ts 的独立求值器（参数重算，不复用组装中间结果） */
 export function verifySkeletonQuestion(question: PilotQuestion, combo: Combo): string[] {
   return verifyQuestion(question, combo).map((issue) => `[${issue.code}] ${issue.message}`)

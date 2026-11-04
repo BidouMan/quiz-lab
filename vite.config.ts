@@ -21,8 +21,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        // 旧 HTML 试卷引擎入口保留
-        main: resolve(rootDir, 'index.html'),
         // Tauri 桌面版独立入口
         app: resolve(rootDir, 'app.html'),
       },

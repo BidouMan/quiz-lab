@@ -6,7 +6,6 @@ import {
   verifyFillQuestion,
   verifyItemStructure,
   verifySkeletonQuestion,
-  verifyStaticItem,
 } from '../src/app/runtimeCheck.ts'
 import { buildPaper } from '../src/app/paperBuilder.ts'
 import { DEFAULT_CONFIG, type AppConfig, type TemplateInfo } from '../src/app/types.ts'
@@ -82,12 +81,11 @@ test('骨架题复核：篡改答案会被独立求值器拦住', () => {
   assert.ok(verifySkeletonQuestion(tampered, combo).length > 0, '篡改答案必须被拦住')
 })
 
-test('静态兜底题：空答案直接剔除', () => {
+test('卷面题结构：空答案直接剔除', () => {
   assert.deepEqual(verifyItemStructure({ id: 'x', kind: 'word', text: '题目', answers: ['3'] }), [])
   assert.ok(
     verifyItemStructure({ id: 'y', kind: 'fill', parts: [{ t: '题干' }, { b: 20 }], answers: [] }).includes('缺少答案'),
   )
-  assert.ok(verifyStaticItem({ id: 'z', kind: 'kousuan', expr: '6 times 7', answers: [] }).includes('静态兜底题缺少答案'))
 })
 
 function verifyFill(question: Pick<FillQuestion, 'stem' | 'answers'>): string[] {

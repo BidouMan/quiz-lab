@@ -1,5 +1,5 @@
 {
-  "title": "三年级数学每日一练",
+  "title": "三年级数学 · 三上练习",
   "sections": [
     {
       "title": "一、口算",
@@ -7,364 +7,364 @@
       "numbered": false,
       "items": [
         {
-          "id": "3A-U1-K1",
+          "id": "3A-U1-3A-U1-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "45 + 8 times 5 =",
+          "expr": "2 times 8 - 13 =",
           "display": false
         },
         {
-          "id": "3A-U1-K2",
+          "id": "3A-U1-3A-U1-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "81 div 9 - 6 =",
+          "expr": "(98 - 82) times 6 =",
           "display": false
         },
         {
-          "id": "3A-U2-K1",
+          "id": "3A-U1-3A-U1-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "30 times 6 =",
+          "expr": "5 times 8 + 14 =",
           "display": false
         },
         {
-          "id": "3A-U2-K2",
+          "id": "3A-U2-3A-U2-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "400 times 5 =",
+          "expr": "70 times 4 =",
           "display": false
         },
         {
-          "id": "3A-U2-K3",
+          "id": "3A-U2-3A-U2-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "12 times 4 =",
+          "expr": "50 times 7 =",
           "display": false
         },
         {
-          "id": "3A-U3-K1",
+          "id": "3A-U2-3A-U2-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "240 div 6 =",
+          "expr": "454 times 2 =",
           "display": false
         },
         {
-          "id": "3A-U3-K2",
+          "id": "3A-U4-3A-U4-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "96 div 3 =",
+          "expr": "100 div 5 =",
           "display": false
         },
         {
-          "id": "3A-U3-K3",
+          "id": "3A-U4-3A-U4-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "720 div 8 =",
+          "expr": "84 div 2 =",
           "display": false
         },
         {
-          "id": "3B-U1-K1",
+          "id": "3A-U4-3A-U4-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "13 times 30 =",
+          "expr": "42 div 7 =",
           "display": false
         },
         {
-          "id": "3B-U1-K2",
+          "id": "3A-U9-3A-U9-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "480 div 12 =",
+          "expr": "8 times 5 - 3 =",
           "display": false
         },
         {
-          "id": "3B-U2-K1",
+          "id": "3A-U9-3A-U9-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "display(frac(2, 7)) + display(frac(3, 7)) =",
-          "display": true
-        },
-        {
-          "id": "3B-U2-K2",
-          "kind": "kousuan",
-          "expr": "display(frac(7, 9)) - display(frac(2, 9)) =",
-          "display": true
-        },
-        {
-          "id": "KOUSUAN-13-3A-U1-K1",
-          "kind": "kousuan",
-          "expr": "45 + 8 times 5 =",
+          "expr": "140 div 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-14-3A-U1-K2",
+          "id": "KOUSUAN-12-3A-U1-3A-U1-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "81 div 9 - 6 =",
+          "expr": "2 times 8 - 13 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-15-3A-U2-K1",
+          "id": "KOUSUAN-13-3A-U1-3A-U1-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "30 times 6 =",
+          "expr": "(98 - 82) times 6 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-16-3A-U2-K2",
+          "id": "KOUSUAN-14-3A-U1-3A-U1-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "400 times 5 =",
+          "expr": "5 times 8 + 14 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-17-3A-U2-K3",
+          "id": "KOUSUAN-15-3A-U2-3A-U2-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "12 times 4 =",
+          "expr": "70 times 4 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-18-3A-U3-K1",
+          "id": "KOUSUAN-16-3A-U2-3A-U2-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "240 div 6 =",
+          "expr": "50 times 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-19-3A-U3-K2",
+          "id": "KOUSUAN-17-3A-U2-3A-U2-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "96 div 3 =",
+          "expr": "454 times 2 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-20-3A-U3-K3",
+          "id": "KOUSUAN-18-3A-U4-3A-U4-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "720 div 8 =",
+          "expr": "100 div 5 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-21-3B-U1-K1",
+          "id": "KOUSUAN-19-3A-U4-3A-U4-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "13 times 30 =",
+          "expr": "84 div 2 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-22-3B-U1-K2",
+          "id": "KOUSUAN-20-3A-U4-3A-U4-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "480 div 12 =",
+          "expr": "42 div 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-23-3B-U2-K1",
+          "id": "KOUSUAN-21-3A-U9-3A-U9-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "display(frac(2, 7)) + display(frac(3, 7)) =",
-          "display": true
-        },
-        {
-          "id": "KOUSUAN-24-3B-U2-K2",
-          "kind": "kousuan",
-          "expr": "display(frac(7, 9)) - display(frac(2, 9)) =",
-          "display": true
-        },
-        {
-          "id": "KOUSUAN-25-3A-U1-K1",
-          "kind": "kousuan",
-          "expr": "45 + 8 times 5 =",
+          "expr": "8 times 5 - 3 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-26-3A-U1-K2",
+          "id": "KOUSUAN-22-3A-U9-3A-U9-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "81 div 9 - 6 =",
+          "expr": "140 div 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-27-3A-U2-K1",
+          "id": "KOUSUAN-23-3A-U1-3A-U1-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "30 times 6 =",
+          "expr": "2 times 8 - 13 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-28-3A-U2-K2",
+          "id": "KOUSUAN-24-3A-U1-3A-U1-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "400 times 5 =",
+          "expr": "(98 - 82) times 6 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-29-3A-U2-K3",
+          "id": "KOUSUAN-25-3A-U1-3A-U1-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "12 times 4 =",
+          "expr": "5 times 8 + 14 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-30-3A-U3-K1",
+          "id": "KOUSUAN-26-3A-U2-3A-U2-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "240 div 6 =",
+          "expr": "70 times 4 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-31-3A-U3-K2",
+          "id": "KOUSUAN-27-3A-U2-3A-U2-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "96 div 3 =",
+          "expr": "50 times 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-32-3A-U3-K3",
+          "id": "KOUSUAN-28-3A-U2-3A-U2-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "720 div 8 =",
+          "expr": "454 times 2 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-33-3B-U1-K1",
+          "id": "KOUSUAN-29-3A-U4-3A-U4-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "13 times 30 =",
+          "expr": "100 div 5 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-34-3B-U1-K2",
+          "id": "KOUSUAN-30-3A-U4-3A-U4-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "480 div 12 =",
+          "expr": "84 div 2 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-35-3B-U2-K1",
+          "id": "KOUSUAN-31-3A-U4-3A-U4-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "display(frac(2, 7)) + display(frac(3, 7)) =",
-          "display": true
-        },
-        {
-          "id": "KOUSUAN-36-3B-U2-K2",
-          "kind": "kousuan",
-          "expr": "display(frac(7, 9)) - display(frac(2, 9)) =",
-          "display": true
-        },
-        {
-          "id": "KOUSUAN-37-3A-U1-K1",
-          "kind": "kousuan",
-          "expr": "45 + 8 times 5 =",
+          "expr": "42 div 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-38-3A-U1-K2",
+          "id": "KOUSUAN-32-3A-U9-3A-U9-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "81 div 9 - 6 =",
+          "expr": "8 times 5 - 3 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-39-3A-U2-K1",
+          "id": "KOUSUAN-33-3A-U9-3A-U9-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "30 times 6 =",
+          "expr": "140 div 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-40-3A-U2-K2",
+          "id": "KOUSUAN-34-3A-U1-3A-U1-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "400 times 5 =",
+          "expr": "2 times 8 - 13 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-41-3A-U2-K3",
+          "id": "KOUSUAN-35-3A-U1-3A-U1-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "12 times 4 =",
+          "expr": "(98 - 82) times 6 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-42-3A-U3-K1",
+          "id": "KOUSUAN-36-3A-U1-3A-U1-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "240 div 6 =",
+          "expr": "5 times 8 + 14 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-43-3A-U3-K2",
+          "id": "KOUSUAN-37-3A-U2-3A-U2-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "96 div 3 =",
+          "expr": "70 times 4 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-44-3A-U3-K3",
+          "id": "KOUSUAN-38-3A-U2-3A-U2-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "720 div 8 =",
+          "expr": "50 times 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-45-3B-U1-K1",
+          "id": "KOUSUAN-39-3A-U2-3A-U2-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "13 times 30 =",
+          "expr": "454 times 2 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-46-3B-U1-K2",
+          "id": "KOUSUAN-40-3A-U4-3A-U4-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "480 div 12 =",
+          "expr": "100 div 5 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-47-3B-U2-K1",
+          "id": "KOUSUAN-41-3A-U4-3A-U4-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "display(frac(2, 7)) + display(frac(3, 7)) =",
-          "display": true
-        },
-        {
-          "id": "KOUSUAN-48-3B-U2-K2",
-          "kind": "kousuan",
-          "expr": "display(frac(7, 9)) - display(frac(2, 9)) =",
-          "display": true
-        },
-        {
-          "id": "KOUSUAN-49-3A-U1-K1",
-          "kind": "kousuan",
-          "expr": "45 + 8 times 5 =",
+          "expr": "84 div 2 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-50-3A-U1-K2",
+          "id": "KOUSUAN-42-3A-U4-3A-U4-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "81 div 9 - 6 =",
+          "expr": "42 div 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-51-3A-U2-K1",
+          "id": "KOUSUAN-43-3A-U9-3A-U9-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "30 times 6 =",
+          "expr": "8 times 5 - 3 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-52-3A-U2-K2",
+          "id": "KOUSUAN-44-3A-U9-3A-U9-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "400 times 5 =",
+          "expr": "140 div 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-53-3A-U2-K3",
+          "id": "KOUSUAN-45-3A-U1-3A-U1-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "12 times 4 =",
+          "expr": "2 times 8 - 13 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-54-3A-U3-K1",
+          "id": "KOUSUAN-46-3A-U1-3A-U1-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "240 div 6 =",
+          "expr": "(98 - 82) times 6 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-55-3A-U3-K2",
+          "id": "KOUSUAN-47-3A-U1-3A-U1-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "96 div 3 =",
+          "expr": "5 times 8 + 14 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-56-3A-U3-K3",
+          "id": "KOUSUAN-48-3A-U2-3A-U2-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "720 div 8 =",
+          "expr": "70 times 4 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-57-3B-U1-K1",
+          "id": "KOUSUAN-49-3A-U2-3A-U2-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "13 times 30 =",
+          "expr": "50 times 7 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-58-3B-U1-K2",
+          "id": "KOUSUAN-50-3A-U2-3A-U2-K3-kousuan-L2-03",
           "kind": "kousuan",
-          "expr": "480 div 12 =",
+          "expr": "454 times 2 =",
           "display": false
         },
         {
-          "id": "KOUSUAN-59-3B-U2-K1",
+          "id": "KOUSUAN-51-3A-U4-3A-U4-K1-kousuan-L2-01",
           "kind": "kousuan",
-          "expr": "display(frac(2, 7)) + display(frac(3, 7)) =",
-          "display": true
+          "expr": "100 div 5 =",
+          "display": false
         },
         {
-          "id": "KOUSUAN-60-3B-U2-K2",
+          "id": "KOUSUAN-52-3A-U4-3A-U4-K2-kousuan-L2-02",
           "kind": "kousuan",
-          "expr": "display(frac(7, 9)) - display(frac(2, 9)) =",
-          "display": true
+          "expr": "84 div 2 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-53-3A-U4-3A-U4-K3-kousuan-L2-03",
+          "kind": "kousuan",
+          "expr": "42 div 7 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-54-3A-U9-3A-U9-K1-kousuan-L2-01",
+          "kind": "kousuan",
+          "expr": "8 times 5 - 3 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-55-3A-U9-3A-U9-K2-kousuan-L2-02",
+          "kind": "kousuan",
+          "expr": "140 div 7 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-56-3A-U1-3A-U1-K1-kousuan-L2-01",
+          "kind": "kousuan",
+          "expr": "2 times 8 - 13 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-57-3A-U1-3A-U1-K2-kousuan-L2-02",
+          "kind": "kousuan",
+          "expr": "(98 - 82) times 6 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-58-3A-U1-3A-U1-K3-kousuan-L2-03",
+          "kind": "kousuan",
+          "expr": "5 times 8 + 14 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-59-3A-U2-3A-U2-K1-kousuan-L2-01",
+          "kind": "kousuan",
+          "expr": "70 times 4 =",
+          "display": false
+        },
+        {
+          "id": "KOUSUAN-60-3A-U2-3A-U2-K2-kousuan-L2-02",
+          "kind": "kousuan",
+          "expr": "50 times 7 =",
+          "display": false
         }
       ]
     },
@@ -374,204 +374,144 @@
       "numbered": false,
       "items": [
         {
-          "id": "3A-U2-C1",
+          "id": "3A-U2-3A-U2-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "234 times 3 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "90 times 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U2-C2",
+          "id": "3A-U2-3A-U2-K3-chushi-L2-02",
           "kind": "chushi",
-          "expr": "406 times 7 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "510 times 4 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U2-C3",
+          "id": "3A-U2-3A-U2-K2-chushi-L2-03",
           "kind": "chushi",
-          "expr": "68 times 5 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "46 times 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U3-C1",
+          "id": "3A-U4-3A-U4-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "96 div 4 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "94 div 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U3-C2",
+          "id": "3A-U4-3A-U4-K4-chushi-L2-02",
           "kind": "chushi",
-          "expr": "705 div 5 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "164 div 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3A-U3-C3",
+          "id": "3A-U9-3A-U9-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "847 div 7 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "345 div 5 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3B-U1-C1",
+          "id": "3A-U9-3A-U9-K2-chushi-L2-02",
           "kind": "chushi",
-          "expr": "23 times 12 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "两位数乘除（推定）"
-          }
+          "expr": "440 div 5 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "3B-U1-C2",
+          "id": "CHUSHI-8-3A-U2-3A-U2-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "45 times 24 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "两位数乘除（推定）"
-          }
+          "expr": "90 times 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-9-3A-U2-C1",
+          "id": "CHUSHI-9-3A-U2-3A-U2-K3-chushi-L2-02",
           "kind": "chushi",
-          "expr": "234 times 3 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "510 times 4 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-10-3A-U2-C2",
+          "id": "CHUSHI-10-3A-U2-3A-U2-K2-chushi-L2-03",
           "kind": "chushi",
-          "expr": "406 times 7 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "46 times 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-11-3A-U2-C3",
+          "id": "CHUSHI-11-3A-U4-3A-U4-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "68 times 5 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "94 div 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-12-3A-U3-C1",
+          "id": "CHUSHI-12-3A-U4-3A-U4-K4-chushi-L2-02",
           "kind": "chushi",
-          "expr": "96 div 4 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "164 div 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-13-3A-U3-C2",
+          "id": "CHUSHI-13-3A-U9-3A-U9-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "705 div 5 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "345 div 5 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-14-3A-U3-C3",
+          "id": "CHUSHI-14-3A-U9-3A-U9-K2-chushi-L2-02",
           "kind": "chushi",
-          "expr": "847 div 7 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "440 div 5 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-15-3B-U1-C1",
+          "id": "CHUSHI-15-3A-U2-3A-U2-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "23 times 12 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "两位数乘除（推定）"
-          }
+          "expr": "90 times 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-16-3B-U1-C2",
+          "id": "CHUSHI-16-3A-U2-3A-U2-K3-chushi-L2-02",
           "kind": "chushi",
-          "expr": "45 times 24 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "两位数乘除（推定）"
-          }
+          "expr": "510 times 4 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-17-3A-U2-C1",
+          "id": "CHUSHI-17-3A-U2-3A-U2-K2-chushi-L2-03",
           "kind": "chushi",
-          "expr": "234 times 3 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "46 times 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-18-3A-U2-C2",
+          "id": "CHUSHI-18-3A-U4-3A-U4-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "406 times 7 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "94 div 2 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-19-3A-U2-C3",
+          "id": "CHUSHI-19-3A-U4-3A-U4-K4-chushi-L2-02",
           "kind": "chushi",
-          "expr": "68 times 5 =",
-          "blank": 30,
-          "meta": {
-            "op": "乘法",
-            "unit": "用一位数乘"
-          }
+          "expr": "164 div 3 =",
+          "display": false,
+          "blank": 30
         },
         {
-          "id": "CHUSHI-20-3A-U3-C1",
+          "id": "CHUSHI-20-3A-U9-3A-U9-K2-chushi-L2-01",
           "kind": "chushi",
-          "expr": "96 div 4 =",
-          "blank": 30,
-          "meta": {
-            "op": "除法",
-            "unit": "用一位数除"
-          }
+          "expr": "345 div 5 =",
+          "display": false,
+          "blank": 30
         }
       ]
     },
@@ -581,791 +521,1141 @@
       "numbered": false,
       "items": [
         {
-          "id": "3A-U1-T1",
+          "id": "3A-U1-3A-U1-K1-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "72 - 36 div 4",
-          "lines": 3,
-          "display": false
+          "expr": "2 times 4 - 6",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U1-T2",
+          "id": "3A-U1-3A-U1-K2-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "6 times 8 + 15",
-          "lines": 3,
-          "display": false
+          "expr": "(98 - 95) times 3",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U1-T3",
+          "id": "3A-U4-3A-U4-K2-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "(100 - 28) div 8",
-          "lines": 3,
-          "display": false
+          "expr": "52 div 2 - 12",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U1-T4",
+          "id": "3A-U4-3A-U4-K3-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "54 div 6 times 7",
-          "lines": 3,
-          "display": false
+          "expr": "60 div 2 - 21",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U4-T1",
+          "id": "3A-U6-3A-U6-K2-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "31 times 7 + 30 times 4 + 28",
-          "lines": 3,
-          "display": false
+          "expr": "(21 + 28) times 2",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "3A-U5-T1",
+          "id": "3A-U6-3A-U6-K2-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "(12 + 8) times 2",
-          "lines": 3,
-          "display": false
+          "expr": "(20 + 36) times 2",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-7-3A-U1-T1",
+          "id": "3A-U9-3A-U9-K1-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "72 - 36 div 4",
-          "lines": 3,
-          "display": false
+          "expr": "(33 - 21) times 2",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-8-3A-U1-T2",
+          "id": "TUOSHI-8-3A-U1-3A-U1-K1-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "6 times 8 + 15",
-          "lines": 3,
-          "display": false
+          "expr": "2 times 4 - 6",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-9-3A-U1-T3",
+          "id": "TUOSHI-9-3A-U1-3A-U1-K2-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "(100 - 28) div 8",
-          "lines": 3,
-          "display": false
+          "expr": "(98 - 95) times 3",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-10-3A-U1-T4",
+          "id": "TUOSHI-10-3A-U4-3A-U4-K2-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "54 div 6 times 7",
-          "lines": 3,
-          "display": false
+          "expr": "52 div 2 - 12",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-11-3A-U4-T1",
+          "id": "TUOSHI-11-3A-U4-3A-U4-K3-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "31 times 7 + 30 times 4 + 28",
-          "lines": 3,
-          "display": false
+          "expr": "60 div 2 - 21",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-12-3A-U5-T1",
+          "id": "TUOSHI-12-3A-U6-3A-U6-K2-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "(12 + 8) times 2",
-          "lines": 3,
-          "display": false
+          "expr": "(21 + 28) times 2",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-13-3A-U1-T1",
+          "id": "TUOSHI-13-3A-U6-3A-U6-K2-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "72 - 36 div 4",
-          "lines": 3,
-          "display": false
+          "expr": "(20 + 36) times 2",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-14-3A-U1-T2",
+          "id": "TUOSHI-14-3A-U9-3A-U9-K1-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "6 times 8 + 15",
-          "lines": 3,
-          "display": false
+          "expr": "(33 - 21) times 2",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-15-3A-U1-T3",
+          "id": "TUOSHI-15-3A-U1-3A-U1-K1-tuoshi-L2-01",
           "kind": "tuoshi",
-          "expr": "(100 - 28) div 8",
-          "lines": 3,
-          "display": false
+          "expr": "2 times 4 - 6",
+          "display": false,
+          "lines": 3
         },
         {
-          "id": "TUOSHI-16-3A-U1-T4",
+          "id": "TUOSHI-16-3A-U1-3A-U1-K2-tuoshi-L2-02",
           "kind": "tuoshi",
-          "expr": "54 div 6 times 7",
-          "lines": 3,
-          "display": false
+          "expr": "(98 - 95) times 3",
+          "display": false,
+          "lines": 3
         }
       ]
     },
     {
-      "title": "四、简便运算",
-      "kind": "jianbian",
-      "numbered": false,
-      "items": [
-        {
-          "id": "3A-U2-J1",
-          "kind": "tuoshi",
-          "expr": "25 times 7 times 4",
-          "lines": 3,
-          "display": false
-        },
-        {
-          "id": "3B-U1-J1",
-          "kind": "tuoshi",
-          "expr": "12 times 25",
-          "lines": 3,
-          "display": false
-        },
-        {
-          "id": "JIANBIAN-3-3A-U2-J1",
-          "kind": "tuoshi",
-          "expr": "25 times 7 times 4",
-          "lines": 3,
-          "display": false
-        },
-        {
-          "id": "JIANBIAN-4-3B-U1-J1",
-          "kind": "tuoshi",
-          "expr": "12 times 25",
-          "lines": 3,
-          "display": false
-        },
-        {
-          "id": "JIANBIAN-5-3A-U2-J1",
-          "kind": "tuoshi",
-          "expr": "25 times 7 times 4",
-          "lines": 3,
-          "display": false
-        },
-        {
-          "id": "JIANBIAN-6-3B-U1-J1",
-          "kind": "tuoshi",
-          "expr": "12 times 25",
-          "lines": 3,
-          "display": false
-        },
-        {
-          "id": "JIANBIAN-7-3A-U2-J1",
-          "kind": "tuoshi",
-          "expr": "25 times 7 times 4",
-          "lines": 3,
-          "display": false
-        },
-        {
-          "id": "JIANBIAN-8-3B-U1-J1",
-          "kind": "tuoshi",
-          "expr": "12 times 25",
-          "lines": 3,
-          "display": false
-        }
-      ]
-    },
-    {
-      "title": "五、填空",
+      "title": "四、填空",
       "kind": "tiankong",
       "numbered": true,
       "items": [
         {
-          "id": "3A-U1-F1",
+          "id": "3A-U1|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "在没有括号的算式里，既有乘除法又有加减法，要先算"
+              "t": "14 个与 11 个合起来，再拿走 5 个，剩 "
             },
             {
-              "b": 20
+              "b": 17.8
             },
             {
-              "t": "法，再算"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "法。"
+              "t": " 个。"
             }
+          ],
+          "answers": [
+            "20 个"
+          ],
+          "solution": [
+            "20 个"
           ]
         },
         {
-          "id": "3A-U2-F1",
+          "id": "3A-U2|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "口算 "
+              "t": "2 箱矿泉水，每箱 2 层，每层 40 瓶，一共 "
             },
             {
-              "m": "200 times 3"
+              "b": 17.8
             },
             {
-              "t": " 时，可以先算 "
-            },
-            {
-              "m": "2 times 3 ="
-            },
-            {
-              "t": " "
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "，再在积的末尾添上"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "个 0。"
+              "t": " 瓶。"
             }
+          ],
+          "answers": [
+            "160"
+          ],
+          "solution": [
+            "160"
           ]
         },
         {
-          "id": "3A-U3-F1",
+          "id": "3A-U3|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "m": "612 div 3"
+              "t": "小东在活动室围了一个三角形和一个四边形（如图），一共有 "
             },
             {
-              "t": " 的商是"
+              "b": 14
             },
             {
-              "b": 16
-            },
-            {
-              "t": "位数，最高位在"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "位上。"
+              "t": " 条边。"
             }
+          ],
+          "answers": [
+            "7"
+          ],
+          "solution": [
+            "7"
+          ],
+          "fig": {
+            "w": 73,
+            "h": 40,
+            "shapes": [
+              {
+                "points": [
+                  [
+                    3.6220000000000017,
+                    30.27
+                  ],
+                  [
+                    30.323999999999998,
+                    30.27
+                  ],
+                  [
+                    16.973,
+                    8.703000000000001
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              },
+              {
+                "points": [
+                  [
+                    39.622,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    28.216
+                  ],
+                  [
+                    39.622,
+                    28.216
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              }
+            ],
+            "labels": [
+              {
+                "x": 2,
+                "y": 35,
+                "text": "①",
+                "size": 9
+              },
+              {
+                "x": 38,
+                "y": 35,
+                "text": "②",
+                "size": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "3A-U4|tiankong|L2#1",
+          "kind": "fill",
+          "parts": [
+            {
+              "t": "一根 44 米长的绳子，剪下 28 米，剩下每 2 米剪一段，还能剪 "
+            },
+            {
+              "b": 15.2
+            },
+            {
+              "t": " 段。"
+            }
+          ],
+          "answers": [
+            "8 段"
+          ],
+          "solution": [
+            "8 段"
           ]
         },
         {
-          "id": "3A-U3-F2",
+          "id": "3A-U5|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "在除法算式里，余数必须比除数"
+              "t": "2024 年是闰年，全年有 "
             },
             {
-              "b": 16
+              "b": 20.4
             },
             {
-              "t": "。"
+              "t": " 天。"
             }
+          ],
+          "answers": [
+            "366 天"
+          ],
+          "solution": [
+            "366 天"
           ]
         },
         {
-          "id": "3A-U4-F1",
+          "id": "3A-U6|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "一年有"
+              "t": "一个正方形相框的周长是 92 厘米，边长 "
             },
             {
-              "b": 20
+              "b": 20.4
             },
             {
-              "t": "个月，其中大月有"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "个，每月有"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "天。"
+              "t": " 厘米。"
             }
+          ],
+          "answers": [
+            "23 厘米"
+          ],
+          "solution": [
+            "23 厘米"
           ]
         },
         {
-          "id": "3A-U4-F2",
+          "id": "TIANKONG-7-3A-U1|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "平年全年有"
+              "t": "14 个与 11 个合起来，再拿走 5 个，剩 "
             },
             {
-              "b": 24
+              "b": 17.8
             },
             {
-              "t": "天，闰年全年有"
-            },
-            {
-              "b": 24
-            },
-            {
-              "t": "天。"
+              "t": " 个。"
             }
+          ],
+          "answers": [
+            "20 个"
+          ],
+          "solution": [
+            "20 个"
           ]
         },
         {
-          "id": "3A-U4-F3",
+          "id": "TIANKONG-8-3A-U2|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "2026 年是"
+              "t": "2 箱矿泉水，每箱 2 层，每层 40 瓶，一共 "
             },
             {
-              "b": 16
+              "b": 17.8
             },
             {
-              "t": "年（填“平”或“闰”），2 月有"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "天。"
+              "t": " 瓶。"
             }
+          ],
+          "answers": [
+            "160"
+          ],
+          "solution": [
+            "160"
           ]
         },
         {
-          "id": "3A-U4-F4",
+          "id": "TIANKONG-9-3A-U3|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "一场电影从 14:30 开始，放映 95 分钟，结束时间是"
+              "t": "小东在活动室围了一个三角形和一个四边形（如图），一共有 "
             },
             {
-              "b": 20
+              "b": 14
             },
             {
-              "t": "时"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "分。"
+              "t": " 条边。"
             }
+          ],
+          "answers": [
+            "7"
+          ],
+          "solution": [
+            "7"
+          ],
+          "fig": {
+            "w": 73,
+            "h": 40,
+            "shapes": [
+              {
+                "points": [
+                  [
+                    3.6220000000000017,
+                    30.27
+                  ],
+                  [
+                    30.323999999999998,
+                    30.27
+                  ],
+                  [
+                    16.973,
+                    8.703000000000001
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              },
+              {
+                "points": [
+                  [
+                    39.622,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    28.216
+                  ],
+                  [
+                    39.622,
+                    28.216
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              }
+            ],
+            "labels": [
+              {
+                "x": 2,
+                "y": 35,
+                "text": "①",
+                "size": 9
+              },
+              {
+                "x": 38,
+                "y": 35,
+                "text": "②",
+                "size": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "TIANKONG-10-3A-U4|tiankong|L2#1",
+          "kind": "fill",
+          "parts": [
+            {
+              "t": "一根 44 米长的绳子，剪下 28 米，剩下每 2 米剪一段，还能剪 "
+            },
+            {
+              "b": 15.2
+            },
+            {
+              "t": " 段。"
+            }
+          ],
+          "answers": [
+            "8 段"
+          ],
+          "solution": [
+            "8 段"
           ]
         },
         {
-          "id": "3A-U5-F1",
+          "id": "TIANKONG-11-3A-U5|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "长方形的长是 8 厘米，宽是 5 厘米，周长是"
+              "t": "2024 年是闰年，全年有 "
             },
             {
-              "b": 20
+              "b": 20.4
             },
             {
-              "t": "厘米。"
+              "t": " 天。"
             }
+          ],
+          "answers": [
+            "366 天"
+          ],
+          "solution": [
+            "366 天"
           ]
         },
         {
-          "id": "3A-U5-F2",
+          "id": "TIANKONG-12-3A-U6|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "正方形的边长是 6 分米，周长是"
+              "t": "一个正方形相框的周长是 92 厘米，边长 "
             },
             {
-              "b": 20
+              "b": 20.4
             },
             {
-              "t": "分米。"
+              "t": " 厘米。"
             }
+          ],
+          "answers": [
+            "23 厘米"
+          ],
+          "solution": [
+            "23 厘米"
           ]
         },
         {
-          "id": "3A-U5-F3",
+          "id": "TIANKONG-13-3A-U1|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "一根绳子长 36 厘米，正好围成一个正方形，这个正方形的边长是"
+              "t": "14 个与 11 个合起来，再拿走 5 个，剩 "
             },
             {
-              "b": 16
+              "b": 17.8
             },
             {
-              "t": "厘米。"
+              "t": " 个。"
             }
+          ],
+          "answers": [
+            "20 个"
+          ],
+          "solution": [
+            "20 个"
           ]
         },
         {
-          "id": "3B-U2-F1",
+          "id": "TIANKONG-14-3A-U2|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "把 1 米长的绳子平均分成 8 段，每段长"
+              "t": "2 箱矿泉水，每箱 2 层，每层 40 瓶，一共 "
             },
             {
-              "b": 22
+              "b": 17.8
             },
             {
-              "t": "米（填分数），3 段长"
-            },
-            {
-              "b": 22
-            },
-            {
-              "t": "米。"
+              "t": " 瓶。"
             }
+          ],
+          "answers": [
+            "160"
+          ],
+          "solution": [
+            "160"
           ]
         },
         {
-          "id": "3B-U3-F1",
+          "id": "TIANKONG-15-3A-U3|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "长方形的面积 = "
+              "t": "小东在活动室围了一个三角形和一个四边形（如图），一共有 "
             },
             {
-              "b": 16
+              "b": 14
             },
             {
-              "t": " "
-            },
-            {
-              "m": "times"
-            },
-            {
-              "t": " "
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "；边长为 5 厘米的正方形，面积是"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "平方厘米。"
+              "t": " 条边。"
             }
+          ],
+          "answers": [
+            "7"
+          ],
+          "solution": [
+            "7"
+          ],
+          "fig": {
+            "w": 73,
+            "h": 40,
+            "shapes": [
+              {
+                "points": [
+                  [
+                    3.6220000000000017,
+                    30.27
+                  ],
+                  [
+                    30.323999999999998,
+                    30.27
+                  ],
+                  [
+                    16.973,
+                    8.703000000000001
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              },
+              {
+                "points": [
+                  [
+                    39.622,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    28.216
+                  ],
+                  [
+                    39.622,
+                    28.216
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              }
+            ],
+            "labels": [
+              {
+                "x": 2,
+                "y": 35,
+                "text": "①",
+                "size": 9
+              },
+              {
+                "x": 38,
+                "y": 35,
+                "text": "②",
+                "size": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "TIANKONG-16-3A-U4|tiankong|L2#1",
+          "kind": "fill",
+          "parts": [
+            {
+              "t": "一根 44 米长的绳子，剪下 28 米，剩下每 2 米剪一段，还能剪 "
+            },
+            {
+              "b": 15.2
+            },
+            {
+              "t": " 段。"
+            }
+          ],
+          "answers": [
+            "8 段"
+          ],
+          "solution": [
+            "8 段"
           ]
         },
         {
-          "id": "3B-U3-F2",
+          "id": "TIANKONG-17-3A-U5|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "1 平方米 = "
+              "t": "2024 年是闰年，全年有 "
             },
             {
-              "b": 24
+              "b": 20.4
             },
             {
-              "t": "平方分米；1 平方分米 = "
-            },
-            {
-              "b": 24
-            },
-            {
-              "t": "平方厘米。"
+              "t": " 天。"
             }
+          ],
+          "answers": [
+            "366 天"
+          ],
+          "solution": [
+            "366 天"
           ]
         },
         {
-          "id": "TIANKONG-15-3A-U1-F1",
+          "id": "TIANKONG-18-3A-U6|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "在没有括号的算式里，既有乘除法又有加减法，要先算"
+              "t": "一个正方形相框的周长是 92 厘米，边长 "
             },
             {
-              "b": 20
+              "b": 20.4
             },
             {
-              "t": "法，再算"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "法。"
+              "t": " 厘米。"
             }
+          ],
+          "answers": [
+            "23 厘米"
+          ],
+          "solution": [
+            "23 厘米"
           ]
         },
         {
-          "id": "TIANKONG-16-3A-U2-F1",
+          "id": "TIANKONG-19-3A-U1|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "口算 "
+              "t": "14 个与 11 个合起来，再拿走 5 个，剩 "
             },
             {
-              "m": "200 times 3"
+              "b": 17.8
             },
             {
-              "t": " 时，可以先算 "
-            },
-            {
-              "m": "2 times 3 ="
-            },
-            {
-              "t": " "
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "，再在积的末尾添上"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "个 0。"
+              "t": " 个。"
             }
+          ],
+          "answers": [
+            "20 个"
+          ],
+          "solution": [
+            "20 个"
           ]
         },
         {
-          "id": "TIANKONG-17-3A-U3-F1",
+          "id": "TIANKONG-20-3A-U2|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "m": "612 div 3"
+              "t": "2 箱矿泉水，每箱 2 层，每层 40 瓶，一共 "
             },
             {
-              "t": " 的商是"
+              "b": 17.8
             },
             {
-              "b": 16
-            },
-            {
-              "t": "位数，最高位在"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "位上。"
+              "t": " 瓶。"
             }
+          ],
+          "answers": [
+            "160"
+          ],
+          "solution": [
+            "160"
           ]
         },
         {
-          "id": "TIANKONG-18-3A-U3-F2",
+          "id": "TIANKONG-21-3A-U3|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "在除法算式里，余数必须比除数"
+              "t": "小东在活动室围了一个三角形和一个四边形（如图），一共有 "
             },
             {
-              "b": 16
+              "b": 14
             },
             {
-              "t": "。"
+              "t": " 条边。"
             }
+          ],
+          "answers": [
+            "7"
+          ],
+          "solution": [
+            "7"
+          ],
+          "fig": {
+            "w": 73,
+            "h": 40,
+            "shapes": [
+              {
+                "points": [
+                  [
+                    3.6220000000000017,
+                    30.27
+                  ],
+                  [
+                    30.323999999999998,
+                    30.27
+                  ],
+                  [
+                    16.973,
+                    8.703000000000001
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              },
+              {
+                "points": [
+                  [
+                    39.622,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    28.216
+                  ],
+                  [
+                    39.622,
+                    28.216
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              }
+            ],
+            "labels": [
+              {
+                "x": 2,
+                "y": 35,
+                "text": "①",
+                "size": 9
+              },
+              {
+                "x": 38,
+                "y": 35,
+                "text": "②",
+                "size": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "TIANKONG-22-3A-U4|tiankong|L2#1",
+          "kind": "fill",
+          "parts": [
+            {
+              "t": "一根 44 米长的绳子，剪下 28 米，剩下每 2 米剪一段，还能剪 "
+            },
+            {
+              "b": 15.2
+            },
+            {
+              "t": " 段。"
+            }
+          ],
+          "answers": [
+            "8 段"
+          ],
+          "solution": [
+            "8 段"
           ]
         },
         {
-          "id": "TIANKONG-19-3A-U4-F1",
+          "id": "TIANKONG-23-3A-U5|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "一年有"
+              "t": "2024 年是闰年，全年有 "
             },
             {
-              "b": 20
+              "b": 20.4
             },
             {
-              "t": "个月，其中大月有"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "个，每月有"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "天。"
+              "t": " 天。"
             }
+          ],
+          "answers": [
+            "366 天"
+          ],
+          "solution": [
+            "366 天"
           ]
         },
         {
-          "id": "TIANKONG-20-3A-U4-F2",
+          "id": "TIANKONG-24-3A-U6|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "平年全年有"
+              "t": "一个正方形相框的周长是 92 厘米，边长 "
             },
             {
-              "b": 24
+              "b": 20.4
             },
             {
-              "t": "天，闰年全年有"
-            },
-            {
-              "b": 24
-            },
-            {
-              "t": "天。"
+              "t": " 厘米。"
             }
+          ],
+          "answers": [
+            "23 厘米"
+          ],
+          "solution": [
+            "23 厘米"
           ]
         },
         {
-          "id": "TIANKONG-21-3A-U4-F3",
+          "id": "TIANKONG-25-3A-U1|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "2026 年是"
+              "t": "14 个与 11 个合起来，再拿走 5 个，剩 "
             },
             {
-              "b": 16
+              "b": 17.8
             },
             {
-              "t": "年（填“平”或“闰”），2 月有"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "天。"
+              "t": " 个。"
             }
+          ],
+          "answers": [
+            "20 个"
+          ],
+          "solution": [
+            "20 个"
           ]
         },
         {
-          "id": "TIANKONG-22-3A-U4-F4",
+          "id": "TIANKONG-26-3A-U2|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "一场电影从 14:30 开始，放映 95 分钟，结束时间是"
+              "t": "2 箱矿泉水，每箱 2 层，每层 40 瓶，一共 "
             },
             {
-              "b": 20
+              "b": 17.8
             },
             {
-              "t": "时"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "分。"
+              "t": " 瓶。"
             }
+          ],
+          "answers": [
+            "160"
+          ],
+          "solution": [
+            "160"
           ]
         },
         {
-          "id": "TIANKONG-23-3A-U5-F1",
+          "id": "TIANKONG-27-3A-U3|tiankong|L2#1",
           "kind": "fill",
           "parts": [
             {
-              "t": "长方形的长是 8 厘米，宽是 5 厘米，周长是"
+              "t": "小东在活动室围了一个三角形和一个四边形（如图），一共有 "
             },
             {
-              "b": 20
+              "b": 14
             },
             {
-              "t": "厘米。"
+              "t": " 条边。"
             }
+          ],
+          "answers": [
+            "7"
+          ],
+          "solution": [
+            "7"
+          ],
+          "fig": {
+            "w": 73,
+            "h": 40,
+            "shapes": [
+              {
+                "points": [
+                  [
+                    3.6220000000000017,
+                    30.27
+                  ],
+                  [
+                    30.323999999999998,
+                    30.27
+                  ],
+                  [
+                    16.973,
+                    8.703000000000001
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              },
+              {
+                "points": [
+                  [
+                    39.622,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    9.73
+                  ],
+                  [
+                    70.432,
+                    28.216
+                  ],
+                  [
+                    39.622,
+                    28.216
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              }
+            ],
+            "labels": [
+              {
+                "x": 2,
+                "y": 35,
+                "text": "①",
+                "size": 9
+              },
+              {
+                "x": 38,
+                "y": 35,
+                "text": "②",
+                "size": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "TIANKONG-28-3A-U4|tiankong|L2#1",
+          "kind": "fill",
+          "parts": [
+            {
+              "t": "一根 44 米长的绳子，剪下 28 米，剩下每 2 米剪一段，还能剪 "
+            },
+            {
+              "b": 15.2
+            },
+            {
+              "t": " 段。"
+            }
+          ],
+          "answers": [
+            "8 段"
+          ],
+          "solution": [
+            "8 段"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "五、应用题",
+      "kind": "word",
+      "numbered": true,
+      "items": [
+        {
+          "id": "3A-U1|word|L2#1",
+          "kind": "word",
+          "text": "弟弟有 76 块拼图，先送给邻居 18 块，又买来 15 块。现在有多少块？",
+          "workLines": 4,
+          "answers": [
+            "73 块"
+          ],
+          "solution": [
+            "76 - 18 + 15 = 73（块）"
           ]
         },
         {
-          "id": "TIANKONG-24-3A-U5-F2",
-          "kind": "fill",
-          "parts": [
-            {
-              "t": "正方形的边长是 6 分米，周长是"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "分米。"
-            }
+          "id": "3A-U2|word|L2#1",
+          "kind": "word",
+          "text": "体育老师装了 7 箱矿泉水，每箱 6 层，每层 15 瓶。一共装了多少瓶？",
+          "workLines": 4,
+          "answers": [
+            "630 瓶"
+          ],
+          "solution": [
+            "7 × 6 × 15 = 630（瓶）"
           ]
         },
         {
-          "id": "TIANKONG-25-3A-U5-F3",
-          "kind": "fill",
-          "parts": [
-            {
-              "t": "一根绳子长 36 厘米，正好围成一个正方形，这个正方形的边长是"
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "厘米。"
-            }
+          "id": "3A-U3|word|L2#1",
+          "kind": "word",
+          "text": "小禾在积木区搭了一个三角形框架和一个四边形框架（如图）。一共用了几条边？",
+          "workLines": 2,
+          "answers": [
+            "7 条"
+          ],
+          "solution": [
+            "7 = 7（条）"
+          ],
+          "fig": {
+            "w": 73,
+            "h": 40,
+            "shapes": [
+              {
+                "points": [
+                  [
+                    6.457000000000001,
+                    28.245
+                  ],
+                  [
+                    27.894,
+                    28.245
+                  ],
+                  [
+                    17.1755,
+                    10.9305
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              },
+              {
+                "points": [
+                  [
+                    42.457,
+                    11.754999999999999
+                  ],
+                  [
+                    67.19200000000001,
+                    11.754999999999999
+                  ],
+                  [
+                    67.19200000000001,
+                    26.596
+                  ],
+                  [
+                    42.457,
+                    26.596
+                  ]
+                ],
+                "closed": true,
+                "stroke": "solid"
+              }
+            ],
+            "labels": [
+              {
+                "x": 2,
+                "y": 35,
+                "text": "①",
+                "size": 9
+              },
+              {
+                "x": 38,
+                "y": 35,
+                "text": "②",
+                "size": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "3A-U4|word|L2#1",
+          "kind": "word",
+          "text": "一根 58 米长的绳子，每 4 米剪一段，要剪 6 段。够不够？",
+          "workLines": 5,
+          "answers": [
+            "够"
+          ],
+          "solution": [
+            "4 × 6 = 24",
+            "58 = 58",
+            "24 ≤ 58，所以够。"
           ]
         },
         {
-          "id": "TIANKONG-26-3B-U2-F1",
-          "kind": "fill",
-          "parts": [
-            {
-              "t": "把 1 米长的绳子平均分成 8 段，每段长"
-            },
-            {
-              "b": 22
-            },
-            {
-              "t": "米（填分数），3 段长"
-            },
-            {
-              "b": 22
-            },
-            {
-              "t": "米。"
-            }
-          ]
-        },
-        {
-          "id": "TIANKONG-27-3B-U3-F1",
-          "kind": "fill",
-          "parts": [
-            {
-              "t": "长方形的面积 = "
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": " "
-            },
-            {
-              "m": "times"
-            },
-            {
-              "t": " "
-            },
-            {
-              "b": 16
-            },
-            {
-              "t": "；边长为 5 厘米的正方形，面积是"
-            },
-            {
-              "b": 20
-            },
-            {
-              "t": "平方厘米。"
-            }
-          ]
-        },
-        {
-          "id": "TIANKONG-28-3B-U3-F2",
-          "kind": "fill",
-          "parts": [
-            {
-              "t": "1 平方米 = "
-            },
-            {
-              "b": 24
-            },
-            {
-              "t": "平方分米；1 平方分米 = "
-            },
-            {
-              "b": 24
-            },
-            {
-              "t": "平方厘米。"
-            }
+          "id": "3A-U5|word|L2#1",
+          "kind": "word",
+          "text": "合唱队要在 13 时 55 分前到音乐厅，路上要走 20 分钟。最迟几时几分出发？",
+          "workLines": 4,
+          "answers": [
+            "13 时",
+            "35 分"
+          ],
+          "solution": [
+            "hourOf(13 × 60 + 55 - 20) = 13（时）",
+            "minuteOf(13 × 60 + 55 - 20) = 35（分）"
           ]
         }
       ]
@@ -1374,7 +1664,6 @@
       "title": "六、比大小",
       "kind": "compare",
       "numbered": true,
-      "note": "在 ○ 里填 >、< 或 =",
       "items": [
         {
           "id": "c1",
@@ -1391,98 +1680,98 @@
           "display": false
         },
         {
-          "id": "compare-LAB-3-c1",
+          "id": "COMPARE-3-c1",
           "kind": "compare",
           "pre": "display(frac(2, 5))",
           "post": "display(frac(3, 5))",
           "display": true
         },
         {
-          "id": "compare-LAB-4-c2",
+          "id": "COMPARE-4-c2",
           "kind": "compare",
           "pre": "45 times 3",
           "post": "54 times 3",
           "display": false
         },
         {
-          "id": "compare-LAB-5-c1",
+          "id": "COMPARE-5-c1",
           "kind": "compare",
           "pre": "display(frac(2, 5))",
           "post": "display(frac(3, 5))",
           "display": true
         },
         {
-          "id": "compare-LAB-6-c2",
+          "id": "COMPARE-6-c2",
           "kind": "compare",
           "pre": "45 times 3",
           "post": "54 times 3",
           "display": false
         },
         {
-          "id": "compare-LAB-7-c1",
+          "id": "COMPARE-7-c1",
           "kind": "compare",
           "pre": "display(frac(2, 5))",
           "post": "display(frac(3, 5))",
           "display": true
         },
         {
-          "id": "compare-LAB-8-c2",
+          "id": "COMPARE-8-c2",
           "kind": "compare",
           "pre": "45 times 3",
           "post": "54 times 3",
           "display": false
         },
         {
-          "id": "compare-LAB-9-c1",
+          "id": "COMPARE-9-c1",
           "kind": "compare",
           "pre": "display(frac(2, 5))",
           "post": "display(frac(3, 5))",
           "display": true
         },
         {
-          "id": "compare-LAB-10-c2",
+          "id": "COMPARE-10-c2",
           "kind": "compare",
           "pre": "45 times 3",
           "post": "54 times 3",
           "display": false
         },
         {
-          "id": "compare-LAB-11-c1",
+          "id": "COMPARE-11-c1",
           "kind": "compare",
           "pre": "display(frac(2, 5))",
           "post": "display(frac(3, 5))",
           "display": true
         },
         {
-          "id": "compare-LAB-12-c2",
+          "id": "COMPARE-12-c2",
           "kind": "compare",
           "pre": "45 times 3",
           "post": "54 times 3",
           "display": false
         },
         {
-          "id": "compare-LAB-13-c1",
+          "id": "COMPARE-13-c1",
           "kind": "compare",
           "pre": "display(frac(2, 5))",
           "post": "display(frac(3, 5))",
           "display": true
         },
         {
-          "id": "compare-LAB-14-c2",
+          "id": "COMPARE-14-c2",
           "kind": "compare",
           "pre": "45 times 3",
           "post": "54 times 3",
           "display": false
         },
         {
-          "id": "compare-LAB-15-c1",
+          "id": "COMPARE-15-c1",
           "kind": "compare",
           "pre": "display(frac(2, 5))",
           "post": "display(frac(3, 5))",
           "display": true
         },
         {
-          "id": "compare-LAB-16-c2",
+          "id": "COMPARE-16-c2",
           "kind": "compare",
           "pre": "45 times 3",
           "post": "54 times 3",
@@ -1510,56 +1799,56 @@
           "blank": 15
         },
         {
-          "id": "geom-LAB-3-g1",
+          "id": "GEOM-3-g1",
           "kind": "geom",
           "fig": "rect",
           "text": "左图长方形的长是 8 cm，宽是 5 cm。它的周长是多少厘米？",
           "blank": 15
         },
         {
-          "id": "geom-LAB-4-g2",
+          "id": "GEOM-4-g2",
           "kind": "geom",
           "fig": "square",
           "text": "左图正方形的边长是 6 cm。它的周长是多少厘米？",
           "blank": 15
         },
         {
-          "id": "geom-LAB-5-g1",
+          "id": "GEOM-5-g1",
           "kind": "geom",
           "fig": "rect",
           "text": "左图长方形的长是 8 cm，宽是 5 cm。它的周长是多少厘米？",
           "blank": 15
         },
         {
-          "id": "geom-LAB-6-g2",
+          "id": "GEOM-6-g2",
           "kind": "geom",
           "fig": "square",
           "text": "左图正方形的边长是 6 cm。它的周长是多少厘米？",
           "blank": 15
         },
         {
-          "id": "geom-LAB-7-g1",
+          "id": "GEOM-7-g1",
           "kind": "geom",
           "fig": "rect",
           "text": "左图长方形的长是 8 cm，宽是 5 cm。它的周长是多少厘米？",
           "blank": 15
         },
         {
-          "id": "geom-LAB-8-g2",
+          "id": "GEOM-8-g2",
           "kind": "geom",
           "fig": "square",
           "text": "左图正方形的边长是 6 cm。它的周长是多少厘米？",
           "blank": 15
         },
         {
-          "id": "geom-LAB-9-g1",
+          "id": "GEOM-9-g1",
           "kind": "geom",
           "fig": "rect",
           "text": "左图长方形的长是 8 cm，宽是 5 cm。它的周长是多少厘米？",
           "blank": 15
         },
         {
-          "id": "geom-LAB-10-g2",
+          "id": "GEOM-10-g2",
           "kind": "geom",
           "fig": "square",
           "text": "左图正方形的边长是 6 cm。它的周长是多少厘米？",

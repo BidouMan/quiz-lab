@@ -234,7 +234,6 @@ test('出卷组装：填空 + 应用题混排，题量正确且无旧题库兜�
   assert.equal(result.stats.generated, 12)
   assert.equal(result.stats.skeleton, 12)
   assert.equal(result.stats.legacy, 0)
-  assert.equal(result.stats.fallback, 0)
   assert.ok(result.notes.every((note) => !note.includes('兜底')), '有生成规则时不应再走兜底')
   assert.deepEqual(
     result.data.sections.map((section) => section.kind),

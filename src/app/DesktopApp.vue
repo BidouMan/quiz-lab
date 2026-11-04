@@ -105,7 +105,6 @@ const paperSummary = computed(() => {
   if (s.skeleton > 0) parts.push(`骨架 ${s.skeleton}${s.reused > 0 ? `（复用 ${s.reused}）` : ''}`)
   if (s.legacy > 0) parts.push(`旧生成器 ${s.legacy}`)
   if (calc > 0) parts.push(`计算生成 ${calc}`)
-  if (s.fallback > 0) parts.push(`静态兜底 ${s.fallback}`)
   const check = s.runtimeCheck
   parts.push(`复核 ${check.checked} 题（失败 ${check.failed} / 剔除 ${check.dropped}）`)
   if (check.regenerated > 0) parts.push(`重生成后通过 ${check.regenerated}`)
