@@ -18,33 +18,20 @@ export const UNITS: Unit[] = [
 
 const U = (id: string) => UNITS.find((u) => u.id === id)!
 
-/** P0 静态样例题，共 40 题。非出题引擎，仅用于版式验证。 */
+/**
+ * P0 静态样例题，共 34 题。非出题引擎，仅用于版式验证与旧预览页。
+ * 0.4.0 第四项教研审核：删除 6 道三上超纲/口径冲突题（见 docs/旧题库教研审核-0.4.0.md）。
+ */
 export const QUESTIONS: Question[] = [
   // ================= 三年级上册 =================
   // ---- U1 两步四则运算与应用 ----
-  {
-    id: '3A-U1-T1', grade: '3A', unitId: '3A-U1', unitName: U('3A-U1').name,
-    type: 'tuoshi', latex: '72 - 36 \\div 4', answer: '72 - 9 = 63', answerLines: ['72 - 36 \\div 4', '= 72 - 9', '= 63'],
-  },
   {
     id: '3A-U1-T2', grade: '3A', unitId: '3A-U1', unitName: U('3A-U1').name,
     type: 'tuoshi', latex: '6 \\times 8 + 15', answer: '48 + 15 = 63', answerLines: ['6 \\times 8 + 15', '= 48 + 15', '= 63'],
   },
   {
-    id: '3A-U1-T3', grade: '3A', unitId: '3A-U1', unitName: U('3A-U1').name,
-    type: 'tuoshi', latex: '(100 - 28) \\div 8', answer: '72 ÷ 8 = 9', answerLines: ['(100 - 28) \\div 8', '= 72 \\div 8', '= 9'],
-  },
-  {
-    id: '3A-U1-T4', grade: '3A', unitId: '3A-U1', unitName: U('3A-U1').name,
-    type: 'tuoshi', latex: '54 \\div 6 \\times 7', answer: '9 × 7 = 63', answerLines: ['54 \\div 6 \\times 7', '= 9 \\times 7', '= 63'],
-  },
-  {
     id: '3A-U1-K1', grade: '3A', unitId: '3A-U1', unitName: U('3A-U1').name,
     type: 'kousuan', latex: '45 + 8 \\times 5 =', answer: '85',
-  },
-  {
-    id: '3A-U1-K2', grade: '3A', unitId: '3A-U1', unitName: U('3A-U1').name,
-    type: 'kousuan', latex: '81 \\div 9 - 6 =', answer: '3',
   },
   {
     id: '3A-U1-F1', grade: '3A', unitId: '3A-U1', unitName: U('3A-U1').name,
@@ -77,10 +64,6 @@ export const QUESTIONS: Question[] = [
   {
     id: '3A-U2-C3', grade: '3A', unitId: '3A-U2', unitName: U('3A-U2').name,
     type: 'chushi', operands: [68, 5], op: 'mul', answer: '340',
-  },
-  {
-    id: '3A-U2-J1', grade: '3A', unitId: '3A-U2', unitName: U('3A-U2').name,
-    type: 'jianbian', latex: '25 \\times 7 \\times 4', answer: '25 × 4 × 7 = 100 × 7 = 700', answerLines: ['25 \\times 7 \\times 4', '= 100 \\times 7', '= 700'],
   },
   {
     id: '3A-U2-F1', grade: '3A', unitId: '3A-U2', unitName: U('3A-U2').name,
@@ -131,7 +114,7 @@ export const QUESTIONS: Question[] = [
   {
     id: '3A-U4-F1', grade: '3A', unitId: '3A-U4', unitName: U('3A-U4').name,
     type: 'tiankong',
-    text: '一年有______个月，其中大月有______个，每月有______天。',
+    text: '一年有______个月，其中大月有______个，每个大月有______天。',
     answer: '12；7；31',
   },
   {
@@ -145,10 +128,6 @@ export const QUESTIONS: Question[] = [
     type: 'tiankong',
     text: '2026 年是______年（填“平”或“闰”），2 月有______天。',
     answer: '平；28',
-  },
-  {
-    id: '3A-U4-T1', grade: '3A', unitId: '3A-U4', unitName: U('3A-U4').name,
-    type: 'tuoshi', latex: '31 \\times 7 + 30 \\times 4 + 28', answer: '217 + 120 + 28 = 365', answerLines: ['31 \\times 7 + 30 \\times 4 + 28', '= 217 + 120 + 28', '= 365'],
   },
   {
     id: '3A-U4-F4', grade: '3A', unitId: '3A-U4', unitName: U('3A-U4').name,
