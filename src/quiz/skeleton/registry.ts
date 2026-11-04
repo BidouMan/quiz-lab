@@ -4,7 +4,7 @@
  */
 import type { Level } from '../types.ts'
 import type { Combo, Scene, Skeleton, SkeletonBand } from './types.ts'
-import { DIVISION_SCENES, PERIMETER_SCENES, DATE_SCENES, TWO_STEP_SCENES, MULDIV_SCENES, AREA_SCENES, MULTIPLICATION_SCENES, DIVISION_FILL_SCENES, MULTIPLICATION_FILL_SCENES, ROUTE_SCENES, MATH_PLAZA_SCENES, REVIEW_SCENES } from './scenes.ts'
+import { DIVISION_SCENES, PERIMETER_SCENES, DATE_SCENES, TWO_STEP_SCENES, MULDIV_SCENES, AREA_SCENES, MULTIPLICATION_SCENES, DIVISION_FILL_SCENES, MULTIPLICATION_FILL_SCENES, ROUTE_SCENES, MATH_PLAZA_SCENES, REVIEW_SCENES, SHAPE_SCENES } from './scenes.ts'
 import { U6_PERIMETER_SKELETONS } from './u6-perimeter.ts'
 import { U4_DIVISION_SKELETONS } from './u4-division.ts'
 import { U5_DATE_SKELETONS } from './u5-date.ts'
@@ -39,6 +39,10 @@ import { U8_MATH_PLAZA_WORD_SKELETONS } from './u8-math-plaza-word.ts'
 import { U8_MATH_PLAZA_WORD_BANDS } from './u8-math-plaza-word.bands.ts'
 import { U9_REVIEW_WORD_SKELETONS } from './u9-review-word.ts'
 import { U9_REVIEW_WORD_BANDS } from './u9-review-word.bands.ts'
+import { U3_SHAPES_FILL_SKELETONS } from './u3-shapes-fill.ts'
+import { U3_SHAPES_FILL_BANDS } from './u3-shapes-fill.bands.ts'
+import { U3_SHAPES_WORD_SKELETONS } from './u3-shapes-word.ts'
+import { U3_SHAPES_WORD_BANDS } from './u3-shapes-word.bands.ts'
 import { attachBands } from './bands.ts'
 
 export interface SkeletonPackage {
@@ -282,6 +286,32 @@ export const PACKAGES: SkeletonPackage[] = [
     scenes: REVIEW_SCENES,
     skeletons: U9_REVIEW_WORD_SKELETONS,
     bands: U9_REVIEW_WORD_BANDS,
+    matchSceneUnit: false,
+  },
+  {
+    id: '3A-U3|tiankong',
+    slug: 'u3-shapes',
+    grade: '3A',
+    unitId: '3A-U3',
+    unitName: '三角形与四边形',
+    type: 'tiankong',
+    title: '三角形、四边形与角',
+    scenes: SHAPE_SCENES,
+    skeletons: U3_SHAPES_FILL_SKELETONS,
+    bands: U3_SHAPES_FILL_BANDS,
+    matchSceneUnit: false,
+  },
+  {
+    id: '3A-U3|word',
+    slug: 'u3-shapes-word',
+    grade: '3A',
+    unitId: '3A-U3',
+    unitName: '三角形与四边形',
+    type: 'word',
+    title: '图形手工里的三角形与四边形',
+    scenes: SHAPE_SCENES,
+    skeletons: U3_SHAPES_WORD_SKELETONS,
+    bands: U3_SHAPES_WORD_BANDS,
     matchSceneUnit: false,
   },
 ]

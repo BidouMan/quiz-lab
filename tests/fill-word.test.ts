@@ -199,11 +199,12 @@ test('题型可用性：填空/应用题按单元与难度动态放开，不可�
   const wrongLevel = typeAvailability({ ...base, level: 'L1' }, TEMPLATE)
   assert.equal(wrongLevel.tiankong.enabled, true)
 
-  const noRules = typeAvailability({ ...base, unitIds: ['3A-U3'] }, TEMPLATE)
-  assert.equal(noRules.tiankong.enabled, false)
-  assert.match(noRules.tiankong.reason, /没有填空生成规则/)
-  assert.equal(noRules.word.enabled, false)
-  assert.match(noRules.word.reason, /没有应用题生成规则/)
+  // U3 已接入图形骨架包：填空与应用都应走骨架，不再落到旧题库
+  const u3 = typeAvailability({ ...base, unitIds: ['3A-U3'] }, TEMPLATE)
+  assert.equal(u3.tiankong.enabled, true)
+  assert.equal(u3.tiankong.source, 'skeleton')
+  assert.equal(u3.word.enabled, true)
+  assert.equal(u3.word.source, 'skeleton')
 
   const noBranch = typeAvailability(base, { ...TEMPLATE, word: false })
   assert.equal(noBranch.word.enabled, false)

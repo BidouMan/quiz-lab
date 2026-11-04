@@ -204,6 +204,14 @@ function numbersIn(text: string): number[] {
 
 function expectedAnswer(skeleton: Skeleton, index: number, params: Record<string, number>, scene: Scene): { text: string; numbers: number[] } {
   const formula = skeleton.formulas[index]
+  const choices = skeleton.answerChoices?.[index]
+  if (choices) {
+    const choiceIndex = evalIndependent(formula, params)
+    if (!Number.isInteger(choiceIndex) || choiceIndex < 0 || choiceIndex >= choices.length) {
+      throw new Error(`独立复核：选项下标越界 ${formula} = ${choiceIndex}`)
+    }
+    return { text: choices[choiceIndex], numbers: [] }
+  }
   if (skeleton.judge) {
     const match = /\s*(<=|>=|<|>)\s*/.exec(formula)
     if (!match) throw new Error('独立复核：判断式缺少比较符')
@@ -292,6 +300,13 @@ export function verifyQuestion(question: PilotQuestion, combo: Combo): VerifyIss
     const actual = question.answers[index]
     if (actual == null) {
       push('answer-missing', `缺少第 ${index + 1} 问答案`)
+      continue
+    }
+    // 选项题：答案可能是文字（锐角/正方形/①…），按文字逐字比对，不能只看数字个数
+    if (active.answerChoices?.[index]) {
+      if (actual !== expected.text) {
+        push('answer-text', `第 ${index + 1} 问答案错：${actual} 应为 ${expected.text}`)
+      }
       continue
     }
     const actualNumbers = numbersIn(actual)

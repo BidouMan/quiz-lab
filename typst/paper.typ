@@ -86,6 +86,45 @@
 
 // 图形（复用原 GeometryFigure 的尺寸比例：长方形 32×19mm、正方形 19×19mm）
 // 竖向标注列 13mm，配 box 禁折行，避免 “5 cm” 在窄列里被拆成两行
+#let fig-stroke(kind) = if kind == "dashed" {
+  (paint: luma(140), thickness: 0.5pt, dash: "dashed")
+} else if kind == "thin" {
+  0.45pt
+} else if kind == "bold" {
+  1pt
+} else {
+  0.75pt
+}
+
+// 通用图形：spec 由题目数据给出，坐标单位 mm，原点在左上角
+#let draw-fig(spec) = box(width: spec.w * 1mm, height: spec.h * 1mm)[
+  #for s in spec.shapes {
+    let pts = s.points
+    let n = pts.len()
+    let segments = if s.at("closed", default: false) { n } else { n - 1 }
+    for i in range(segments) {
+      let p1 = pts.at(i)
+      let p2 = pts.at(if i + 1 < n { i + 1 } else { 0 })
+      place(line(
+        start: (p1.at(0) * 1mm, p1.at(1) * 1mm),
+        end: (p2.at(0) * 1mm, p2.at(1) * 1mm),
+        stroke: fig-stroke(s.at("stroke", default: "solid")),
+      ))
+    }
+  }
+  #for l in spec.at("labels", default: ()) {
+    place(
+      top + left,
+      dx: l.x * 1mm,
+      dy: l.y * 1mm,
+      text(
+        size: l.at("size", default: 9) * 1pt,
+        weight: if l.at("bold", default: false) { "bold" } else { "regular" },
+      )[#l.text],
+    )
+  }
+]
+
 #let geom-fig(kind) = {
   let side-label(s) = pad(right: 1mm, align(right + horizon)[#box(text(size: 9pt)[#s])])
   if kind == "rect" {
@@ -140,7 +179,7 @@
     ]
   } else if it.kind == "fill" {
     // 填空恒定通栏：不参与半栏配对；左对齐按内容自然延伸，不拉伸行内空白
-    par(justify: false)[
+    let body = [
       #lead
       #for p in it.parts {
         if "t" in p {
@@ -152,13 +191,37 @@
         }
       }
     ]
+    // 图形题：文字在左、图在右
+    if it.at("fig", default: none) != none {
+      grid(
+        columns: (1fr, auto),
+        column-gutter: 4mm,
+        align: horizon,
+        body,
+        draw-fig(it.fig),
+      )
+    } else {
+      body
+    }
   } else if it.kind == "word" {
     // 应用题恒定通栏：题干自然折行，下方纯留白作答（不画横线）
-    [
+    let body = [
       #par(justify: true)[#lead #it.text]
       #v(1.5mm)
       #block(height: it.workLines * 8.5mm)
     ]
+    // 图形题：题干与作答区在左，图形靠右
+    if it.at("fig", default: none) != none {
+      grid(
+        columns: (1fr, auto),
+        column-gutter: 4mm,
+        align: (left + top, right + top),
+        body,
+        draw-fig(it.fig),
+      )
+    } else {
+      body
+    }
   } else if it.kind == "compare" {
     grid(
       columns: (auto, auto, auto),

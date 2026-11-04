@@ -107,7 +107,7 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
         <em v-if="unit.unconfirmed" class="tag">推定</em>
       </label>
       <p v-if="config.unitIds.length === 0" class="hint">至少选择一个单元才能出题。</p>
-      <p v-else class="hint">只列三上已建骨架包的 8 个单元（图形单元 U3 暂未建包）。</p>
+      <p v-else class="hint">只列三上已建骨架包的 9 个单元。</p>
     </section>
 
     <section class="group">

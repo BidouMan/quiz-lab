@@ -161,6 +161,17 @@ function judgeSteps(skeleton: Skeleton, params: Params, comparison: { left: numb
 function solveAsk(skeleton: Skeleton, index: number, params: Params, scene: Scene): AskResult {
   const formula = skeleton.formulas[index]
   const unit = resolveUnit(skeleton.answerUnits?.[index] ?? skeleton.unit, scene)
+  const choices = skeleton.answerChoices?.[index]
+  if (choices) {
+    const choiceIndex = evalFormula(formula, params)
+    if (!Number.isInteger(choiceIndex) || choiceIndex < 0 || choiceIndex >= choices.length) {
+      throw new Error(`选项下标越界: ${formula} = ${choiceIndex}`)
+    }
+    return {
+      text: choices[choiceIndex],
+      steps: [`由图形判断，答案是「${choices[choiceIndex]}」。`],
+    }
+  }
   if (skeleton.judge) {
     if (index !== 0) throw new Error('判断题只能有一问')
     return judgeSteps(skeleton, params, evalComparison(formula, params))
@@ -265,6 +276,7 @@ function buildQuestion(
     answers,
     steps,
     answerUnits,
+    fig: skeleton.figure?.(params),
     workLines: skeleton.workLines ?? Math.min(7, 2 + Math.max(1, asks.length) * 2 + (skeleton.judge ? 1 : 0)),
   }
 }
@@ -394,6 +406,7 @@ export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper
               parts: splitFillLocal(question.stem, question.answers),
               answers: question.answers,
               solution: [question.answers.join('；')],
+              fig: question.fig,
             })),
           },
         ]
@@ -409,6 +422,7 @@ export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper
               workLines: question.workLines,
               answers: question.answers,
               solution: question.steps,
+              fig: question.fig,
             })),
           },
         ]

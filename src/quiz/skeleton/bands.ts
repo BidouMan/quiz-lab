@@ -37,6 +37,8 @@ export function resolveSkeleton(skeleton: Skeleton, level: Level): Skeleton {
     workLines: item.workLines ?? skeleton.workLines,
     unit: item.unit ?? skeleton.unit,
     answerUnits: item.answerUnits ?? skeleton.answerUnits,
+    answerChoices: item.answerChoices ?? skeleton.answerChoices,
+    figure: item.figure ?? skeleton.figure,
     sceneUnit: item.sceneUnit ?? skeleton.sceneUnit,
     sceneTags: item.sceneTags ?? skeleton.sceneTags,
   }

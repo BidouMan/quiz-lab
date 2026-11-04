@@ -82,6 +82,8 @@ export interface SkeletonBand {
   guard?: (p: Record<string, number>) => boolean
   asks?: string[]
   formulas?: string[]
+  answerChoices?: string[][]
+  figure?: (p: Record<string, number>) => FigureSpec
   askModes?: AskMode[]
   remainderUnit?: string
   workLines?: number
@@ -89,6 +91,36 @@ export interface SkeletonBand {
   answerUnits?: string[]
   sceneUnit?: string
   sceneTags?: string[]
+}
+
+/** 图形标注/图形元语：坐标单位为 mm，原点在画布左上角 */
+export interface FigureLabel {
+  x: number
+  y: number
+  text: string
+  size?: number
+  bold?: boolean
+}
+
+export type FigureStroke = 'solid' | 'dashed' | 'thin' | 'bold'
+
+export interface FigureShape {
+  /** 折线顶点；closed=true 时首尾相连 */
+  points: [number, number][]
+  closed?: boolean
+  stroke?: FigureStroke
+}
+
+export interface FigureSpec {
+  w: number
+  h: number
+  shapes: FigureShape[]
+  labels?: FigureLabel[]
+}
+
+/** 一个空位/一问的答案；answerChoices 存在时 formulas 求的是 0 起的选项下标 */
+export interface AnswerChoice {
+  choices: string[]
 }
 
 /**
@@ -123,6 +155,10 @@ export interface Skeleton {
   slots: Record<string, SlotSpec>
   /** 数值区间无法表达的额外约束（如 a×b > c×d、必须整除） */
   guard?: (p: Record<string, number>) => boolean
+  /** 答案选项：与 formulas 一一对应，formula 求 0 起下标；用于辨认/分类等文字答案 */
+  answerChoices?: string[][]
+  /** 按参数生成图形；坐标单位 mm，渲染为「文字在左、图在右」 */
+  figure?: (p: Record<string, number>) => FigureSpec
   /** 三档约束；缺省档沿用本骨架的 slots/guard/asks/formulas */
   bands?: Partial<Record<Level, SkeletonBand>>
 }
@@ -172,6 +208,8 @@ export interface PilotQuestion {
   asks: string[]
   answers: string[]
   steps: string[]
+  /** 随题图形；坐标单位 mm */
+  fig?: FigureSpec
   answerUnits: string[]
   workLines: number
 }
@@ -183,6 +221,8 @@ export interface PilotItem {
   parts?: ({ t: string } | { m: string } | { b: number })[]
   text?: string
   workLines?: number
+  /** 图形题：渲染在题干右侧 */
+  fig?: FigureSpec
   answers?: string[]
   solution?: string[]
 }

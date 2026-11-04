@@ -1,4 +1,5 @@
 import type { Level } from '../quiz/types.ts'
+import type { FigureSpec } from '../quiz/skeleton/types.ts'
 
 export type AppType =
   | 'kousuan'
@@ -84,7 +85,7 @@ export interface TypstItem {
   parts?: FillPart[]
   pre?: string
   post?: string
-  fig?: 'rect' | 'square'
+  fig?: 'rect' | 'square' | FigureSpec
   text?: string
   workLines?: number
   /** 填空/应用题的答案（模板不渲染，供参考页与导出使用） */
