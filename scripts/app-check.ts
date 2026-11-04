@@ -81,10 +81,16 @@ for (const scenario of scenarios) {
   const count = scenario.count ?? recommendedCount(base)
   const config: AppConfig = { ...base, count }
 
+  const buildStart = Date.now()
   const result = buildPaper({ config, template, seed: 20261104, memory })
+  const buildMs = Date.now() - buildStart
+  const runtime = result.stats.runtimeCheck
   console.log(`\n===== ${scenario.label}（${scenario.slug}）=====`)
   console.log(
     `目标 ${count} / 实出 ${result.count} · 骨架 ${result.stats.skeleton} · 旧生成器 ${result.stats.legacy} · 静态兜底 ${result.stats.fallback} · 去重命中 ${result.stats.duplicates}`,
+  )
+  console.log(
+    `运行时复核 ${runtime.checked} 题（失败 ${runtime.failed} / 剔除 ${runtime.dropped} / 重生成通过 ${runtime.regenerated}）· 出卷耗时 ${buildMs} ms`,
   )
   for (const section of result.data.sections) {
     console.log(`  ${section.title}：${section.items.length} 题`)

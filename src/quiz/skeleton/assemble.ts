@@ -317,6 +317,92 @@ function compatibleScenes(combo: Combo, skeleton: Skeleton, pool: Scene[]): Scen
   })
 }
 
+/** 单题输出卷面条目；出卷与复核后重生成共用，保证两条路径渲染结构一致 */
+export function toPilotItem(question: PilotQuestion, combo: Combo): PilotItem {
+  if (combo.type === 'tiankong') {
+    return {
+      id: question.id,
+      kind: 'fill',
+      parts: splitFillLocal(question.stem, question.answers),
+      answers: question.answers,
+      solution: [question.answers.join('；')],
+      fig: question.fig,
+    }
+  }
+  return {
+    id: question.id,
+    kind: 'word',
+    text: question.stem,
+    workLines: question.workLines,
+    answers: question.answers,
+    solution: question.steps,
+    fig: question.fig,
+  }
+}
+
+/**
+ * 复核失败后的单题重生成：复用同一句式（骨架）与同一难度档，换场景与数值重出一题。
+ * 只允许通过传入的 used 集合约束卷内去重；调用方负责先释放原题的占用。
+ */
+export function rebuildQuestion(input: {
+  combo: Combo
+  skeletonId: string
+  seed: number
+  /** 题号，用于生成唯一 id */
+  index: number
+  used?: UsedSets
+}): PilotQuestion | null {
+  const { combo, skeletonId, seed, index } = input
+  const used = input.used ?? createUsedSets()
+  const skeleton = combo.skeletons
+    .map((item) => resolveSkeleton(item, combo.level))
+    .find((item) => item.id === skeletonId)
+  if (!skeleton) return null
+  const rng = createRng(seed)
+  const scenes = shuffle(
+    rng,
+    compatibleScenes(combo, skeleton, combo.scenes).filter((scene) => !used.scenes.has(sceneKey(scene))),
+  )
+  for (const scene of scenes) {
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const params = generateParams(skeleton, rng)
+      if (!params) continue
+      const valuesKey = Object.keys(params)
+        .sort()
+        .map((name) => params[name])
+        .join(',')
+      if (used.values.has(valuesKey)) continue
+      let question: PilotQuestion
+      try {
+        question = buildQuestion(skeleton, scene, params, combo, index)
+      } catch {
+        continue
+      }
+      if (stemChars(question.stem) > MAX_STEM_CHARS) continue
+      const textKey = question.stem.replace(/\d+/g, '#')
+      if (used.texts.has(textKey)) continue
+      used.values.add(valuesKey)
+      used.texts.add(textKey)
+      used.scenes.add(sceneKey(scene))
+      return question
+    }
+  }
+  return null
+}
+
+/** 释放一题的卷内去重占用，供复核剔除/重生成时腾出位置 */
+export function releaseQuestion(question: PilotQuestion, used: UsedSets): void {
+  used.scenes.delete(question.sceneKey)
+  used.values.delete(
+    Object.keys(question.params)
+      .sort()
+      .map((name) => question.params[name])
+      .join(','),
+  )
+  used.texts.delete(question.stem.replace(/\d+/g, '#'))
+  used.skeletons.delete(`${question.comboId}|${question.skeletonId}`)
+}
+
 export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper {
   const rng = createRng(options.seed)
   const used = options.used ?? createUsedSets()

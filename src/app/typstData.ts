@@ -200,24 +200,39 @@ function toStaticItem(source: Question, type: QuestionType, index: number): Typs
   if (type === 'kousuan') {
     if (!source.latex) return null
     const expr = toMath(source.latex)
-    return { id: `${source.id}-f${index}`, kind: 'kousuan', expr, display: expr.includes('display(frac') }
+    return {
+      id: `${source.id}-f${index}`,
+      kind: 'kousuan',
+      expr,
+      display: expr.includes('display(frac'),
+      answers: [source.answer],
+    }
   }
 
   if (type === 'chushi') {
     if (!source.operands || !source.op) return null
     const [left, right] = source.operands
     const expr = `${left} ${VERT_SYMBOL[source.op]} ${right} =`
-    return { id: `${source.id}-f${index}`, kind: 'chushi', expr, blank: 30 }
+    return { id: `${source.id}-f${index}`, kind: 'chushi', expr, blank: 30, answers: [source.answer] }
   }
 
   if (type === 'tuoshi' || type === 'jianbian') {
     if (!source.latex) return null
-    return { id: `${source.id}-f${index}`, kind: 'tuoshi', expr: toMath(source.latex), lines: 3 }
+    return {
+      id: `${source.id}-f${index}`,
+      kind: 'tuoshi',
+      expr: toMath(source.latex),
+      lines: 3,
+      answers: [source.answer],
+      solution: source.answerLines,
+    }
   }
 
   if (type === 'tiankong') {
     if (!source.text) return null
-    return { id: `${source.id}-f${index}`, kind: 'fill', parts: splitFill(source.text) }
+    // 旧题库答案用“；”分隔，与生成器一致；保留答案供运行时复核做非空/数量校验
+    const answers = source.answer ? source.answer.split('；') : []
+    return { id: `${source.id}-f${index}`, kind: 'fill', parts: splitFill(source.text, answers), answers }
   }
 
   return null

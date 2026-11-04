@@ -11,8 +11,24 @@ import type { MemoryStore } from '../quiz/memory.ts'
 import { generate } from '../quiz/generate.ts'
 import { fillLevelsFor, fillSupports, generateFill } from '../quiz/fill.ts'
 import { generateWord, wordLevelsFor, wordSupports } from '../quiz/word.ts'
-import { buildComboPaper, createUsedSets, type UsedSets } from '../quiz/skeleton/index.ts'
-import type { Combo } from '../quiz/skeleton/types.ts'
+import {
+  buildComboPaper,
+  createUsedSets,
+  rebuildQuestion,
+  releaseQuestion,
+  toPilotItem,
+  type UsedSets,
+} from '../quiz/skeleton/index.ts'
+import type { Combo, PilotQuestion } from '../quiz/skeleton/types.ts'
+import {
+  admitWithRetry,
+  emptyRuntimeCheck,
+  recordCheck,
+  verifyCalcQuestion,
+  verifyItemStructure,
+  verifySkeletonQuestion,
+  verifyStaticItem,
+} from './runtimeCheck.ts'
 import { skeletonCombo, skeletonLevels, skeletonUnits, type GeneratedType } from './skeletonSource.ts'
 import { latexToTypst } from '../quiz/typst.ts'
 import {
@@ -474,6 +490,8 @@ interface TypeBuild {
   duplicates: number
   kpNames: string[]
   notes: string[]
+  /** 本次生成的运行时复核结果 */
+  check: BuildStats['runtimeCheck']
 }
 
 function emptyBuild(): TypeBuild {
@@ -486,6 +504,7 @@ function emptyBuild(): TypeBuild {
     duplicates: 0,
     kpNames: [],
     notes: [],
+    check: emptyRuntimeCheck(),
   }
 }
 
@@ -524,7 +543,15 @@ function buildCalcType(
       let countFromUnit = 0
       for (const item of pool) {
         if (added >= limit) break
-        if (add(item)) {
+        // 静态兜底不重生成：只做结构与答案非空校验，不合格直接剔除并如实少题
+        const outcome = admitWithRetry<TypstItem>({
+          initial: item,
+          verify: verifyStaticItem,
+          regenerate: () => null,
+        })
+        recordCheck(build.check, outcome, `${unit.unitName}·旧题库${typeLabel(type)}`)
+        if (outcome.accepted == null) continue
+        if (add(outcome.accepted)) {
           added++
           countFromUnit++
         }
@@ -535,6 +562,39 @@ function buildCalcType(
       }
     }
     return added
+  }
+
+  /** 规则库计算题：生成后独立用 evalLatex 重算；失败有限次重生成，仍失败则剔除 */
+  const takeQuestions = (questions: GeneratedQuestion[], unit: Unit, unitSeed: number): void => {
+    for (const question of questions) {
+      const outcome = admitWithRetry<GeneratedQuestion>({
+        initial: question,
+        verify: verifyCalcQuestion,
+        regenerate: (attempt) => {
+          try {
+            const retry = generate({
+              grade: config.grade,
+              unitId: unit.unitId,
+              type,
+              level: config.level,
+              count: 1,
+              seed: unitSeed + attempt * 1009,
+              memory,
+            })
+            return retry.questions[0] ?? null
+          } catch {
+            return null
+          }
+        },
+      })
+      recordCheck(build.check, outcome, `${unit.unitName}·${typeLabel(type)}`)
+      if (outcome.accepted == null) continue
+      const accepted = outcome.accepted
+      if (add(questionToItem(accepted))) {
+        build.generated++
+        if (!build.kpNames.includes(accepted.kpName)) build.kpNames.push(accepted.kpName)
+      }
+    }
   }
 
   if (supporting.length > 0) {
@@ -551,12 +611,7 @@ function buildCalcType(
           seed: seed + index * 131,
           memory,
         })
-        for (const question of result.questions) {
-          if (add(questionToItem(question))) {
-            build.generated++
-            if (!build.kpNames.includes(question.kpName)) build.kpNames.push(question.kpName)
-          }
-        }
+        takeQuestions(result.questions, unit, seed + index * 131)
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error)
         build.notes.push(`${unit.unitName}：生成失败（${reason}）`)
@@ -582,10 +637,7 @@ function buildCalcType(
           })
           for (const question of result.questions) {
             if (build.items.length >= quota) break
-            if (add(questionToItem(question))) {
-              build.generated++
-              if (!build.kpNames.includes(question.kpName)) build.kpNames.push(question.kpName)
-            }
+            takeQuestions([question], unit, seed + round * 977 + index * 131)
           }
         } catch {
           // 补采失败不再重复记原因
@@ -607,19 +659,28 @@ interface GeneratedPiece {
   kpName: string
 }
 
-/** 骨架包出题：单包最多 30 条骨架，超额部分截断并提示 */
+/** 骨架题必须同时保留可复核的 PilotQuestion，复核只从参数重算，不回看组装结果 */
+interface SkeletonPiece extends GeneratedPiece {
+  question: PilotQuestion
+  combo: Combo
+}
+
+/** 骨架包出题：题量超过单包骨架数时，由 assemble 内部按「同骨架换场景/数字」复用补足，不再截断 */
 function skeletonPieces(
   combo: Combo,
   count: number,
   seed: number,
   used: UsedSets,
   kpName: string,
-): GeneratedPiece[] {
-  const limited = Math.min(count, 30)
-  const paper = buildComboPaper(combo, { count: limited, seed, used })
-  return paper.data.sections
-    .flatMap((section) => section.items)
-    .map((item) => ({ item: item as TypstItem, kpName }))
+): SkeletonPiece[] {
+  const paper = buildComboPaper(combo, { count, seed, used })
+  const items = paper.data.sections.flatMap((section) => section.items) as TypstItem[]
+  return paper.questions.map((question, index) => ({
+    item: items[index],
+    kpName,
+    question,
+    combo,
+  }))
 }
 
 /**
@@ -677,9 +738,31 @@ function buildGeneratedType(input: {
     try {
       const pieces = skeletonPieces(combo, count, unitSeed, skeletonUsed, `${unit.unitName}·${label}`)
       let added = 0
+      let nextIndex = 1000
       for (const piece of pieces) {
         if (build.items.length >= quota) break
-        if (add(piece.item, 'skeleton', piece.kpName)) added++
+        // 骨架题走 verify.ts 的独立求值器；失败先同句式换参数重生成，仍失败则剔除
+        const outcome = admitWithRetry<SkeletonPiece>({
+          initial: piece,
+          verify: (candidate) => verifySkeletonQuestion(candidate.question, candidate.combo),
+          regenerate: (attempt) => {
+            const question = rebuildQuestion({
+              combo,
+              skeletonId: piece.question.skeletonId,
+              seed: unitSeed + attempt * 1009,
+              index: nextIndex++,
+              used: skeletonUsed,
+            })
+            if (!question) return null
+            return { item: toPilotItem(question, combo), kpName: piece.kpName, question, combo }
+          },
+          onReject: (candidate) => releaseQuestion(candidate.question, skeletonUsed),
+        })
+        recordCheck(build.check, outcome, `${unit.unitName}·骨架${label}`)
+        if (outcome.accepted == null) continue
+        if (add(outcome.accepted.item, 'skeleton', outcome.accepted.kpName)) {
+          added++
+        }
       }
       return added
     } catch (error) {
@@ -695,7 +778,21 @@ function buildGeneratedType(input: {
       let added = 0
       for (const piece of pieces) {
         if (build.items.length >= quota) break
-        if (add(piece.item, 'legacy', piece.kpName)) added++
+        // 旧生成器的兜底题至少做结构 + 答案非空校验；失败换种子重生成，仍失败则剔除
+        const outcome = admitWithRetry<GeneratedPiece>({
+          initial: piece,
+          verify: (candidate) => verifyItemStructure(candidate.item),
+          regenerate: (attempt) => {
+            try {
+              return runLegacy(unit, 1, unitSeed + attempt * 1009)[0] ?? null
+            } catch {
+              return null
+            }
+          },
+        })
+        recordCheck(build.check, outcome, `${unit.unitName}·旧${label}生成器`)
+        if (outcome.accepted == null) continue
+        if (add(outcome.accepted.item, 'legacy', outcome.accepted.kpName)) added++
       }
       return added
     } catch (error) {
@@ -741,7 +838,14 @@ function buildGeneratedType(input: {
       let countFromUnit = 0
       for (const item of staticItemsFor(config.grade, unit.unitId, type)) {
         if (build.items.length >= quota) break
-        if (add(item, 'static', '')) countFromUnit++
+        const outcome = admitWithRetry<TypstItem>({
+          initial: item,
+          verify: verifyStaticItem,
+          regenerate: () => null,
+        })
+        recordCheck(build.check, outcome, `${unit.unitName}·旧题库${label}`)
+        if (outcome.accepted == null) continue
+        if (add(outcome.accepted, 'static', '')) countFromUnit++
       }
       if (countFromUnit > 0) {
         build.notes.push(`${unit.unitName}：无${label}生成规则，旧题库兜底 ${countFromUnit} 题`)
@@ -823,10 +927,18 @@ function buildSampleType(type: AppType, quota: number, used: Set<string>): TypeB
   const pool = STATIC_SAMPLES[type] ?? []
   for (const item of pool) {
     if (build.items.length >= quota) break
-    const key = itemKey(item)
+    // 静态示例题不是兜底题库：只做结构校验，不合格不出现在卷面
+    const outcome = admitWithRetry<TypstItem>({
+      initial: item,
+      verify: verifyItemStructure,
+      regenerate: () => null,
+    })
+    recordCheck(build.check, outcome, `${typeLabel(type)}·静态示例`)
+    if (outcome.accepted == null) continue
+    const key = itemKey(outcome.accepted)
     if (used.has(key)) continue
     used.add(key)
-    build.items.push(item)
+    build.items.push(outcome.accepted)
     build.fallback++
   }
   if (build.items.length > 0) {
@@ -893,20 +1005,34 @@ export function buildPaper(input: {
     duplicates: 0,
     kpNames: [],
     unitNames: [],
+    runtimeCheck: emptyRuntimeCheck(),
   }
   const notes: string[] = []
+  const check = stats.runtimeCheck
   for (const build of builds.values()) {
     stats.generated += build.generated
     stats.skeleton += build.skeleton
     stats.legacy += build.legacy
     stats.fallback += build.fallback
     stats.duplicates += build.duplicates
+    check.checked += build.check.checked
+    check.failed += build.check.failed
+    check.dropped += build.check.dropped
+    check.regenerated += build.check.regenerated
+    for (const detail of build.check.details) {
+      if (check.details.length < 20 && !check.details.includes(detail)) check.details.push(detail)
+    }
     for (const name of build.kpNames) {
       if (!stats.kpNames.includes(name)) stats.kpNames.push(name)
     }
     for (const note of build.notes) {
       if (!notes.includes(note)) notes.push(note)
     }
+  }
+  if (check.dropped > 0) {
+    notes.push(
+      `运行时复核：复核 ${check.checked} 题，失败 ${check.failed} 题，剔除 ${check.dropped} 题（${check.details.join('；')}）`,
+    )
   }
 
   for (const type of skipped) {

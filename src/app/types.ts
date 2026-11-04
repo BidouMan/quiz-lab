@@ -107,6 +107,20 @@ export interface TypstPaperData {
   sections: TypstSection[]
 }
 
+/** 出卷运行时复核统计（界面必须展示，不能只写日志） */
+export interface RuntimeCheckStats {
+  /** 送进复核的题数（不含重生成候选） */
+  checked: number
+  /** 首次复核不通过、需要重生成或剔除的题数 */
+  failed: number
+  /** 重生成后仍不通过、最终从卷面剔除的题数 */
+  dropped: number
+  /** 经重生成后通过复核、留在卷面的题数 */
+  regenerated: number
+  /** 剔除原因摘要 */
+  details: string[]
+}
+
 /** 出卷统计，供界面一行摘要使用 */
 export interface BuildStats {
   requested: number
@@ -124,6 +138,8 @@ export interface BuildStats {
   kpNames: string[]
   /** 实际覆盖的单元名称 */
   unitNames: string[]
+  /** 本次出卷的独立复核结果 */
+  runtimeCheck: RuntimeCheckStats
 }
 
 export interface BuildResult {
