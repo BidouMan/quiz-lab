@@ -50,11 +50,32 @@ const WEIGHTS: Record<AppType, number> = {
 
 const LEVELS: Level[] = ['L1', 'L2', 'L3']
 
+/**
+ * 教材里不存在的单元×题型，明确标为不适用，不再用旧题库兜底。
+ * 依据见 PROGRESS.md「0.4.0 第二项」与 docs/题目质量评审-v0.3.0.md 的 P1-A1。
+ */
+const NOT_APPLICABLE_CALC: Record<string, Partial<Record<CalcType, string>>> = {
+  '3A-U2': {
+    jianbian: '教材未单列简便运算，结合律、分配律属四年级内容（P1-A1 评审结论）',
+  },
+  '3A-U5': {
+    tuoshi: '本单元是年月日认识与经过时间，教材不设脱式；时间计算由填空/应用题承载',
+  },
+  '3A-U7': {
+    kousuan: '“马拉松路线设计”是项目式学习单元，教材不设口算',
+    tuoshi: '项目式学习单元，教材不设脱式；路线长度由填空承载',
+  },
+  '3A-U8': {
+    kousuan: '数学广场是活动与图形玩法单元，教材不设口算',
+    tuoshi: '活动单元，教材不设脱式；图形玩法由填空/应用题承载',
+  },
+}
+
 export interface Availability {
   enabled: boolean
   reason: string
-  /** 题目来源：骨架包 / 规则库 / 旧生成器 / 静态题库；界面据此标明而不是静默混用 */
-  source?: 'skeleton' | 'rule' | 'legacy' | 'static'
+  /** 题目来源：骨架包 / 规则库 / 旧生成器 / 静态题库 / 教材不适用；界面据此标明而不是静默混用 */
+  source?: 'skeleton' | 'rule' | 'legacy' | 'static' | 'na'
 }
 
 export function isCalcType(type: AppType): type is CalcType {
@@ -125,6 +146,17 @@ export function typeAvailability(
       const supporting = units.filter((unit) => unitSupports(unit.unitId, type, config.level))
       if (supporting.length > 0) {
         result[type] = { enabled: true, reason: '', source: 'rule' }
+        continue
+      }
+      const naReasons = units
+        .map((unit) => NOT_APPLICABLE_CALC[unit.unitId]?.[type])
+        .filter((reason): reason is string => reason != null)
+      if (naReasons.length > 0) {
+        result[type] = {
+          enabled: false,
+          reason: `不适用：${[...new Set(naReasons)].join('；')}`,
+          source: 'na',
+        }
         continue
       }
       const levels = levelsFor(
@@ -328,6 +360,8 @@ function capacityOf(type: AppType, config: AppConfig): number {
   if (isCalcType(type)) {
     const supporting = unitIds.filter((unitId) => unitSupports(unitId, type, config.level))
     if (supporting.length > 0) return Number.POSITIVE_INFINITY
+    const notApplicable = unitIds.some((unitId) => NOT_APPLICABLE_CALC[unitId]?.[type] != null)
+    if (notApplicable) return 0
     return staticCountFor(config.grade, unitIds, type)
   }
   if (type === 'tiankong') {

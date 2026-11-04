@@ -313,8 +313,14 @@ const units: Unit[] = [
             L2: wf('perimeter'),
             L3: wf('perimeter'),
           },
+          tuoshi: {
+            // 长方形周长公式 (长+宽)×2 本身就是两步，固定乘 2 与单元对齐
+            L1: r('mix3', { pattern: '(a+b)*2', bracket: true, minOperand: 1, maxOperand: 6, maxResult: 24 }),
+            L2: r('mix3', { pattern: '(a+b)*2', bracket: true, minOperand: 5, maxOperand: 40, maxResult: 160 }),
+            L3: r('mix3', { pattern: '(a+b)*2', bracket: true, minOperand: 10, maxOperand: 99, maxResult: 400 }),
+          },
         },
-        '周长计算与反向求边长；L3 含“改围成正方形”的中间量。',
+        '周长计算与反向求边长；L3 含“改围成正方形”的中间量；脱式只出 (长+宽)×2。',
       ),
     ],
   },

@@ -558,6 +558,16 @@ function buildMix3(ctx: BuildContext): BuiltQuestion | null {
         values = [a, b, c0]
         break
       }
+      case '(a+b)*2': {
+        // 周长专用：固定乘 2，避免生成 (长+宽)×3 这类与单元无关的式子
+        const omin = Math.max(1, c.minOperand ?? 1)
+        const omax = Math.max(omin, maxOperand)
+        const a = randInt(rng, omin, omax)
+        const b = randInt(rng, omin, omax)
+        node = bin('×', bin('+', num(a), num(b)), num(2))
+        values = [a, b, 2]
+        break
+      }
       case '(a+b)/c': {
         const c0 = randInt(rng, 2, 9)
         const q = randInt(rng, 1, Math.max(1, Math.floor(maxResult / c0)))

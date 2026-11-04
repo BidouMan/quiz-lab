@@ -34,6 +34,7 @@ const SOURCE_LABELS: Record<string, string> = {
   rule: '规则库',
   legacy: '旧生成器',
   static: '静态题库',
+  na: '不适用',
 }
 
 function sourceLabel(type: AppType): string {
@@ -140,7 +141,7 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
           />
           <span :class="{ muted: !availability[option.type].enabled }">{{ option.label }}</span>
           <em
-            v-if="availability[option.type].enabled && sourceLabel(option.type)"
+            v-if="sourceLabel(option.type)"
             class="src"
             :class="availability[option.type].source"
           >
@@ -298,6 +299,10 @@ input:disabled {
 .src.static {
   border-color: #999;
   color: #555;
+}
+.src.na {
+  border-color: #9a5a5a;
+  color: #8a3a3a;
 }
 .type-reason.off {
   color: #8a4b00;
