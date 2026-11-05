@@ -1,6 +1,5 @@
 import { randInt, type Rng } from './rng.ts'
-import { renderRayScene, renderSegmentScene, type RayCellModel, type RaySpec } from './figure.ts'
-import type { FigureSpec } from './skeleton/types.ts'
+import { renderRayScene, type RayCellModel, type RaySpec } from './figure.ts'
 import type { FillDraft, FillFormName, Grade, Level } from './types.ts'
 
 /**
@@ -10,18 +9,6 @@ import type { FillDraft, FillFormName, Grade, Level } from './types.ts'
  * 走题干空位、答案、去重、跨卷记忆与运行时复核。figure.ts 只负责画图。
  */
 export type AngleFillForm = 'angle-count' | 'angle-classify' | 'angle-add-line'
-export type CountForm = 'count-triangles' | 'count-rectangles'
-
-/** 未接入出卷的计数方案小样（保留验证用，不参与填空生成） */
-export interface CountPiece {
-  text: string
-  fig: FigureSpec
-  blank: number
-  answer: string
-  form: CountForm
-  params: Record<string, number | string>
-  kpName: string
-}
 
 const BLANK = '____'
 
@@ -229,67 +216,4 @@ export function verifyAngleFill(form: AngleFillForm, params: Record<string, numb
     return [String(params.ask === 'added' ? m : ((m + 1) * m) / 2)]
   }
   return []
-}
-
-/**
- * 【方案验证·未接入出卷】数三角形：
- * 只数由图中已有线段围成的三角形。底边 AB 上有 k 个分点，顶点 C 向每个分点连线段，
- * 每个三角形都必须以 C 为一个顶点、从底边 k+2 个点中取两个，答案 C(k+2,2)。
- */
-export function makeCountTriangles(rng: Rng): CountPiece {
-  const k = randInt(rng, 1, 4)
-  const base = randInt(rng, 8, 12)
-  const height = randInt(rng, 6, 9)
-  const apexX = round1(base * (randInt(rng, 40, 60) / 100))
-  const apex: [number, number] = [apexX, 0]
-  const left: [number, number] = [0, height]
-  const right: [number, number] = [base, height]
-  const segments = [
-    { from: left, to: right },
-    { from: left, to: apex },
-    { from: right, to: apex },
-  ]
-  for (let index = 1; index <= k; index++) {
-    segments.push({ from: apex, to: [round1((base * index) / (k + 1)), height] as [number, number] })
-  }
-  const fig = renderSegmentScene({ segments })
-  const answer = ((k + 1) * (k + 2)) / 2
-  return {
-    text: `图中由已有线段围成的三角形一共有多少个？`,
-    fig,
-    blank: 1,
-    answer: String(answer),
-    form: 'count-triangles',
-    params: { form: 'count-triangles', k, base, height, apex: apexX },
-    kpName: '数三角形',
-  }
-}
-
-/**
- * 【方案验证·未接入出卷】数长方形：
- * m×n 的完整方格网，所有边都落在已有网格线上；答案 C(m+1,2)×C(n+1,2)。
- */
-export function makeCountRectangles(rng: Rng): CountPiece {
-  // 旋转视为同一种网格：固定 m ≥ n，2–5 共 10 种
-  const a = randInt(rng, 2, 5)
-  const b = randInt(rng, 2, 5)
-  const m = Math.max(a, b)
-  const n = Math.min(a, b)
-  const segments = []
-  for (let x = 0; x <= m; x++) {
-    segments.push({ from: [x, 0] as [number, number], to: [x, n] as [number, number] })
-  }
-  for (let y = 0; y <= n; y++) {
-    segments.push({ from: [0, y] as [number, number], to: [m, y] as [number, number] })
-  }
-  const answer = ((m * (m + 1)) / 2) * ((n * (n + 1)) / 2)
-  return {
-    text: `图中由已有线段围成的长方形一共有多少个？`,
-    fig: renderSegmentScene({ segments }),
-    blank: 1,
-    answer: String(answer),
-    form: 'count-rectangles',
-    params: { form: 'count-rectangles', m, n },
-    kpName: '数长方形',
-  }
 }

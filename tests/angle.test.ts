@@ -7,8 +7,6 @@ import {
   makeAngleAddLine,
   makeAngleClassify,
   makeAngleCount,
-  makeCountRectangles,
-  makeCountTriangles,
   verifyAngleFill,
   type AngleFillForm,
 } from '../src/quiz/angle.ts'
@@ -105,23 +103,6 @@ test('添线数角：增加数 = m，总数 = C(m+1,2)', () => {
       assert.deepEqual(verifyItemStructure(draftItem(draft)), [])
     }
   }
-})
-
-test('数三角形 / 数长方形：方案小样答案与独立枚举一致', () => {
-  const rng = createRng(123)
-  const rectangleKeys = new Set<string>()
-  for (let attempt = 0; attempt < 300; attempt++) {
-    const triangle = makeCountTriangles(rng)
-    const k = Number(triangle.params.k)
-    assert.equal(triangle.answer, String(combination(k + 2, 2)))
-
-    const rectangle = makeCountRectangles(rng)
-    const m = Number(rectangle.params.m)
-    const n = Number(rectangle.params.n)
-    assert.equal(rectangle.answer, String(combination(m + 1, 2) * combination(n + 1, 2)))
-    rectangleKeys.add(`${rectangle.params.m}x${rectangle.params.n}`)
-  }
-  assert.equal(rectangleKeys.size, 10, '2–5 的完整方格网应有 10 种（旋转视为同一种）')
 })
 
 test('角形态只在三上 U3，U6 与 3B 不出现', () => {

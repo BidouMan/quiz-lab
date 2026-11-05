@@ -166,10 +166,73 @@ test('图形与周长：信息不足必须被拒', () => {
 test('图形与周长：L1 只给条件求周长/认识图形，L3 含拼合/倍数关系', () => {
   const l1 = new Set(generateGeom({ grade: '3A', unitIds: UNITS_3A, level: 'L1', count: 10, seed: 3 }).items.map((p) => p.form))
   const l3 = new Set(generateGeom({ grade: '3A', unitIds: UNITS_3A, level: 'L3', count: 10, seed: 3 }).items.map((p) => p.form))
-  assert.deepEqual([...l1].sort(), ['count-shapes', 'recognize-name', 'rect-perimeter', 'square-perimeter', 'triangle-perimeter'])
+  assert.deepEqual(
+    [...l1].sort(),
+    [
+      'count-rectangles',
+      'count-shapes',
+      'count-triangles',
+      'recognize-name',
+      'rect-perimeter',
+      'square-perimeter',
+      'triangle-perimeter',
+    ],
+  )
   assert.ok(l3.has('combine'), 'L3 必须出现拼合后周长')
   assert.ok(l3.has('ratio'), 'L3 必须出现长是宽的几倍')
   assert.ok(!l1.has('combine'), 'L1 不应出现拼合题')
+})
+
+const combination2 = (n: number): number => (n * (n - 1)) / 2
+
+test('数图形：U8 三档各出满 30 题，答案只按 k / m,n 独立重算', () => {
+  for (const level of ['L1', 'L2', 'L3'] as const) {
+    const generated = generateGeom({ grade: '3A', unitIds: ['3A-U8'], level, count: 30, seed: 20261105 })
+    assert.equal(generated.items.length, 30, `${level} U8 应出满 30 题`)
+    const keys = new Set(generated.items.map((piece) => `${piece.form}|${JSON.stringify(piece.fig)}`))
+    assert.equal(keys.size, 30, `${level} 同卷不得出现同图`)
+    for (const piece of generated.items) {
+      assert.ok(piece.form === 'count-triangles' || piece.form === 'count-rectangles', `U8 只出数图形：${piece.form}`)
+      if (piece.form === 'count-triangles') {
+        const k = Number(piece.params.k)
+        assert.equal(piece.answer, String(combination2(k + 2)), `数三角形答案应由 k 独立重算：${piece.text}`)
+      } else {
+        const m = Number(piece.params.m)
+        const n = Number(piece.params.n)
+        assert.equal(
+          piece.answer,
+          String(combination2(m + 1) * combination2(n + 1)),
+          `数长方形答案应由 m,n 独立重算：${piece.text}`,
+        )
+      }
+      assert.deepEqual(verifyItemStructure(geomItem(piece)), [], `${level} ${piece.text}`)
+      assert.equal(piece.unit, '', '数图形不带长度单位')
+    }
+  }
+})
+
+test('数图形：U8 跨卷去重生效，第二卷不复用第一卷的图', () => {
+  const memory = new MemoryStore()
+  memory.beginPaper()
+  const first = generateGeom({ grade: '3A', unitIds: ['3A-U8'], level: 'L2', count: 10, seed: 11, memory })
+  const firstKeys = new Set(first.items.map((piece) => `${piece.form}|${JSON.stringify(piece.fig)}|${JSON.stringify(piece.params)}`))
+  memory.beginPaper()
+  const second = generateGeom({ grade: '3A', unitIds: ['3A-U8'], level: 'L2', count: 10, seed: 12, memory })
+  const secondKeys = second.items.map((piece) => `${piece.form}|${JSON.stringify(piece.fig)}|${JSON.stringify(piece.params)}`)
+  assert.equal(second.items.length, 10, '第二卷仍应出满 10 题')
+  assert.ok(secondKeys.every((key) => !firstKeys.has(key)), '跨卷不得复用上一卷的数图形题')
+  for (const piece of second.items) assert.deepEqual(verifyItemStructure(geomItem(piece)), [])
+})
+
+test('数图形：U9 复习单元继承 U3 图形、U6 周长与 U8 数图形', () => {
+  const u9 = generateGeom({ grade: '3A', unitIds: ['3A-U9'], level: 'L2', count: 30, seed: 20261106 })
+  assert.equal(u9.items.length, 30, 'U9 应出满 30 题')
+  const forms = new Set(u9.items.map((piece) => piece.form))
+  assert.ok(forms.has('count-triangles'), 'U9 应继承数三角形')
+  assert.ok(forms.has('count-rectangles'), 'U9 应继承数长方形')
+  assert.ok(forms.has('rect-perimeter'), 'U9 应继承周长题')
+  assert.ok(forms.has('count-shapes'), 'U9 应继承 U3 认识图形')
+  for (const piece of u9.items) assert.deepEqual(verifyItemStructure(geomItem(piece)), [], `${piece.form} ${piece.text}`)
 })
 
 test('图形与周长：只在所选单元内出图，不含 U3/U6 时不出', () => {

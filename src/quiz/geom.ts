@@ -1,7 +1,7 @@
 import { createRng, randInt, type Rng } from './rng.ts'
 import type { MemoryStore } from './memory.ts'
 import { shortHash, stableStringify } from './normalize.ts'
-import { renderFigure, type FigureModel } from './figure.ts'
+import { renderFigure, renderSegmentScene, type FigureModel } from './figure.ts'
 import type { FigureSpec } from './skeleton/types.ts'
 import type { Grade, Level } from './types.ts'
 
@@ -36,6 +36,8 @@ export type GeomForm =
   | 't-shape-perimeter'
   | 'join-squares-perimeter'
   | 'grid-perimeter'
+  | 'count-triangles'
+  | 'count-rectangles'
 
 export interface GeomPiece {
   text: string
@@ -61,10 +63,10 @@ export interface GeomOptions {
   memory?: MemoryStore
 }
 
-/** 图形题只在三上「三角形与四边形（U3）」和「周长（U6）」单元内出图 */
+/** 图形题只在三上「三角形与四边形（U3）」「周长（U6）」「数学广场（U8）」及复习单元 U9 内出图 */
 export function geomSupported(grade: Grade, unitIds: string[]): boolean {
   if (grade === '3B') return true
-  return unitIds.some((id) => id === '3A-U3' || id === '3A-U6')
+  return unitIds.some((id) => id === '3A-U3' || id === '3A-U6' || id === '3A-U8' || id === '3A-U9')
 }
 
 /** 所选单元是否有任一难度可出图形题 */
@@ -160,6 +162,8 @@ const KP = {
   tshape: 'T 形周长（平移）',
   joinSquares: '拼正方形后的周长',
   grid: '数方格求周长',
+  countTriangles: '数三角形',
+  countRectangles: '数长方形',
 }
 
 function makeRectPerim(rng: Rng): GeomPiece {
@@ -901,6 +905,69 @@ function makeGridPerim(rng: Rng): GeomPiece {
   }
 }
 
+/**
+ * 数三角形：底边上有 k 个分点，顶点 C 与每个分点都连线段。
+ * 三角形必须取 C 加底边上两点，答案 C(k+2,2)，只由 k 独立重算。
+ */
+function makeCountTriangles(rng: Rng): GeomPiece {
+  const k = randInt(rng, 1, 4)
+  const base = randInt(rng, 8, 12)
+  const height = randInt(rng, 6, 9)
+  const apexX = round1(base * (randInt(rng, 40, 60) / 100))
+  const apex: [number, number] = [apexX, 0]
+  const left: [number, number] = [0, height]
+  const right: [number, number] = [base, height]
+  const segments = [
+    { from: left, to: right },
+    { from: left, to: apex },
+    { from: right, to: apex },
+  ]
+  for (let index = 1; index <= k; index++) {
+    segments.push({ from: apex, to: [round1((base * index) / (k + 1)), height] as [number, number] })
+  }
+  const answer = ((k + 1) * (k + 2)) / 2
+  return {
+    text: '图中由已有线段围成的三角形一共有多少个？',
+    fig: renderSegmentScene({ segments }),
+    blank: 8,
+    answer: String(answer),
+    form: 'count-triangles',
+    params: { form: 'count-triangles', k, base, height, apex: apexX },
+    unit: '',
+    kpName: KP.countTriangles,
+  }
+}
+
+/**
+ * 数长方形：m×n 的完整方格网，所有边都落在已有网格线上。
+ * 答案 C(m+1,2)×C(n+1,2)，只由 m、n 独立重算。
+ */
+function makeCountRectangles(rng: Rng): GeomPiece {
+  // 旋转视为同一种网格：固定 m ≥ n，2–5 共 10 种
+  const a = randInt(rng, 2, 5)
+  const b = randInt(rng, 2, 5)
+  const m = Math.max(a, b)
+  const n = Math.min(a, b)
+  const segments: Array<{ from: [number, number]; to: [number, number] }> = []
+  for (let x = 0; x <= m; x++) {
+    segments.push({ from: [x, 0], to: [x, n] })
+  }
+  for (let y = 0; y <= n; y++) {
+    segments.push({ from: [0, y], to: [m, y] })
+  }
+  const answer = ((m * (m + 1)) / 2) * ((n * (n + 1)) / 2)
+  return {
+    text: '图中由已有线段围成的长方形一共有多少个？',
+    fig: renderSegmentScene({ segments }),
+    blank: 8,
+    answer: String(answer),
+    form: 'count-rectangles',
+    params: { form: 'count-rectangles', m, n },
+    unit: '',
+    kpName: KP.countRectangles,
+  }
+}
+
 /** 各配方在图上必须标出的已知量，按标注顺序排列（供测试与核对脚本逐题验证“标注足够”） */
 export const GEOM_FIGURE_GIVENS: Partial<Record<GeomForm, string[]>> = {
   'triangle-perimeter': ['b', 'c', 'a'],
@@ -984,6 +1051,13 @@ const U3_FORMS: Record<Level, GeomForm[]> = {
   L3: ['sticks', 'compose', 'classify'],
 }
 
+/** 3A-U8 数学广场：数图形玩法，只画图、答案按参数独立重算 */
+const U8_FORMS: Record<Level, GeomForm[]> = {
+  L1: ['count-triangles', 'count-rectangles'],
+  L2: ['count-triangles', 'count-rectangles'],
+  L3: ['count-triangles', 'count-rectangles'],
+}
+
 function formsForU6(level: Level): GeomForm[] {
   if (level === 'L1') return ['rect-perimeter', 'square-perimeter', 'triangle-perimeter']
   if (level === 'L2') {
@@ -1013,10 +1087,19 @@ function formsForU6(level: Level): GeomForm[] {
   ]
 }
 
-/** 某单元在某难度下可出的图形形态；U3/U6 之外为空 */
+/** 某单元在某难度下可出的图形形态；U3/U6/U8 之外为空 */
 export function geomUnitForms(unitId: string, level: Level): GeomForm[] {
   if (unitId === '3A-U3') return U3_FORMS[level]
   if (unitId === '3A-U6') return formsForU6(level)
+  if (unitId === '3A-U8') return U8_FORMS[level]
+  // U9 是整册复习：继承 U3 认识图形、U6 周长与 U8 数图形
+  if (unitId === '3A-U9') {
+    const forms: GeomForm[] = []
+    for (const form of [...U3_FORMS[level], ...formsForU6(level), ...U8_FORMS[level]]) {
+      if (!forms.includes(form)) forms.push(form)
+    }
+    return forms
+  }
   return []
 }
 
@@ -1080,6 +1163,10 @@ function makeOne(form: GeomForm, rng: Rng): GeomPiece {
       return makeJoinSquaresPerim(rng)
     case 'grid-perimeter':
       return makeGridPerim(rng)
+    case 'count-triangles':
+      return makeCountTriangles(rng)
+    case 'count-rectangles':
+      return makeCountRectangles(rng)
   }
 }
 
