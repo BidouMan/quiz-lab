@@ -560,7 +560,7 @@ const buildPerimeter: WordBuilder = (rng, level) => {
     }
   }
   if (level === 'L1') {
-    // 本单元只做“四周围一圈”，篱笆靠墙的变式归 3A-U8；单位随场景走
+    // 本单元以“四周围一圈”为主，靠墙/留门/改围等变式也已归并到本单元，按两成上限取样
     const variant = randInt(rng, 0, 5)
     if (variant === 2) {
       const lengthCm = randInt(rng, 16, 30)
@@ -720,7 +720,7 @@ const buildPerimeter: WordBuilder = (rng, level) => {
   }
 }
 
-// ---------- 一面靠墙的篱笆（3A-U8 数学广场） ----------
+// ---------- 一面靠墙的篱笆（原 3A-U8，已并入 U6） ----------
 
 const WALL_SCENES = ['菜地', '花圃', '苗圃', '果园']
 
@@ -1290,57 +1290,6 @@ const buildPattern: WordBuilder = (rng, level) => {
   }
 }
 
-// ---------- 数学广场：图形最值 ----------
-
-const buildMaxArea: WordBuilder = (rng, level) => {
-  if (level === 'L1') {
-    const side = randInt(rng, 4, 8)
-    const wire = side * 4
-    const area = side * side
-    return {
-      stem: `用 ${wire} 根 1 米长的小棒围成一个长方形（长和宽都是整米数）。围成正方形时面积最大，最大面积是多少平方米？`,
-      questions: ['最大面积是多少平方米？'],
-      answers: [String(area)],
-      steps: [
-        step(1, `${wire} ÷ 4`, side, `${wire} ÷ 4 = ${side}（米），围成边长 ${side} 米的正方形`),
-        step(1, `${side} × ${side}`, area, `${side} × ${side} = ${area}（平方米）`),
-      ],
-      params: { side, wire, area, unit: '平方米', mode: 'squareMaxArea' },
-      features: { form: 'maxArea', level, questions: 1, steps: 2, judge: false },
-    }
-  }
-  if (level === 'L2') {
-    const side = randInt(rng, 5, 10)
-    const wire = side * 4
-    const area = side * side
-    return {
-      stem: `一根长 ${wire} 米的绳子围成一个长方形（长和宽都是整米数）。①围成正方形时边长是多少米？②这时面积最大，最大面积是多少平方米？`,
-      questions: ['围成正方形时边长是多少米？', '最大面积是多少平方米？'],
-      answers: [String(side), String(area)],
-      steps: [
-        step(1, `${wire} ÷ 4`, side, `${wire} ÷ 4 = ${side}（米）`),
-        step(2, `${side} × ${side}`, area, `${side} × ${side} = ${area}（平方米）`),
-      ],
-      params: { side, wire, area, unit: '平方米', mode: 'ropeMaxArea' },
-      features: { form: 'maxArea', level, questions: 2, steps: 2, judge: false },
-    }
-  }
-  const side = randInt(rng, 5, 12)
-  const area = side * side
-  const perimeter = side * 4
-  return {
-    stem: `一块正方形菜地的面积是 ${area} 平方米。①它的边长是多少米？②要在四周围一圈篱笆，篱笆至少长多少米？`,
-    questions: ['它的边长是多少米？', '篱笆至少长多少米？'],
-    answers: [String(side), String(perimeter)],
-    steps: [
-      step(1, `${area} ÷ ${side}`, side, `因为 ${side} × ${side} = ${area}，所以边长是 ${side} 米`),
-      step(2, `${side} × 4`, perimeter, `${side} × 4 = ${perimeter}（米）`),
-    ],
-    params: { side, area, perimeter, unit: '米', mode: 'squareFromArea' },
-    features: { form: 'maxArea', level, questions: 2, steps: 2, judge: false },
-  }
-}
-
 // ---------- 数学广场：七巧板拼摆 ----------
 
 const buildTangram: WordBuilder = (rng, level) => {
@@ -1471,7 +1420,6 @@ const BUILDERS: Record<WordFormName, WordBuilder> = {
   shopCompare: buildShopCompare,
   discount: buildDiscount,
   pattern: buildPattern,
-  maxArea: buildMaxArea,
   tangram: buildTangram,
 }
 
@@ -1781,24 +1729,6 @@ export function verifyWord(form: WordFormName, params: ParamMap): WordCheck {
       if ((sticks - 3) / 2 + 1 !== count) throw new Error('三角形反求个数不一致')
       return { questions: 2, answers: [String(sticks), String(count)], steps: 2 }
     }
-    case 'maxArea': {
-      const mode = String(params.mode)
-      const side = n(params, 'side')
-      if (mode === 'squareMaxArea') {
-        if (n(params, 'wire') !== side * 4) throw new Error('围成正方形的周长不成立')
-        if (n(params, 'area') !== side * side) throw new Error('最大面积不成立')
-        return { questions: 1, answers: [String(side * side)], steps: 2 }
-      }
-      if (mode === 'ropeMaxArea') {
-        if (n(params, 'wire') !== side * 4) throw new Error('绳子长度不能围成该正方形')
-        if (n(params, 'area') !== side * side) throw new Error('最大面积不成立')
-        return { questions: 2, answers: [String(side), String(side * side)], steps: 2 }
-      }
-      const area = n(params, 'area')
-      if (side * side !== area) throw new Error('正方形面积与边长不匹配')
-      if (n(params, 'perimeter') !== side * 4) throw new Error('正方形周长不成立')
-      return { questions: 2, answers: [String(side), String(side * 4)], steps: 2 }
-    }
     case 'tangram': {
       const mode = String(params.mode)
       if (mode === 'triToSquare' || mode === 'triToTrapezoid' || mode === 'triToTrapezoidReverse') {
@@ -2066,7 +1996,7 @@ function checkUnitConsistency(input: {
   features: Record<string, number | string | boolean>
 }): string | null {
   const form = String(input.features.form ?? '')
-  if (!['perimeter', 'wallFence', 'area', 'maxArea'].includes(form)) return null
+  if (!['perimeter', 'wallFence', 'area'].includes(form)) return null
   const unit = input.params.unit
   if (typeof unit !== 'string' || !(DIM_UNITS as readonly string[]).includes(unit)) {
     return '缺少或非法的单位参数'

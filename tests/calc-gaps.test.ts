@@ -26,7 +26,7 @@ function evalAscii(latex: string): number {
   return Function(`return ${expr}`)() as number
 }
 
-test('教材不适用题型：U2 简便 / U5 脱式 / U7、U8 口算脱式', () => {
+test('教材不适用题型：U2 简便 / U5 脱式 / U7 口算脱式', () => {
   const u2 = availability('3A-U2', 'L2')
   assert.equal(u2.jianbian.enabled, false)
   assert.equal(u2.jianbian.source, 'na')
@@ -38,7 +38,7 @@ test('教材不适用题型：U2 简便 / U5 脱式 / U7、U8 口算脱式', () 
   assert.equal(u5.tuoshi.source, 'na')
   assert.match(u5.tuoshi.reason, /年月日/)
 
-  for (const unitId of ['3A-U7', '3A-U8']) {
+  for (const unitId of ['3A-U7']) {
     const unit = availability(unitId, 'L2')
     for (const type of ['kousuan', 'tuoshi'] as const) {
       assert.equal(unit[type].enabled, false, `${unitId} ${type} 应不适用`)

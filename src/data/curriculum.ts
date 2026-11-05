@@ -357,33 +357,6 @@ const units: Unit[] = [
       kp('3A-U7-K3', '上海半程马拉松的路线设计', {}, '项目式学习，本版不生成。'),
     ],
   },
-  {
-    grade: '3A',
-    semester: '上',
-    unitId: '3A-U8',
-    unitName: '数学广场',
-    note: '七巧板、篱笆问题、围正方形最大面积、摆图形找规律；与 3A-U6 的普通周长题错开。',
-    kps: [
-      kp('3A-U8-K1', '七巧板', {}, '由 3A-U8-K2 的 tangram 玩法承载，单独知识点不重复出题。'),
-      kp(
-        '3A-U8-K2',
-        '数学广场的图形玩法',
-        {
-          tiankong: {
-            L1: [tf('wallFence'), tf('tangram'), tf('pattern'), tf('maxArea')],
-            L2: [tf('wallFence'), tf('tangram'), tf('pattern'), tf('maxArea')],
-            L3: [tf('wallFence'), tf('tangram'), tf('pattern'), tf('maxArea')],
-          },
-          word: {
-            L1: [wf('wallFence'), wf('tangram'), wf('pattern'), wf('maxArea')],
-            L2: [wf('wallFence'), wf('tangram'), wf('pattern'), wf('maxArea')],
-            L3: [wf('wallFence'), wf('tangram'), wf('pattern'), wf('maxArea')],
-          },
-        },
-        '篱笆靠墙（4 种围法）、七巧板拼摆、小棒摆图形找规律、围成正方形面积最大；普通四周围一圈的周长题归 3A-U6。',
-      ),
-    ],
-  },
   // ==================== 三年级下册（推定） ====================
   {
     grade: '3B',

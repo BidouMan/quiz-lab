@@ -13,7 +13,7 @@ const TEMPLATE: TemplateInfo = {
   geom: true,
 }
 
-const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8']
+const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7']
 
 test('记忆写入/读取：卷号、次数、最近卷号可往返', () => {
   const store = new MemoryStore()

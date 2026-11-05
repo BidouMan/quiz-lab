@@ -186,9 +186,9 @@ test('反例：超纲词（面积/方程等）必须被拒', () => {
   assert.ok(issues.some((issue) => issue.includes('超纲词')), `应拒绝超纲词：${issues.join('；')}`)
 })
 
-test('方案 A 单元归属：U8 不出拓展题，U3 删除数长方形后无 T2 类别', () => {
-  assert.equal(advancedSupports('3A', ['3A-U8'], 'L2'), false)
-  assert.deepEqual(advancedLevelsFor('3A', ['3A-U8']), [])
+test('方案 A 单元归属：U7 项目式单元不出拓展题，U3 删除数长方形后无 T2 类别', () => {
+  assert.equal(advancedSupports('3A', ['3A-U7'], 'L2'), false)
+  assert.deepEqual(advancedLevelsFor('3A', ['3A-U7']), [])
   assert.equal(advancedSupports('3A', ['3A-U3'], 'L2'), false)
   assert.equal(advancedSupports('3A', ['3A-U3'], 'L1'), false)
   assert.equal(advancedSupports('3A', ['3A-U5'], 'L1'), true)
@@ -231,14 +231,14 @@ test('接入 buildPaper：默认 3 题、按类别留白、运行时复核 0 丢
   }
 })
 
-test('接入 typeAvailability：U8 标不适用，U3 删除数长方形后不可用，U5/L3 给可切档提示', () => {
+test('接入 typeAvailability：U7 标不适用，U3 删除数长方形后不可用，U5/L3 给可切档提示', () => {
   const availability = (unitIds: string[], level: 'L1' | 'L2' | 'L3') =>
     typeAvailability(
       { ...DEFAULT_CONFIG, grade: '3A', unitIds, level, types: ['advanced'], counts: { advanced: 3 }, count: 3 },
       TEMPLATE,
     ).advanced
-  assert.equal(availability(['3A-U8'], 'L2').enabled, false)
-  assert.equal(availability(['3A-U8'], 'L2').source, 'na')
+  assert.equal(availability(['3A-U7'], 'L2').enabled, false)
+  assert.equal(availability(['3A-U7'], 'L2').source, 'na')
   assert.equal(availability(['3A-U3'], 'L2').enabled, false)
   const u5l3 = availability(['3A-U5'], 'L3')
   assert.equal(u5l3.enabled, false)

@@ -63,10 +63,10 @@ export interface GeomOptions {
   memory?: MemoryStore
 }
 
-/** 图形题只在三上「三角形与四边形（U3）」「周长（U6）」「数学广场（U8）」内出图 */
+/** 图形题只在三上「三角形与四边形（U3）」「周长（U6）」内出图 */
 export function geomSupported(grade: Grade, unitIds: string[]): boolean {
   if (grade === '3B') return true
-  return unitIds.some((id) => id === '3A-U3' || id === '3A-U6' || id === '3A-U8')
+  return unitIds.some((id) => id === '3A-U3' || id === '3A-U6')
 }
 
 /** 所选单元是否有任一难度可出图形题 */
@@ -1051,13 +1051,6 @@ const U3_FORMS: Record<Level, GeomForm[]> = {
   L3: ['sticks', 'compose', 'classify', 'count-triangles', 'count-rectangles'],
 }
 
-/** 3A-U8 数学广场：数图形玩法，只画图、答案按参数独立重算 */
-const U8_FORMS: Record<Level, GeomForm[]> = {
-  L1: ['count-triangles', 'count-rectangles'],
-  L2: ['count-triangles', 'count-rectangles'],
-  L3: ['count-triangles', 'count-rectangles'],
-}
-
 function formsForU6(level: Level): GeomForm[] {
   if (level === 'L1') return ['rect-perimeter', 'square-perimeter', 'triangle-perimeter']
   if (level === 'L2') {
@@ -1087,11 +1080,10 @@ function formsForU6(level: Level): GeomForm[] {
   ]
 }
 
-/** 某单元在某难度下可出的图形形态；U3/U6/U8 之外为空 */
+/** 某单元在某难度下可出的图形形态；U3/U6 之外为空 */
 export function geomUnitForms(unitId: string, level: Level): GeomForm[] {
   if (unitId === '3A-U3') return U3_FORMS[level]
   if (unitId === '3A-U6') return formsForU6(level)
-  if (unitId === '3A-U8') return U8_FORMS[level]
   return []
 }
 
@@ -1195,16 +1187,14 @@ export function generateGeom(options: GeomOptions): {
   const exhausted = new Set<GeomForm>()
   // U3 单开时数图形只做少量补充，避免挤掉该单元原有的认图形形态
   const countForms: GeomForm[] = ['count-triangles', 'count-rectangles']
-  const countCap =
-    unitIds.includes('3A-U3') && !unitIds.includes('3A-U8')
-      ? Math.max(1, Math.ceil(count / 5))
-      : Number.POSITIVE_INFINITY
+  const countCap = unitIds.includes('3A-U3')
+    ? Math.max(1, Math.ceil(count / 5))
+    : Number.POSITIVE_INFINITY
   let countUsed = 0
-  // 数长方形网格收到 2–4 后只有 6 种，U8/U9 里同样限流，避免跨卷反复撞同一批
-  const rectCap =
-    unitIds.includes('3A-U8') || unitIds.includes('3A-U3')
-      ? Math.max(1, Math.ceil(count / 5))
-      : Number.POSITIVE_INFINITY
+  // 数长方形网格收到 2–4 后只有 6 种，按卷限流，避免跨卷反复撞同一批
+  const rectCap = unitIds.includes('3A-U3')
+    ? Math.max(1, Math.ceil(count / 5))
+    : Number.POSITIVE_INFINITY
   let rectUsed = 0
   let crossReused = 0
   const maxAttemptsPerItem = 240

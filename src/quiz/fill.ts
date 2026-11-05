@@ -802,7 +802,7 @@ const buildSquareArea: FillBuilder = (rng, level) => {
   }
 }
 
-// 数学广场：找规律摆图形，U8 的独立玩法之一
+// 找规律摆图形（原 U8 玩法，现按乘加/除法分别归 U2、U3、U4）
 const buildPattern: FillBuilder = (rng, level) => {
   if (level === 'L1') {
     const count = randInt(rng, 2, 8)
@@ -837,58 +837,7 @@ const buildPattern: FillBuilder = (rng, level) => {
   }
 }
 
-// 数学广场：围成正方形时面积最大（U8 的独立玩法之二）
-const buildMaxArea: FillBuilder = (rng, level) => {
-  if (level === 'L1') {
-    const side = randInt(rng, 3, 12)
-    const wire = side * 4
-    const variant = randInt(rng, 0, 2)
-    const stem =
-      variant === 0
-        ? `用 ${wire} 根 1 米长的小棒摆成一个正方形，边长是 ${BLANK} 米，面积是 ${BLANK} 平方米。`
-        : variant === 1
-          ? `一根长 ${wire} 米的铁丝正好围成一个正方形，边长是 ${BLANK} 米，面积是 ${BLANK} 平方米。`
-          : `一根长 ${wire} 米的绳子正好围成一个正方形，边长是 ${BLANK} 米，面积是 ${BLANK} 平方米。`
-    return {
-      stem,
-      answers: [String(side), String(side * side)],
-      params: { side, wire, unit: '米', mode: 'wireSquare' },
-      values: [side, wire, side * side],
-      features: { form: 'maxArea', level, reverse: false, blanks: 2 },
-    }
-  }
-  if (level === 'L2') {
-    const side = randInt(rng, 4, 12)
-    const wire = side * 4
-    const variant = randInt(rng, 0, 2)
-    const noun = variant === 0 ? '绳子' : variant === 1 ? '篱笆' : '铁丝'
-    return {
-      stem: `用长 ${wire} 米的${noun}围成一个正方形，面积最大是 ${BLANK} 平方米。`,
-      answers: [String(side * side)],
-      params: { side, wire, unit: '米', mode: 'ropeMaxArea', noun },
-      values: [side, wire, side * side],
-      features: { form: 'maxArea', level, reverse: false, blanks: 1 },
-    }
-  }
-  const side = randInt(rng, 4, 12)
-  const area = side * side
-  const variant = randInt(rng, 0, 2)
-  const tail =
-    variant === 0
-      ? `周长是 ${BLANK} 米。`
-      : variant === 1
-        ? `在四周围一圈篱笆，篱笆至少长 ${BLANK} 米。`
-        : `在四周贴一圈花边，花边一共长 ${BLANK} 米。`
-  return {
-    stem: `一个正方形的面积是 ${area} 平方米，它的边长是 ${BLANK} 米，${tail}`,
-    answers: [String(side), String(side * 4)],
-    params: { side, area, unit: '米', mode: 'squareFromArea' },
-    values: [side, area, side * 4],
-    features: { form: 'maxArea', level, reverse: true, blanks: 2 },
-  }
-}
-
-// 数学广场：七巧板拼摆（U8 的独立玩法之三）
+// 七巧板拼摆（原 U8 玩法，乘法版归 U3、除法版归 U4）
 const buildTangram: FillBuilder = (rng, level) => {
   if (level === 'L1') {
     const mode = randInt(rng, 0, 2)
@@ -1281,7 +1230,6 @@ const BUILDERS: Record<FillFormName, FillBuilder> = {
   rectArea: buildRectArea,
   squareArea: buildSquareArea,
   pattern: buildPattern,
-  maxArea: buildMaxArea,
   tangram: buildTangram,
   fraction: buildFraction,
   fractionUnit: buildFractionUnit,
@@ -1434,22 +1382,6 @@ export function verifyFill(form: FillFormName, params: ParamMap): string[] {
       const sticks = n('sticks')
       if (sticks !== 3 + 2 * (count - 1)) throw new Error('三角形小棒数不成立')
       return [String(sticks), String(count)]
-    }
-    case 'maxArea': {
-      const mode = text('mode')
-      if (mode === 'ropeMaxArea') {
-        const side = n('side')
-        if (n('wire') !== side * 4) throw new Error('绳子长度不能围成该正方形')
-        return [String(side * side)]
-      }
-      if (mode === 'squareFromArea') {
-        const side = n('side')
-        if (n('area') !== side * side) throw new Error('面积与边长不匹配')
-        return [String(side), String(side * 4)]
-      }
-      const side = n('side')
-      if (n('wire') !== side * 4) throw new Error('小棒根数不能围成该正方形')
-      return [String(side), String(side * side)]
     }
     case 'tangram': {
       const mode = text('mode')
@@ -1663,7 +1595,7 @@ function checkFillUnitConsistency(input: {
   features: Record<string, number | string | boolean>
 }): string | null {
   const form = String(input.features.form ?? '')
-  if (!['rectPerimeter', 'squarePerimeter', 'wallFence', 'rectArea', 'squareArea', 'maxArea'].includes(form)) {
+  if (!['rectPerimeter', 'squarePerimeter', 'wallFence', 'rectArea', 'squareArea'].includes(form)) {
     return null
   }
   const unit = input.params.unit

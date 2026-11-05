@@ -45,7 +45,7 @@ export interface CompareOptions {
   memory?: MemoryStore
 }
 
-const ORDER_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8']
+const ORDER_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7']
 const ORDER_3B = ['3B-U1', '3B-U2', '3B-U3', '3B-U4', '3B-U5', '3B-U6', '3B-U7']
 
 function maxIndex(unitIds: string[], order: string[]): number {
@@ -92,7 +92,6 @@ const UNIT_FORMS_3A: Record<string, Record<Level, CompareForm[]>> = {
   '3A-U5': { L1: ['time'], L2: ['time', 'days'], L3: ['time', 'days'] },
   '3A-U6': { L1: [], L2: [], L3: [] },
   '3A-U7': { L1: ['length'], L2: ['length', 'mixedUnit'], L3: ['mixedUnit', 'length'] },
-  '3A-U8': { L1: [], L2: [], L3: [] },
 }
 
 /** 某单元在某难度下可用的比大小形态 */
@@ -108,7 +107,6 @@ const UNIT_LABELS: Record<string, string> = {
   '3A-U5': '年月日',
   '3A-U6': '周长',
   '3A-U7': '马拉松路线',
-  '3A-U8': '数学广场',
 }
 
 /** 所选单元是否有任一难度可出比大小 */

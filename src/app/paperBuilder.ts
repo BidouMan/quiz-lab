@@ -108,10 +108,6 @@ const NOT_APPLICABLE_CALC: Record<string, Partial<Record<CalcType, string>>> = {
     kousuan: '“马拉松路线设计”是项目式学习单元，教材不设口算',
     tuoshi: '项目式学习单元，教材不设递等式；路线长度由填空承载',
   },
-  '3A-U8': {
-    kousuan: '数学广场是活动与图形玩法单元，教材不设口算',
-    tuoshi: '活动单元，教材不设递等式；图形玩法由填空/应用题承载',
-  },
   '3B-U4': {
     kousuan: '本版未建分数口算规则，可出的分数题不足一页，按不适用处理',
   },
@@ -172,13 +168,13 @@ export function typeVisibleInGrade(grade: Grade, type: AppType): boolean {
     return LEVELS.some((level) => formatSupports(grade, unitIds, level, type))
   }
 
-  // 列式计算只覆盖三上 U1/U2/U4/U9 的四则结构
+  // 列式计算只覆盖三上 U1/U2/U4/U6 的四则结构
   if (type === 'lieshi') {
     const unitIds = units.map((unit) => unit.unitId)
     return LEVELS.some((level) => lieSupports(grade, unitIds, level))
   }
 
-  // 拓展题按知识点映射到 U1–U6/U9，U7/U8 暂无结构
+  // 拓展题按知识点映射到 U1–U6，U7 为项目式单元、暂无拓展结构
   if (type === 'advanced') {
     const unitIds = units.map((unit) => unit.unitId)
     return LEVELS.some((level) => advancedSupports(grade, unitIds, level))
@@ -190,7 +186,7 @@ export function typeVisibleInGrade(grade: Grade, type: AppType): boolean {
   )
 }
 
-/** 参数面板只列三上已建骨架包的 8 个单元（U3 暂无填空/应用题包，不进入列表） */
+/** 参数面板只列三上已建骨架包的 7 个单元 */
 export function panelUnits(): Unit[] {
   const ids = new Set(skeletonUnits('3A').map((unit) => unit.unitId))
   return unitsForGrade('3A').filter((unit) => ids.has(unit.unitId))
@@ -406,7 +402,7 @@ export function typeAvailability(
         reason:
           levels.length > 0
             ? `所选单元在 ${config.level} 没有列式计算结构，可切到 ${levels.join('/')}`
-            : `不适用：本单元不涉及整数两步四则（列式计算按“加减→U1/U9、乘法→U2、除法→U4、倍→U4”映射，三上 U3/U5–U8 无对应结构）`,
+            : `不适用：本单元不涉及整数两步四则（列式计算按“加减→U1、乘法→U2、除法→U4、倍→U4”映射，三上 U3/U5/U7 无对应结构）`,
         source: levels.length > 0 ? undefined : 'na',
       }
       continue
@@ -432,7 +428,7 @@ export function typeAvailability(
         reason:
           levels.length > 0
             ? `所选单元在 ${config.level} 没有拓展题结构，可切到 ${levels.join('/')}`
-            : `不适用：本单元没有拓展题结构（按知识点映射：U1/U2/U4/U9 四则推理、U3 图形计数、U5 时间与日期、U6 周长；U7/U8 为项目式/活动单元，暂不出拓展题）`,
+            : `不适用：本单元没有拓展题结构（按知识点映射：U1/U2/U4 四则推理、U3 图形计数、U5 时间与日期、U6 周长；U7 为项目式单元，暂不出拓展题）`,
         source: levels.length > 0 ? undefined : 'na',
       }
       continue

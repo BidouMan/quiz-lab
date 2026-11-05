@@ -4,7 +4,7 @@
  */
 import type { Level } from '../types.ts'
 import type { Combo, Scene, Skeleton, SkeletonBand } from './types.ts'
-import { DIVISION_SCENES, PERIMETER_SCENES, DATE_SCENES, TWO_STEP_SCENES, MULDIV_SCENES, AREA_SCENES, MULTIPLICATION_SCENES, DIVISION_FILL_SCENES, MULTIPLICATION_FILL_SCENES, ROUTE_SCENES, MATH_PLAZA_SCENES, SHAPE_SCENES } from './scenes.ts'
+import { DIVISION_SCENES, PERIMETER_SCENES, DATE_SCENES, TWO_STEP_SCENES, MULDIV_SCENES, AREA_SCENES, MULTIPLICATION_SCENES, DIVISION_FILL_SCENES, MULTIPLICATION_FILL_SCENES, ROUTE_SCENES, SHAPE_SCENES } from './scenes.ts'
 import { U6_PERIMETER_SKELETONS } from './u6-perimeter.ts'
 import { U4_DIVISION_SKELETONS } from './u4-division.ts'
 import { U5_DATE_SKELETONS } from './u5-date.ts'
@@ -29,12 +29,18 @@ import { U6_PERIMETER_FILL_SKELETONS } from './u6-perimeter-fill.ts'
 import { U6_PERIMETER_FILL_BANDS } from './u6-perimeter-fill.bands.ts'
 import { U7_MARATHON_FILL_SKELETONS } from './u7-marathon-fill.ts'
 import { U7_MARATHON_FILL_BANDS } from './u7-marathon-fill.bands.ts'
-import { U8_MATH_PLAZA_FILL_SKELETONS } from './u8-math-plaza-fill.ts'
-import { U8_MATH_PLAZA_FILL_BANDS } from './u8-math-plaza-fill.bands.ts'
 import { U7_MARATHON_WORD_SKELETONS } from './u7-marathon-word.ts'
 import { U7_MARATHON_WORD_BANDS } from './u7-marathon-word.bands.ts'
-import { U8_MATH_PLAZA_WORD_SKELETONS } from './u8-math-plaza-word.ts'
-import { U8_MATH_PLAZA_WORD_BANDS } from './u8-math-plaza-word.bands.ts'
+import {
+  U6_FENCE_FILL_SKELETONS, U6_FENCE_FILL_BANDS,
+  U6_FENCE_WORD_SKELETONS, U6_FENCE_WORD_BANDS,
+  U3_SHAPES_FILL_VARIANTS, U3_SHAPES_FILL_VARIANT_BANDS,
+  U3_SHAPES_WORD_VARIANTS, U3_SHAPES_WORD_VARIANT_BANDS,
+  U4_DIVISION_FILL_VARIANTS, U4_DIVISION_FILL_VARIANT_BANDS,
+  U4_DIVISION_WORD_VARIANTS, U4_DIVISION_WORD_VARIANT_BANDS,
+  U2_SEQ_FILL_VARIANTS, U2_SEQ_FILL_VARIANT_BANDS,
+  U2_SEQ_WORD_VARIANTS, U2_SEQ_WORD_VARIANT_BANDS,
+} from './u8-variants.ts'
 import { U3_SHAPES_FILL_SKELETONS } from './u3-shapes-fill.ts'
 import { U3_SHAPES_FILL_BANDS } from './u3-shapes-fill.bands.ts'
 import { U3_SHAPES_WORD_SKELETONS } from './u3-shapes-word.ts'
@@ -85,8 +91,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'word',
     title: '长方形和正方形的周长',
     scenes: PERIMETER_SCENES,
-    skeletons: U6_PERIMETER_SKELETONS,
-    bands: U6_PERIMETER_BANDS,
+    skeletons: [...U6_PERIMETER_SKELETONS, ...U6_FENCE_WORD_SKELETONS],
+    bands: { ...U6_PERIMETER_BANDS, ...U6_FENCE_WORD_BANDS },
     matchSceneUnit: true,
   },
   {
@@ -98,8 +104,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'word',
     title: '用一位数除法解决问题',
     scenes: DIVISION_SCENES,
-    skeletons: U4_DIVISION_SKELETONS,
-    bands: U4_DIVISION_BANDS,
+    skeletons: [...U4_DIVISION_SKELETONS, ...U4_DIVISION_WORD_VARIANTS],
+    bands: { ...U4_DIVISION_BANDS, ...U4_DIVISION_WORD_VARIANT_BANDS },
     matchSceneUnit: false,
   },
   {
@@ -150,8 +156,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'word',
     title: '用一位数乘解决问题',
     scenes: MULTIPLICATION_SCENES,
-    skeletons: U2_MULTIPLICATION_SKELETONS,
-    bands: U2_MULTIPLICATION_BANDS,
+    skeletons: [...U2_MULTIPLICATION_SKELETONS, ...U2_SEQ_WORD_VARIANTS],
+    bands: { ...U2_MULTIPLICATION_BANDS, ...U2_SEQ_WORD_VARIANT_BANDS },
     matchSceneUnit: false,
   },
   {
@@ -163,8 +169,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'tiankong',
     title: '用一位数除法填空',
     scenes: DIVISION_FILL_SCENES,
-    skeletons: U4_DIVISION_FILL_SKELETONS,
-    bands: U4_DIVISION_FILL_BANDS,
+    skeletons: [...U4_DIVISION_FILL_SKELETONS, ...U4_DIVISION_FILL_VARIANTS],
+    bands: { ...U4_DIVISION_FILL_BANDS, ...U4_DIVISION_FILL_VARIANT_BANDS },
     matchSceneUnit: false,
   },
   {
@@ -176,8 +182,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'tiankong',
     title: '用一位数乘法填空',
     scenes: MULTIPLICATION_FILL_SCENES,
-    skeletons: U2_MULTIPLICATION_FILL_SKELETONS,
-    bands: U2_MULTIPLICATION_FILL_BANDS,
+    skeletons: [...U2_MULTIPLICATION_FILL_SKELETONS, ...U2_SEQ_FILL_VARIANTS],
+    bands: { ...U2_MULTIPLICATION_FILL_BANDS, ...U2_SEQ_FILL_VARIANT_BANDS },
     matchSceneUnit: false,
   },
   {
@@ -202,8 +208,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'tiankong',
     title: '周长填空',
     scenes: PERIMETER_SCENES,
-    skeletons: U6_PERIMETER_FILL_SKELETONS,
-    bands: U6_PERIMETER_FILL_BANDS,
+    skeletons: [...U6_PERIMETER_FILL_SKELETONS, ...U6_FENCE_FILL_SKELETONS],
+    bands: { ...U6_PERIMETER_FILL_BANDS, ...U6_FENCE_FILL_BANDS },
     matchSceneUnit: true,
   },
   {
@@ -220,19 +226,6 @@ export const PACKAGES: SkeletonPackage[] = [
     matchSceneUnit: false,
   },
   {
-    id: '3A-U8|tiankong',
-    slug: 'u8-math-plaza-fill',
-    grade: '3A',
-    unitId: '3A-U8',
-    unitName: '数学广场',
-    type: 'tiankong',
-    title: '数学广场·综合填空',
-    scenes: MATH_PLAZA_SCENES,
-    skeletons: U8_MATH_PLAZA_FILL_SKELETONS,
-    bands: U8_MATH_PLAZA_FILL_BANDS,
-    matchSceneUnit: false,
-  },
-  {
     id: '3A-U7|word',
     slug: 'u7-marathon-word',
     grade: '3A',
@@ -246,19 +239,6 @@ export const PACKAGES: SkeletonPackage[] = [
     matchSceneUnit: false,
   },
   {
-    id: '3A-U8|word',
-    slug: 'u8-math-plaza-word',
-    grade: '3A',
-    unitId: '3A-U8',
-    unitName: '数学广场',
-    type: 'word',
-    title: '数学广场·解决问题',
-    scenes: MATH_PLAZA_SCENES,
-    skeletons: U8_MATH_PLAZA_WORD_SKELETONS,
-    bands: U8_MATH_PLAZA_WORD_BANDS,
-    matchSceneUnit: false,
-  },
-  {
     id: '3A-U3|tiankong',
     slug: 'u3-shapes',
     grade: '3A',
@@ -267,8 +247,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'tiankong',
     title: '三角形、四边形与角',
     scenes: SHAPE_SCENES,
-    skeletons: U3_SHAPES_FILL_SKELETONS,
-    bands: U3_SHAPES_FILL_BANDS,
+    skeletons: [...U3_SHAPES_FILL_SKELETONS, ...U3_SHAPES_FILL_VARIANTS],
+    bands: { ...U3_SHAPES_FILL_BANDS, ...U3_SHAPES_FILL_VARIANT_BANDS },
     matchSceneUnit: false,
   },
   {
@@ -280,8 +260,8 @@ export const PACKAGES: SkeletonPackage[] = [
     type: 'word',
     title: '图形手工里的三角形与四边形',
     scenes: SHAPE_SCENES,
-    skeletons: U3_SHAPES_WORD_SKELETONS,
-    bands: U3_SHAPES_WORD_BANDS,
+    skeletons: [...U3_SHAPES_WORD_SKELETONS, ...U3_SHAPES_WORD_VARIANTS],
+    bands: { ...U3_SHAPES_WORD_BANDS, ...U3_SHAPES_WORD_VARIANT_BANDS },
     matchSceneUnit: false,
   },
 ]

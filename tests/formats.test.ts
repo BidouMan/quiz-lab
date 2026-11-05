@@ -111,7 +111,7 @@ test('单元可用性：U3 判断题靠概念命题接入，选择题仍不适�
   assert.equal(formatSupports('3A', ['3A-U6'], 'L2', 'judge'), true)
   assert.deepEqual(formatSourceUnits('3A', ['3A-U3'], 'L1', 'judge'), ['3A-U3'])
   assert.deepEqual(formatSourceUnits('3A', ['3A-U3'], 'L1', 'choice'), [])
-  assert.equal(formatSupports('3A', ['3A-U8'], 'L1', 'judge'), false)
+  assert.equal(formatSupports('3A', ['3A-U3'], 'L1', 'choice'), false)
 })
 
 test('跨卷去重：连续 4 卷不重复', () => {

@@ -45,12 +45,12 @@ function assertAnswer(q: GeneratedQuestion): void {
   }
 }
 
-test('单元树：三上 8 个单元、三下 7 个单元，三下全部标记 unconfirmed', () => {
+test('单元树：三上 7 个单元、三下 7 个单元，三下全部标记 unconfirmed', () => {
   const grade3A = CURRICULUM.units.filter((u) => u.grade === '3A')
   const grade3B = CURRICULUM.units.filter((u) => u.grade === '3B')
-  assert.equal(grade3A.length, 8)
+  assert.equal(grade3A.length, 7)
   assert.equal(grade3B.length, 7)
-  assert.equal(CURRICULUM.units.length, 15)
+  assert.equal(CURRICULUM.units.length, 14)
   for (const unit of grade3B) {
     assert.equal(unit.unconfirmed, true, `${unit.unitId} 应标记 unconfirmed`)
     assert.ok(unit.note && unit.note.includes('推定'), `${unit.unitId} 应有推定备注`)

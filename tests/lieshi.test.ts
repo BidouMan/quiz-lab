@@ -14,7 +14,7 @@ import {
 } from '../src/quiz/lieshi.ts'
 import { MemoryStore } from '../src/quiz/memory.ts'
 
-const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8']
+const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7']
 
 const template = (id: string) => {
   const found = LIE_TEMPLATES.find((item) => item.id === id)

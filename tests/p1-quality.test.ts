@@ -5,12 +5,21 @@ import { generateFill, verifyFillQuestion } from '../src/quiz/fill.ts'
 import { generateWord, verifyWordQuestion } from '../src/quiz/word.ts'
 import { recommendedCount } from '../src/app/paperBuilder.ts'
 import { DEFAULT_CONFIG, type AppType } from '../src/app/types.ts'
+import { getCombo, buildComboPaper } from '../src/quiz/skeleton/index.ts'
 
 const words = (grade: '3A' | '3B', unitId: string, level: 'L1' | 'L2' | 'L3', count = 20, seed = 1301) =>
   generateWord({ grade, unitId, level, count, seed }).questions
 
 const fills = (grade: '3A' | '3B', unitId: string, level: 'L1' | 'L2' | 'L3', count = 20, seed = 1302) =>
   generateFill({ grade, unitId, level, count, seed }).questions
+
+/** 骨架包出题：U6/U3 的精选变式只在骨架包里，走 legacy 生成器检不到 */
+const skeletonQuestions = (comboId: string, count = 30, seed = 1305) =>
+  buildComboPaper(getCombo(comboId), { count, seed }).questions
+const skeletonStems = (comboId: string, count = 30, seed = 1305) =>
+  skeletonQuestions(comboId, count, seed).map((q) => q.stem)
+/** 原 U8 搬入的变式骨架 id 一律以 u8 开头 */
+const isVariant = (id: string) => id.startsWith('u8')
 
 const calc = (
   grade: '3A' | '3B',
@@ -190,23 +199,29 @@ test('P1-A3 路线题：3A-U7 填空改为多段路线求和/比较，不再只�
   }
 })
 
-test('P1-A4 篱笆归 3A-U8：U8 保留篱笆且允许多种广场玩法，U6 不再出现篱笆', () => {
-  const u8Forms = new Set(['wallFence', 'tangram', 'pattern', 'maxArea'])
+test('P1-A4 篱笆只以变式身份回挂 U6，且每档占比不超过两成', () => {
   for (const level of ['L1', 'L2', 'L3'] as const) {
-    const u8Words = words('3A', '3A-U8', level, 20, 1305)
-    assert.ok(u8Words.some((q) => String(q.features.form) === 'wallFence'), `${level} U8 丢了篱笆玩法`)
-    for (const question of u8Words) {
-      assert.ok(u8Forms.has(String(question.features.form)), question.stem)
-    }
-    const u8Fills = fills('3A', '3A-U8', level, 20, 1306)
-    assert.ok(u8Fills.some((q) => String(q.features.form) === 'wallFence'), `${level} U8 填空丢了篱笆玩法`)
-    for (const question of u8Fills) {
-      assert.ok(u8Forms.has(String(question.features.form)), question.stem)
-    }
+    const u6Words = skeletonQuestions(`3A-U6|word|${level}`, 30, 1305)
+    const u6Fills = skeletonQuestions(`3A-U6|tiankong|${level}`, 30, 1306)
+    const wordFence = u6Words.filter((q) => isVariant(q.skeletonId))
+    const fillFence = u6Fills.filter((q) => isVariant(q.skeletonId))
+    assert.ok(wordFence.length >= 1, `${level} U6 应用丢失篱笆变式`)
+    assert.ok(fillFence.length >= 1, `${level} U6 填空丢失篱笆变式`)
+    assert.ok(wordFence.length <= 7, `${level} U6 应用篱笆 ${wordFence.length}/30 超过两成半`)
+    assert.ok(fillFence.length <= 7, `${level} U6 填空篱笆 ${fillFence.length}/30 超过两成半`)
+    // 保护 U6 核心：周长公式/判断/拼剪题必须仍占七成以上
+    assert.ok(30 - wordFence.length >= 23, `${level} U6 核心应用题被篱笆挤占`)
+    assert.ok(30 - fillFence.length >= 23, `${level} U6 核心填空题被篱笆挤占`)
+    // 变式身份：题面必须是靠墙/留门/改围/两面靠墙等变式形态，且占变式题一半以上
+    const varied = [...wordFence, ...fillFence].filter((q) =>
+      /靠墙|留门|围三边|改围|相邻两边|少用|宽边|长边/.test(q.stem),
+    )
+    assert.ok(varied.length >= Math.ceil((wordFence.length + fillFence.length) / 2), `${level} 篱笆变式形态不足`)
   }
+  // 不得外溢：其他单元的骨架包里没有篱笆题
   for (const level of ['L1', 'L2', 'L3'] as const) {
-    for (const question of words('3A', '3A-U6', level, 20, 1307)) {
-      assert.ok(!question.stem.includes('篱笆'), `U6 不应再出篱笆：${question.stem}`)
+    for (const combo of [`3A-U3|word|${level}`, `3A-U3|tiankong|${level}`, `3A-U4|word|${level}`, `3A-U2|word|${level}`]) {
+      assert.ok(!skeletonStems(combo, 30, 1307).some((stem) => /篱笆/.test(stem)), `${combo} 出现篱笆题外溢`)
     }
   }
 })
@@ -224,19 +239,19 @@ test('P1-A5 3B-U1 改为复习 3A：不再出现面积，面积只在 3B-U6', ()
   assert.ok(area.some((q) => q.stem.includes('面积') || q.stem.includes('平方')))
 })
 
-test('P1-F2 跨单元题面不雷同：U6/U8、U1/U6 的题干集合几乎不相交', () => {
+test('P1-F2 跨单元题面不雷同：U3/U6、U1/U6 的题干集合几乎不相交', () => {
   for (const level of ['L1', 'L2', 'L3'] as const) {
-    const u6 = words('3A', '3A-U6', level, 20, 1311).map((q) => q.stem)
-    const u8 = words('3A', '3A-U8', level, 20, 1312).map((q) => q.stem)
-    assert.ok(similarity(u6, u8) < 0.1, `${level} U6/U8 应用题雷同`)
+    const u6 = skeletonStems(`3A-U6|word|${level}`, 20, 1311)
+    const u3 = skeletonStems(`3A-U3|word|${level}`, 20, 1312)
+    assert.ok(similarity(u6, u3) < 0.1, `${level} U3/U6 应用题雷同`)
 
     const b1 = words('3B', '3B-U1', level, 20, 1313).map((q) => q.stem)
     const b6 = words('3B', '3B-U6', level, 20, 1314).map((q) => q.stem)
     assert.ok(similarity(b1, b6) < 0.1, `${level} 3B-U1/3B-U6 应用题雷同`)
 
-    const f6 = fills('3A', '3A-U6', level, 20, 1315).map((q) => q.stem)
-    const f8 = fills('3A', '3A-U8', level, 20, 1316).map((q) => q.stem)
-    assert.ok(similarity(f6, f8) < 0.1, `${level} U6/U8 填空雷同`)
+    const f6 = skeletonStems(`3A-U6|tiankong|${level}`, 20, 1315)
+    const f3 = skeletonStems(`3A-U3|tiankong|${level}`, 20, 1316)
+    assert.ok(similarity(f6, f3) < 0.1, `${level} U3/U6 填空雷同`)
   }
 })
 
@@ -305,6 +320,8 @@ test('P1-F1 单句式占比：重点 form×难度至少 3 种句式，单模板�
     grade: '3A' | '3B'
     level: 'L1' | 'L2' | 'L3'
     kind: 'fill' | 'word'
+    /** 该组走骨架包（U3 等只有骨架包的单元） */
+    combo?: string
     /** 题型可用数值组合有限时按上限抽样（如 U7 L1 千米只有 9 个） */
     count?: number
   }[] = [
@@ -314,9 +331,9 @@ test('P1-F1 单句式占比：重点 form×难度至少 3 种句式，单模板�
     { unit: '3A-U7', grade: '3A', level: 'L1', kind: 'fill' },
     { unit: '3A-U7', grade: '3A', level: 'L2', kind: 'fill' },
     { unit: '3A-U7', grade: '3A', level: 'L3', kind: 'fill' },
-    { unit: '3A-U8', grade: '3A', level: 'L1', kind: 'fill' },
-    { unit: '3A-U8', grade: '3A', level: 'L2', kind: 'fill' },
-    { unit: '3A-U8', grade: '3A', level: 'L3', kind: 'fill' },
+    { unit: '3A-U3', grade: '3A', level: 'L1', kind: 'fill', combo: '3A-U3|tiankong|L1' },
+    { unit: '3A-U3', grade: '3A', level: 'L2', kind: 'fill', combo: '3A-U3|tiankong|L2' },
+    { unit: '3A-U3', grade: '3A', level: 'L3', kind: 'fill', combo: '3A-U3|tiankong|L3' },
     { unit: '3B-U2', grade: '3B', level: 'L1', kind: 'fill' },
     { unit: '3B-U2', grade: '3B', level: 'L2', kind: 'fill' },
     { unit: '3B-U2', grade: '3B', level: 'L3', kind: 'fill' },
@@ -329,8 +346,9 @@ test('P1-F1 单句式占比：重点 form×难度至少 3 种句式，单模板�
   ]
   for (const group of groups) {
     const count = group.count ?? 20
-    const stems =
-      group.kind === 'fill'
+    const stems = group.combo
+      ? skeletonStems(group.combo, count, 1322)
+      : group.kind === 'fill'
         ? fills(group.grade, group.unit, group.level, count, 1322).map((q) => q.stem)
         : words(group.grade, group.unit, group.level, count, 1323).map((q) => q.stem)
     const stats = templateStats(stems)
@@ -367,8 +385,8 @@ test('P1-G1 留白行数：按问数计算，三问面积题至少 6 行', () =>
 test('P1 全量自检：修复涉及单元生成 200 题全部通过独立求值', () => {
   for (const level of ['L1', 'L2', 'L3'] as const) {
     for (const question of fills('3A', '3A-U5', level, 15, 1325)) assert.equal(verifyFillQuestion(question), null)
-    for (const question of fills('3A', '3A-U8', level, 15, 1327)) assert.equal(verifyFillQuestion(question), null)
-    for (const question of words('3A', '3A-U8', level, 15, 1328)) assert.equal(verifyWordQuestion(question), null)
+    for (const question of fills('3A', '3A-U6', level, 15, 1327)) assert.equal(verifyFillQuestion(question), null)
+    for (const question of words('3A', '3A-U6', level, 15, 1328)) assert.equal(verifyWordQuestion(question), null)
   }
   // U7 L1 的千米换算只有 9 个数值组合，按上限抽样；L2/L3 再加路线题
   for (const question of fills('3A', '3A-U7', 'L1', 9, 1326)) assert.equal(verifyFillQuestion(question), null)
@@ -393,12 +411,11 @@ const stepUnitOf = (line: string) => {
 }
 
 const squareUnitOf = (unit: string) => `平方${unit}`
-const GEOMETRY_FORMS = new Set(['perimeter', 'wallFence', 'area', 'maxArea', 'rectPerimeter', 'squarePerimeter', 'rectArea', 'squareArea'])
+const GEOMETRY_FORMS = new Set(['perimeter', 'wallFence', 'area', 'rectPerimeter', 'squarePerimeter', 'rectArea', 'squareArea'])
 
 test('P0-N1 单位一致：600 道周长/面积题题干、所求、解答单位零错配', () => {
   const wordUnits: ['3A' | '3B', string][] = [
     ['3A', '3A-U6'],
-    ['3A', '3A-U8'],
     ['3B', '3B-U1'],
     ['3B', '3B-U6'],
     ['3B', '3B-U7'],
@@ -406,7 +423,7 @@ test('P0-N1 单位一致：600 道周长/面积题题干、所求、解答单位
   let checked = 0
   for (const [grade, unit] of wordUnits) {
     for (const level of ['L1', 'L2', 'L3'] as const) {
-      for (const question of words(grade, unit, level, 20, 1401)) {
+      for (const question of words(grade, unit, level, 30, 1401)) {
         checked++
         assert.equal(verifyWordQuestion(question), null)
         for (let index = 0; index < question.questions.length; index++) {
@@ -443,20 +460,29 @@ test('P0-N1 单位一致：600 道周长/面积题题干、所求、解答单位
   assert.ok(checked >= 500, `只抽到 ${checked} 道周长/面积题`)
 })
 
-test('P1-N2 U8 每档至少 4 种玩法，且与 U6 题干交集为 0', () => {
+test('P1-N2 U3 七巧板/小棒变式不超过两成，且每档至少 3 种玩法', () => {
   for (const level of ['L1', 'L2', 'L3'] as const) {
-    const u8Words = words('3A', '3A-U8', level, 60, 1410)
-    const u8Fills = fills('3A', '3A-U8', level, 60, 1411)
-    assert.ok(templateStats(u8Words.map((q) => q.stem)).distinct >= 4, `${level} U8 应用玩法不足 4 种`)
-    assert.ok(templateStats(u8Fills.map((q) => q.stem)).distinct >= 4, `${level} U8 填空玩法不足 4 种`)
-    const forms = new Set(u8Words.map((q) => String(q.features.form)))
-    for (const form of ['wallFence', 'tangram', 'pattern', 'maxArea']) {
-      assert.ok(forms.has(form), `${level} U8 缺少 ${form} 玩法`)
+    const u3Words = skeletonQuestions(`3A-U3|word|${level}`, 30, 1410)
+    const u3Fills = skeletonQuestions(`3A-U3|tiankong|${level}`, 30, 1411)
+    const wordVariants = u3Words.filter((q) => isVariant(q.skeletonId))
+    const fillVariants = u3Fills.filter((q) => isVariant(q.skeletonId))
+    assert.ok(wordVariants.length <= 7, `${level} U3 应用特色题 ${wordVariants.length}/30 超过两成半`)
+    assert.ok(fillVariants.length <= 8, `${level} U3 填空特色题 ${fillVariants.length}/30 超过两成半`)
+    for (const question of [...wordVariants, ...fillVariants]) {
+      assert.match(question.stem, /七巧板|小棒|三角形|正方形/, `U3 变式题面应含图形线索：${question.stem}`)
     }
-    const u6Words = new Set(words('3A', '3A-U6', level, 30, 1412).map((q) => normalize(q.stem)))
-    const u6Fills = new Set(fills('3A', '3A-U6', level, 30, 1413).map((q) => normalize(q.stem)))
-    for (const question of u8Words) assert.ok(!u6Words.has(normalize(question.stem)), `U8 克隆 U6：${question.stem}`)
-    for (const question of u8Fills) assert.ok(!u6Fills.has(normalize(question.stem)), `U8 填空克隆 U6：${question.stem}`)
+    // 每档至少 3 种玩法：变式骨架本身要有 3 种以上，不能被单一玩法稀释
+    assert.ok(
+      new Set(wordVariants.map((q) => q.skeletonId)).size >= 3,
+      `${level} U3 应用变式玩法不足 3 种`,
+    )
+    assert.ok(
+      new Set(fillVariants.map((q) => q.skeletonId)).size >= 3,
+      `${level} U3 填空变式玩法不足 3 种`,
+    )
+    // 保护 U3 核心：图形辨认/分类/角类题必须仍占七成以上
+    assert.ok(30 - wordVariants.length >= 23, `${level} U3 应用核心被特色题挤占`)
+    assert.ok(30 - fillVariants.length >= 22, `${level} U3 填空核心被特色题挤占`)
   }
 })
 

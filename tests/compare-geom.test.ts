@@ -9,7 +9,7 @@ import { DEFAULT_CONFIG, type AppConfig, type TemplateInfo, type TypstItem } fro
 import { MemoryStore } from '../src/quiz/memory.ts'
 
 const TEMPLATE: TemplateInfo = { path: 'typst/paper.typ', exists: true, word: true, compare: true, geom: true }
-const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8']
+const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7']
 const UNITS_3B = ['3B-U1', '3B-U2', '3B-U3', '3B-U4', '3B-U5', '3B-U6', '3B-U7']
 
 function compareItem(piece: ReturnType<typeof generateCompare>['items'][number]): TypstItem {
@@ -185,14 +185,17 @@ test('图形与周长：L1 只给条件求周长/认识图形，L3 含拼合/倍
 
 const combination2 = (n: number): number => (n * (n - 1)) / 2
 
-test('数图形：U8 三档各出满 30 题，答案只按 k / m,n 独立重算', () => {
+test('数图形：U3 三档出满各自形态池，数图形答案只按 k / m,n 独立重算', () => {
+  // U8 并入后，U3 的独有形态池：L1/L2 可出 30 道，L3 只有 sticks/compose/classify/数图形 四类，上限 25
+  const capacity: Record<'L1' | 'L2' | 'L3', number> = { L1: 30, L2: 30, L3: 25 }
   for (const level of ['L1', 'L2', 'L3'] as const) {
-    const generated = generateGeom({ grade: '3A', unitIds: ['3A-U8'], level, count: 30, seed: 20261105 })
-    assert.equal(generated.items.length, 30, `${level} U8 应出满 30 题`)
-    const keys = new Set(generated.items.map((piece) => `${piece.form}|${JSON.stringify(piece.fig)}`))
-    assert.equal(keys.size, 30, `${level} 同卷不得出现同图`)
-    for (const piece of generated.items) {
-      assert.ok(piece.form === 'count-triangles' || piece.form === 'count-rectangles', `U8 只出数图形：${piece.form}`)
+    const generated = generateGeom({ grade: '3A', unitIds: ['3A-U3'], level, count: 30, seed: 20261105 })
+    assert.equal(generated.items.length, capacity[level], `${level} U3 应出满 ${capacity[level]} 题`)
+    const counts = generated.items.filter((piece) => piece.form === 'count-triangles' || piece.form === 'count-rectangles')
+    assert.ok(counts.length >= 2, `${level} U3 应至少出两道数图形`)
+    const keys = new Set(counts.map((piece) => `${piece.form}|${JSON.stringify(piece.fig)}`))
+    assert.equal(keys.size, counts.length, `${level} 同卷不得出现同图`)
+    for (const piece of counts) {
       if (piece.form === 'count-triangles') {
         const k = Number(piece.params.k)
         assert.equal(piece.answer, String(combination2(k + 2)), `数三角形答案应由 k 独立重算：${piece.text}`)
@@ -211,16 +214,16 @@ test('数图形：U8 三档各出满 30 题，答案只按 k / m,n 独立重算'
   }
 })
 
-test('数图形：U8 跨卷去重生效，第二卷不复用第一卷的图', () => {
+test('数图形：U3 跨卷去重生效，第二卷不复用第一卷的图', () => {
   const memory = new MemoryStore()
   memory.beginPaper()
-  const first = generateGeom({ grade: '3A', unitIds: ['3A-U8'], level: 'L2', count: 10, seed: 11, memory })
+  const first = generateGeom({ grade: '3A', unitIds: ['3A-U3'], level: 'L2', count: 10, seed: 11, memory })
   const firstKeys = new Set(first.items.map((piece) => `${piece.form}|${JSON.stringify(piece.fig)}|${JSON.stringify(piece.params)}`))
   memory.beginPaper()
-  const second = generateGeom({ grade: '3A', unitIds: ['3A-U8'], level: 'L2', count: 10, seed: 12, memory })
+  const second = generateGeom({ grade: '3A', unitIds: ['3A-U3'], level: 'L2', count: 10, seed: 12, memory })
   const secondKeys = second.items.map((piece) => `${piece.form}|${JSON.stringify(piece.fig)}|${JSON.stringify(piece.params)}`)
   assert.equal(second.items.length, 10, '第二卷仍应出满 10 题')
-  assert.ok(secondKeys.every((key) => !firstKeys.has(key)), '跨卷不得复用上一卷的数图形题')
+  assert.ok(secondKeys.every((key) => !firstKeys.has(key)), '跨卷不得复用上一卷的图形题')
   for (const piece of second.items) assert.deepEqual(verifyItemStructure(geomItem(piece)), [])
 })
 

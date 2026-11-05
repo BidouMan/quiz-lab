@@ -88,7 +88,6 @@ export type FillFormName =
   | 'fractionUnit'
   | 'fractionPart'
   | 'pattern'
-  | 'maxArea'
   | 'tangram'
   | 'angle-count'
   | 'angle-classify'
@@ -110,7 +109,6 @@ export type WordFormName =
   | 'shopCompare'
   | 'discount'
   | 'pattern'
-  | 'maxArea'
   | 'tangram'
 
 export interface FillRuleSpec {
