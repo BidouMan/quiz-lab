@@ -20,6 +20,13 @@ import {
   lieUnitSupported,
   type LieQuestion,
 } from '../quiz/lieshi.ts'
+import {
+  advancedLevelsFor,
+  advancedSupports,
+  advancedUnitSupported,
+  generateAdvanced,
+  type AdvancedQuestion,
+} from '../quiz/advanced.ts'
 import { compareUnitForms, generateCompare, type ComparePiece } from '../quiz/compare.ts'
 import { geomUnitForms, geomUnitsSupported, generateGeom, type GeomPiece } from '../quiz/geom.ts'
 import { angleUnitSupported as fillAngleUnit } from '../quiz/angle.ts'
@@ -81,6 +88,7 @@ const WEIGHTS: Record<AppType, number> = {
   judge: 0.06,
   choice: 0.06,
   lieshi: 0.08,
+  advanced: 0.06,
 }
 
 const LEVELS: Level[] = ['L1', 'L2', 'L3']
@@ -168,6 +176,12 @@ export function typeVisibleInGrade(grade: Grade, type: AppType): boolean {
   if (type === 'lieshi') {
     const unitIds = units.map((unit) => unit.unitId)
     return LEVELS.some((level) => lieSupports(grade, unitIds, level))
+  }
+
+  // 拓展题按知识点映射到 U1–U6/U9，U7/U8 暂无结构
+  if (type === 'advanced') {
+    const unitIds = units.map((unit) => unit.unitId)
+    return LEVELS.some((level) => advancedSupports(grade, unitIds, level))
   }
 
   return geomUnitsSupported(
@@ -398,6 +412,32 @@ export function typeAvailability(
       continue
     }
 
+    if (type === 'advanced') {
+      if (units.length === 0) {
+        result[type] = { enabled: false, reason: '请先选择单元' }
+        continue
+      }
+      if (template == null) {
+        result[type] = { enabled: false, reason: '正在读取模板…' }
+        continue
+      }
+      const unitIds = units.map((unit) => unit.unitId)
+      if (advancedSupports(config.grade, unitIds, config.level)) {
+        result[type] = { enabled: true, reason: '', source: 'rule' }
+        continue
+      }
+      const levels = advancedLevelsFor(config.grade, unitIds)
+      result[type] = {
+        enabled: false,
+        reason:
+          levels.length > 0
+            ? `所选单元在 ${config.level} 没有拓展题结构，可切到 ${levels.join('/')}`
+            : `不适用：本单元没有拓展题结构（按知识点映射：U1/U2/U4/U9 四则推理、U3 图形计数、U5 时间与日期、U6 周长；U7/U8 为项目式/活动单元，暂不出拓展题）`,
+        source: levels.length > 0 ? undefined : 'na',
+      }
+      continue
+    }
+
     if (type === 'compare' || type === 'geom') {
       const flag = type === 'compare' ? template?.compare : template?.geom
       const label = typeLabel(type)
@@ -552,6 +592,9 @@ function capacityOf(type: AppType, config: AppConfig): number {
   if (type === 'lieshi') {
     return lieSupports(config.grade, unitIds, config.level) ? Number.POSITIVE_INFINITY : 0
   }
+  if (type === 'advanced') {
+    return advancedSupports(config.grade, unitIds, config.level) ? Number.POSITIVE_INFINITY : 0
+  }
   // 其余题型没有静态样例池（STATIC_SAMPLES 仅有 compare/geom 两个键）
   return 0
 }
@@ -654,6 +697,7 @@ function prioritizeUnits(units: Unit[], type: AppType, level: Level): Unit[] {
       return formatSourceUnits(unit.grade, [unit.unitId], level, type).length > 0 ? 1 : 0
     }
     if (type === 'lieshi') return lieUnitSupported(unit.grade, unit.unitId, level) ? 1 : 0
+    if (type === 'advanced') return advancedUnitSupported(unit.grade, unit.unitId, level) ? 1 : 0
     return unitSupports(unit.unitId, type, level) ? 1 : 0
   }
   return [...units].sort((a, b) => score(b) - score(a))
@@ -677,6 +721,10 @@ const itemKey = (item: TypstItem): string => {
   }
   if (item.kind === 'lieshi') {
     return `lieshi:${item.lie?.templateId ?? ''}:${item.lie ? lieAstKey(item.lie.ast) : (item.text ?? '').replace(/\s+/g, '')}`
+  }
+  // 拓展题按“结构 + 知识点”去重，不用题干字符串
+  if (item.kind === 'advanced') {
+    return `advanced:${item.adv?.key ?? (item.text ?? '').replace(/\s+/g, '')}`
   }
   if (item.kind === 'compare') return `compare:${(item.pre ?? '').replace(/\s+/g, '')}|${(item.post ?? '').replace(/\s+/g, '')}`
   // 图形题的题干可能重复（如“右边的图形是什么形状？”），真正区分题目的是图形规格与参数，
@@ -1233,6 +1281,33 @@ function lieQuestionToItem(question: LieQuestion): TypstItem {
   }
 }
 
+/** 拓展题：一题一行通栏，题干后留 3–4 行空白写思路/算式 */
+function advancedQuestionToItem(question: AdvancedQuestion): TypstItem {
+  return {
+    id: question.id,
+    kind: 'advanced',
+    text: question.stem,
+    workLines: question.tier === 'T1' ? 3 : 4,
+    answers: [question.answer],
+    solution: question.steps.map((step) => step.text),
+    adv: {
+      categoryId: question.categoryId,
+      tier: question.tier,
+      level: question.level,
+      unitId: question.unitId,
+      kpKey: question.kpKey,
+      kpKeys: question.kpKeys,
+      params: question.params,
+      known: question.known,
+      unknown: question.unknown,
+      stem: question.stem,
+      steps: question.steps,
+      answer: question.answer,
+      key: question.key,
+    },
+  }
+}
+
 function formatToItem(piece: FormatPiece, index: number): TypstItem {
   return {
     id: `fmt-${piece.kind}-${index + 1}`,
@@ -1362,6 +1437,66 @@ function buildLieType(
   return build
 }
 
+/**
+ * 拓展题：结构先定、题干后渲染；逐题走「独立重算 + 结构-解法一致性」双路径复核。
+ * 同卷按“结构 + 知识点”去重，不按题干字符串。
+ */
+function buildAdvancedType(
+  quota: number,
+  config: AppConfig,
+  seed: number,
+  used: Set<string>,
+  memory: MemoryStore,
+  sourceUsed: Set<string>,
+): TypeBuild {
+  const build = emptyBuild()
+  if (quota <= 0) return build
+  const unitIds = selectedUnits(config).map((unit) => unit.unitId)
+  const result = generateAdvanced({
+    grade: config.grade,
+    unitIds,
+    level: config.level,
+    count: quota,
+    seed,
+    memory,
+    sourceUsed,
+  })
+  build.crossReused += result.crossReused
+  for (const note of result.notes) if (!build.notes.includes(note)) build.notes.push(note)
+
+  for (const question of result.questions) {
+    if (build.items.length >= quota) break
+    const item = advancedQuestionToItem(question)
+    const outcome = admitWithRetry<TypstItem>({
+      initial: item,
+      verify: verifyItemStructure,
+      regenerate: () => {
+        const retry = generateAdvanced({
+          grade: config.grade,
+          unitIds,
+          level: config.level,
+          count: 1,
+          seed: seed + build.items.length * 1009 + 41,
+          memory,
+        })
+        return retry.questions[0] ? advancedQuestionToItem(retry.questions[0]!) : null
+      },
+    })
+    recordCheck(build.check, outcome, '拓展题·双路径复核')
+    if (outcome.accepted == null) continue
+    const key = itemKey(outcome.accepted)
+    if (used.has(key)) {
+      build.duplicates++
+      continue
+    }
+    used.add(key)
+    build.items.push(outcome.accepted)
+    build.generated++
+    if (question.kpName && !build.kpNames.includes(question.kpName)) build.kpNames.push(question.kpName)
+  }
+  return build
+}
+
 /** 比大小 / 图形与周长：走规则生成器，经运行时复核后再上卷 */
 function buildRuleType(
   type: 'compare' | 'geom',
@@ -1476,6 +1611,8 @@ export function buildPaper(input: {
       builds.set(type, buildFormatType(type, quota, config, seed, used, memory, sourceUsed))
     } else if (type === 'lieshi') {
       builds.set(type, buildLieType(quota, config, seed, used, memory, sourceUsed))
+    } else if (type === 'advanced') {
+      builds.set(type, buildAdvancedType(quota, config, seed, used, memory, sourceUsed))
     } else {
       builds.set(
         type,

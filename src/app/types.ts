@@ -2,6 +2,7 @@ import type { Level } from '../quiz/types.ts'
 import type { FigureSpec } from '../quiz/skeleton/types.ts'
 import type { FormatSourceData } from '../quiz/formats.ts'
 import type { LieRecord } from '../quiz/lieshi.ts'
+import type { AdvancedRecord } from '../quiz/advanced.ts'
 
 export type AppType =
   | 'kousuan'
@@ -15,6 +16,7 @@ export type AppType =
   | 'judge'
   | 'choice'
   | 'lieshi'
+  | 'advanced'
 
 export type Grade = '3A' | '3B'
 
@@ -73,6 +75,7 @@ export const PRACTICE_DEFAULT_COUNTS: Record<AppType, number> = {
   judge: 4,
   choice: 4,
   lieshi: 4,
+  advanced: 3,
 }
 
 /** 练习模式首启默认勾选题型 */
@@ -156,6 +159,8 @@ export interface TypstItem {
   fmt?: FormatAudit
   /** 列式计算：句式模板、参数、AST 与期望算式，供双路径复核 */
   lie?: LieRecord
+  /** 拓展题：类别、结构参数、步骤知识点与独立重算字段 */
+  adv?: AdvancedRecord
 }
 
 export interface FormatAudit {

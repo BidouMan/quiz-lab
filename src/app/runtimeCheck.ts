@@ -8,6 +8,7 @@
 import { evalLatex } from '../quiz/expr.ts'
 import { verifyConceptItem } from '../quiz/concepts.ts'
 import { verifyLieItem } from '../quiz/lieshi.ts'
+import { verifyAdvancedItem } from '../quiz/advanced.ts'
 import { deriveWrongValues, verifyFormatSource } from '../quiz/formats.ts'
 import { verifyQuestion } from '../quiz/skeleton/index.ts'
 import type { Combo, PilotQuestion } from '../quiz/skeleton/types.ts'
@@ -195,6 +196,9 @@ export function verifyItemStructure(item: TypstItem): string[] {
 
   // 列式计算：复用生成器暴露的双路径复核（独立求值 + 模板反解结构）
   if (kind === 'lieshi') return verifyLieItem(item)
+
+  // 拓展题：独立重算 + 每步知识点键校验 + 结构约束（含唯一解）
+  if (kind === 'advanced') return verifyAdvancedItem(item)
 
   // 比大小 / 图形题：按题面独立重算，再与标注答案核对
   if (kind === 'compare') {

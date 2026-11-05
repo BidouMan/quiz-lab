@@ -54,6 +54,7 @@ const PAGE_COST: Record<AppType, number> = {
   judge: 0.06,
   choice: 0.08,
   lieshi: 0.12,
+  advanced: 0.2,
 }
 const roughPages = computed(() => {
   if (activeTypes.value.length === 0) return 0
@@ -165,7 +166,7 @@ function toggleAll(checked: boolean) {
         </label>
       </div>
       <p class="hint">
-        计算类：L1 基础、L2 常规进位退位、L3 连续进位/末尾有 0/带括号三步。填空与应用题：L1 直接套用、L2 换算或两步、L3 反向求/多步判断。
+        计算类：L1 基础、L2 常规进位退位、L3 连续进位/末尾有 0/带括号三步。填空与应用题：L1 直接套用、L2 换算或两步、L3 反向求/多步判断。拓展题：L1=T1 拓展、L2=T2 提高、L3=T3 挑战。
       </p>
     </section>
 
@@ -207,6 +208,9 @@ function toggleAll(checked: boolean) {
         </p>
         <p v-if="option.type === 'geom' && availability[option.type].enabled" class="hint">
           图形建议 30–50 题（约 5–9 页），单题型上限 {{ MAX_TYPE_COUNT }} 题。
+        </p>
+        <p v-if="option.type === 'advanced' && availability[option.type].enabled" class="hint">
+          拓展题建议 3–5 题（每题留 3–4 行空白写思路），单题型上限 {{ MAX_TYPE_COUNT }} 题。
         </p>
       </template>
       <p v-if="countNotice" class="type-reason warn">{{ countNotice }}</p>

@@ -13,6 +13,7 @@ export const TYPE_ORDER: AppType[] = [
   'judge',
   'choice',
   'lieshi',
+  'advanced',
 ]
 
 const TYPE_LABELS: Record<AppType, string> = {
@@ -27,6 +28,7 @@ const TYPE_LABELS: Record<AppType, string> = {
   judge: '判断题',
   choice: '选择题',
   lieshi: '列式计算',
+  advanced: '拓展题',
 }
 
 export const TYPE_OPTIONS: { type: AppType; label: string }[] = TYPE_ORDER.map((type) => ({
