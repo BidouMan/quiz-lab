@@ -845,6 +845,8 @@ const cutPerimeter: AdvancedCategory = {
     const l = num(p, 'l')
     const w = num(p, 'w')
     const rest = l - w
+    const longSide = Math.max(rest, w)
+    const shortSide = Math.min(rest, w)
     const answer = 2 * (rest + w)
     const original = 2 * (l + w)
     return {
@@ -852,13 +854,13 @@ const cutPerimeter: AdvancedCategory = {
       unknown: '剩下图形的周长',
       steps: [
         {
-          text: `最大的正方形边长最多是${w}厘米（不能超过宽）；从一端剪下后，剩下部分长${rest}厘米、宽${w}厘米`,
+          text: `最大的正方形边长最多是${w}厘米（不能超过宽）；从一端剪下后，剩下部分长${longSide}厘米、宽${shortSide}厘米`,
           kp: '3A-PERIMETER',
         },
         {
-          text: `(${rest}+${w})×2=${answer}（厘米）`,
+          text: `(${longSide}+${shortSide})×2=${answer}（厘米）`,
           kp: '3A-PERIMETER',
-          expr: `(${rest}+${w})*2`,
+          expr: `(${longSide}+${shortSide})*2`,
           result: answer,
         },
         {

@@ -315,12 +315,13 @@ test('P0 写法扫描：无“0 天/……0/时0分”，星期几日期下限 8
   assert.deepEqual(violations.slice(0, 5), [], `写法问题 ${violations.length} 条`)
 })
 
-test('P0 剪拼：长≠2宽、剩下部分不是正方形、答案唯一', () => {
+test('P0 剪拼：长≠2宽、剩下部分不是正方形、长短边命名正确、答案唯一', () => {
   const category = advancedCategory('adv-cut-perimeter')
   assert.ok(category)
   const rng = createRng(77)
   let scanned = 0
-  for (let index = 0; index < 2000; index++) {
+  const violations: string[] = []
+  for (let index = 0; index < 3000; index++) {
     const params = category.draw(rng)
     if (params == null) continue
     scanned++
@@ -331,8 +332,14 @@ test('P0 剪拼：长≠2宽、剩下部分不是正方形、答案唯一', () =
     assert.ok(category.stem(params).includes('从一端剪下'), '题干必须写“从一端剪下”')
     const built = category.build(params)
     assert.equal(built.answer, String(category.recompute(params)))
+    const match = /剩下部分长(\d+)厘米、宽(\d+)厘米/.exec(built.steps[0]!.text)
+    if (!match) violations.push(`未按长/宽命名：${built.steps[0]!.text}`)
+    else if (Number(match[1]) < Number(match[2])) {
+      violations.push(`短边被叫“长”：${built.steps[0]!.text}`)
+    }
   }
-  assert.ok(scanned >= 1000, `剪拼扫描量只有 ${scanned}`)
+  assert.ok(scanned >= 2900, `剪拼扫描量只有 ${scanned}`)
+  assert.deepEqual(violations.slice(0, 5), [], `剪拼长/宽命名问题 ${violations.length} 条`)
 })
 
 test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而非档位', () => {
