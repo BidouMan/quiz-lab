@@ -50,7 +50,6 @@ const PAGE_COST: Record<AppType, number> = {
   tiankong: 0.06,
   compare: 0.06,
   geom: 0.2,
-  angle: 0.2,
   word: 0.08,
   judge: 0.06,
   choice: 0.08,
@@ -207,9 +206,6 @@ function toggleAll(checked: boolean) {
         </p>
         <p v-if="option.type === 'geom' && availability[option.type].enabled" class="hint">
           图形建议 30–50 题（约 5–9 页），单题型上限 {{ MAX_TYPE_COUNT }} 题。
-        </p>
-        <p v-if="option.type === 'angle' && availability[option.type].enabled" class="hint">
-          角与图形计数建议 4–8 题（约 1–2 页），需选择三上第三单元。
         </p>
       </template>
       <p v-if="countNotice" class="type-reason warn">{{ countNotice }}</p>

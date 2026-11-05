@@ -10,7 +10,6 @@ export type AppType =
   | 'tiankong'
   | 'compare'
   | 'geom'
-  | 'angle'
   | 'word'
   | 'judge'
   | 'choice'
@@ -68,7 +67,6 @@ export const PRACTICE_DEFAULT_COUNTS: Record<AppType, number> = {
   tiankong: 8,
   compare: 4,
   geom: 4,
-  angle: 4,
   word: 6,
   judge: 4,
   choice: 4,

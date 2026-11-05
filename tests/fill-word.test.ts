@@ -46,7 +46,13 @@ test('填空：三上三下所有标注单元、三档难度都能稳定生成�
         count: 8,
         seed: 9001,
       })
-      assert.equal(result.count, 8, `${unit.unitId}/${level} 题量不足`)
+      // 角与图形计数并入填空后，U3 只有角形态，受 1/3 上限约束，不强行凑满
+      if (unit.unitId === '3A-U3') {
+        assert.ok(result.count <= Math.floor(8 / 3), `${unit.unitId}/${level} 角形态超过 1/3`)
+        assert.ok(result.count > 0, `${unit.unitId}/${level} 应至少出 1 道角形态`)
+      } else {
+        assert.equal(result.count, 8, `${unit.unitId}/${level} 题量不足`)
+      }
       for (const question of result.questions) {
         assert.equal(verifyFillQuestion(question), null, `${question.id} 独立求值失败`)
         assert.equal(question.answer, question.answers.join('；'))

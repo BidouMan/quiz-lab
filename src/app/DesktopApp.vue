@@ -15,7 +15,7 @@ import {
 } from './api'
 import ParamsPanel from './ParamsPanel.vue'
 import PdfPreview from './PdfPreview.vue'
-import { buildPaper, defaultUnitIds, migrateCounts, panelUnits, typeVisibleInGrade } from './paperBuilder'
+import { buildPaper, defaultUnitIds, migrateCounts, migrateLegacyCounts, panelUnits, typeVisibleInGrade } from './paperBuilder'
 import { TYPE_OPTIONS } from './typstData'
 import {
   clampTypeCount,
@@ -261,11 +261,12 @@ onMounted(async () => {
     // 范围锁定三上：旧配置里的三下年级/单元一律钳回三上 8 个包单元
     const grade: AppConfig['grade'] = '3A'
     const allowedUnits = new Set(panelUnits().map((unit) => unit.unitId))
-    const types = Array.isArray(stored.types)
-      ? stored.types
-          .filter(isAppType)
-          .filter((type) => typeVisibleInGrade(grade, type))
-      : []
+    // 旧配置里的 angle 题型已并入填空，选择它时迁移为 tiankong
+    const rawTypes: unknown[] = Array.isArray(stored.types) ? stored.types : []
+    const migratedTypes = rawTypes.flatMap((type) => (type === 'angle' ? ['tiankong'] : [type]))
+    const types: AppType[] = Array.from(
+      new Set(migratedTypes.filter(isAppType).filter((type) => typeVisibleInGrade(grade, type))),
+    )
     const storedUnits = Array.isArray(stored.unitIds)
       ? stored.unitIds.filter(
           (id): id is string => typeof id === 'string' && allowedUnits.has(id) && findUnit(id)?.grade === grade,
@@ -273,22 +274,22 @@ onMounted(async () => {
       : null
     const level: AppConfig['level'] =
       stored.level === 'L1' || stored.level === 'L3' ? stored.level : 'L2'
+    const storedCounts =
+      stored.counts != null && typeof stored.counts === 'object' ? (stored.counts as Record<string, unknown>) : null
+    const migrated = migrateLegacyCounts(storedCounts)
+    if (typeof storedCounts?.angle === 'number' && storedCounts.angle > 0) {
+      notice.value = '「角与图形计数」已并入填空，原题量已累加到填空题'
+    }
+    const counts: AppConfig['counts'] =
+      migrated != null
+        ? { ...PRACTICE_DEFAULT_COUNTS, ...migrated }
+        : migrateCounts(typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count, types)
     Object.assign(config, {
       grade,
       level,
       unitIds: storedUnits && storedUnits.length > 0 ? storedUnits : defaultUnitIds(grade),
       types: types.length > 0 ? types : PRACTICE_DEFAULT_TYPES.filter((type) => typeVisibleInGrade(grade, type)),
-      counts:
-        stored.counts != null && typeof stored.counts === 'object'
-          ? {
-              ...PRACTICE_DEFAULT_COUNTS,
-              ...Object.fromEntries(
-                Object.entries(stored.counts)
-                  .filter(([type, value]) => isAppType(type) && typeof value === 'number')
-                  .map(([type, value]) => [type, clampTypeCount(value)]),
-              ),
-            }
-          : migrateCounts(typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count, types),
+      counts,
       count: typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count,
       pages: typeof stored.pages === 'number' ? stored.pages : DEFAULT_CONFIG.pages,
       typstPath: typeof stored.typstPath === 'string' ? stored.typstPath : '',

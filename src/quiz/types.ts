@@ -1,5 +1,7 @@
 /** v0.2.0 题库地基：类型定义（只做数据与生成器，不接 UI） */
 
+import type { FigureSpec } from './skeleton/types.ts'
+
 export type Grade = '3A' | '3B'
 export type Semester = '上' | '下'
 export type CalcType = 'kousuan' | 'chushi' | 'tuoshi' | 'jianbian'
@@ -88,6 +90,9 @@ export type FillFormName =
   | 'pattern'
   | 'maxArea'
   | 'tangram'
+  | 'angle-count'
+  | 'angle-classify'
+  | 'angle-add-line'
 
 /** 应用题的场景形态 */
 export type WordFormName =
@@ -201,6 +206,16 @@ export interface GenerateResult {
   crossReused?: number
 }
 
+/** 填空题生成中的一道草稿：题干、答案与复核参数；带图形态附 FigureSpec */
+export interface FillDraft {
+  stem: string
+  answers: string[]
+  params: ParamMap
+  values: number[]
+  features: Record<string, number | string | boolean>
+  fig?: FigureSpec
+}
+
 /** 填空题：题干用 $...$ 表示数学片段、连续下划线表示空位，answer 用“；”分隔 */
 export interface FillQuestion {
   id: string
@@ -222,6 +237,8 @@ export interface FillQuestion {
   fingerprint: string
   values: number[]
   features: Record<string, number | string | boolean>
+  /** 角与图形计数等带图填空的图形规格 */
+  fig?: FigureSpec
 }
 
 /** 应用题的一步解答：算式 + 结果 */
@@ -278,6 +295,8 @@ export interface GenerateFillOptions {
   count: number
   seed?: number
   memory?: import('./memory.ts').MemoryStore
+  /** 角与图形计数形态的本卷最多占几题；缺省按 count 的 1/3 */
+  maxAngle?: number
 }
 
 export interface GenerateWordOptions {

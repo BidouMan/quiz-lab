@@ -1,5 +1,6 @@
 import { CURRICULUM, findKp, findUnit } from '../data/curriculum.ts'
 import type {
+  FillDraft,
   FillFormName,
   FillQuestion,
   FillRuleSpec,
@@ -12,6 +13,7 @@ import type {
 import { MemoryStore } from './memory.ts'
 import { createRng, pick, randInt, type Rng } from './rng.ts'
 import { unitGuardProblem } from './unitGuards.ts'
+import { angleFillForms, buildAngleFill, verifyAngleFill, angleUnitSupported } from './angle.ts'
 
 /**
  * 填空题生成器。
@@ -25,20 +27,14 @@ import { unitGuardProblem } from './unitGuards.ts'
 
 const BLANK = '____'
 
-interface FillDraft {
-  stem: string
-  answers: string[]
-  params: ParamMap
-  values: number[]
-  features: Record<string, number | string | boolean>
-}
-
 type FillBuilder = (rng: Rng, level: Level) => FillDraft | null
 
 interface Target {
   unit: Unit
   kp: KnowledgePoint
   specs: FillRuleSpec[]
+  /** 角与图形计数形态：合并进填空后参与 1/3 占比上限 */
+  angle?: boolean
 }
 
 const asSpecs = (value: FillRuleSpec | FillRuleSpec[] | undefined): FillRuleSpec[] => {
@@ -1294,6 +1290,9 @@ const BUILDERS: Record<FillFormName, FillBuilder> = {
   mul2x2: buildMul2x2,
   mul2x3: buildMul2x3,
   div2x2: buildDiv2x2,
+  'angle-count': (rng, level) => buildAngleFill('angle-count', rng, level),
+  'angle-classify': (rng, level) => buildAngleFill('angle-classify', rng, level),
+  'angle-add-line': (rng, level) => buildAngleFill('angle-add-line', rng, level),
 }
 
 // ---------- 独立求值：只看 params 重算答案 ----------
@@ -1314,6 +1313,10 @@ export function verifyFill(form: FillFormName, params: ParamMap): string[] {
   }
 
   switch (form) {
+    case 'angle-count':
+    case 'angle-classify':
+    case 'angle-add-line':
+      return verifyAngleFill(form, params)
     case 'leapYear': {
       const year = n('year')
       const leap = (year % 400 === 0) || (year % 4 === 0 && year % 100 !== 0)
@@ -1711,6 +1714,15 @@ function resolveTargets(options: GenerateFillOptions): Target[] {
       if (specs.length > 0) targets.push({ unit, kp, specs })
     }
   }
+  /** 角与图形计数已并入填空：只有 U3 且有角形态时追加一个角目标 */
+  const pushAngle = (unit: Unit) => {
+    if (!angleUnitSupported(unit.unitId)) return
+    const forms = angleFillForms(level)
+    if (forms.length === 0) return
+    const kp = unit.kps.find((item) => item.kpName.includes('角')) ?? unit.kps[0]
+    if (!kp) return
+    targets.push({ unit, kp, specs: forms.map((form) => ({ form })), angle: true })
+  }
 
   if (kpId) {
     const found = findKp(kpId)
@@ -1725,9 +1737,13 @@ function resolveTargets(options: GenerateFillOptions): Target[] {
     if (!unit) throw new Error(`找不到单元: ${unitId}`)
     if (unit.grade !== grade) throw new Error(`${unitId} 不属于 ${grade}`)
     pushUnit(unit)
+    pushAngle(unit)
   } else {
     for (const unit of CURRICULUM.units) {
-      if (unit.grade === grade) pushUnit(unit)
+      if (unit.grade === grade) {
+        pushUnit(unit)
+        pushAngle(unit)
+      }
     }
   }
 
@@ -1761,9 +1777,18 @@ export function generateFill(options: GenerateFillOptions): {
   const questions: FillQuestion[] = []
   const failures: string[] = []
   let crossReused = 0
+  // 角与图形计数并入填空后限占 1/3；本卷由组卷侧传入上限，缺省按 count/3
+  const angleCap = options.maxAngle != null ? Math.max(0, Math.floor(options.maxAngle)) : Math.floor(count / 3)
+  let angleUsed = 0
+  let plainCursor = 0
 
   for (let index = 0; index < count; index++) {
-    const target = targets[index % targets.length]
+    let target = targets[index % targets.length]!
+    if (target.angle && angleUsed >= angleCap) {
+      const plain = targets.filter((item) => !item.angle)
+      if (plain.length === 0) break
+      target = plain[plainCursor++ % plain.length]!
+    }
     const candidates: { draft: FillDraft; spec: FillRuleSpec; fp: string }[] = []
     /** 记忆池轮转候选：最近窗口内的题，取 lastPaper 最小（最久未用）的那道 */
     let stale: { draft: FillDraft; spec: FillRuleSpec; fp: string } | null = null
@@ -1834,6 +1859,7 @@ export function generateFill(options: GenerateFillOptions): {
     memory.record(chosen.fp)
     usedFp.add(chosen.fp)
     usedStem.add(chosen.draft.stem.replace(/\s+/g, ''))
+    if (target.angle) angleUsed++
     questions.push({
       id: `${target.unit.unitId}-${target.kp.kpId}-tiankong-${level}-${String(index + 1).padStart(2, '0')}`,
       grade,
@@ -1850,6 +1876,7 @@ export function generateFill(options: GenerateFillOptions): {
       fingerprint: chosen.fp,
       values: chosen.draft.values,
       features: chosen.draft.features,
+      fig: chosen.draft.fig,
     })
   }
 
@@ -1869,19 +1896,22 @@ export function generateFill(options: GenerateFillOptions): {
 export function hasFillRules(unitId: string): boolean {
   const unit = findUnit(unitId)
   if (!unit) return false
+  if (angleUnitSupported(unitId)) return true
   return unit.kps.some((kp) => asSpecs(kp.rules.tiankong?.L1).length > 0 || asSpecs(kp.rules.tiankong?.L2).length > 0 || asSpecs(kp.rules.tiankong?.L3).length > 0)
 }
 
-/** 某单元在指定难度是否有填空规则 */
+/** 某单元在指定难度是否有填空规则（含已并入填空的角与图形计数） */
 export function fillSupports(unitId: string, level: Level): boolean {
   const unit = findUnit(unitId)
   if (!unit) return false
+  if (angleUnitSupported(unitId) && angleFillForms(level).length > 0) return true
   return unit.kps.some((kp) => asSpecs(kp.rules.tiankong?.[level]).length > 0)
 }
 
 export function fillLevelsFor(unitId: string): Level[] {
   const unit = findUnit(unitId)
   if (!unit) return []
+  if (angleUnitSupported(unitId)) return ['L1', 'L2', 'L3']
   const levels = new Set<Level>()
   for (const kp of unit.kps) {
     for (const level of ['L1', 'L2', 'L3'] as Level[]) {

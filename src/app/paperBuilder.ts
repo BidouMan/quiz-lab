@@ -14,7 +14,7 @@ import { fillLevelsFor, fillSupports, generateFill } from '../quiz/fill.ts'
 import { generateWord, wordLevelsFor, wordSupports } from '../quiz/word.ts'
 import { compareUnitForms, generateCompare, type ComparePiece } from '../quiz/compare.ts'
 import { geomUnitForms, geomUnitsSupported, generateGeom, type GeomPiece } from '../quiz/geom.ts'
-import { angleUnitForms, angleUnitsSupported, generateAngle, type AnglePiece } from '../quiz/angle.ts'
+import { angleUnitSupported as fillAngleUnit } from '../quiz/angle.ts'
 import {
   formatSourceUnits,
   formatSupports,
@@ -69,7 +69,6 @@ const WEIGHTS: Record<AppType, number> = {
   tiankong: 0.18,
   compare: 0.04,
   geom: 0.03,
-  angle: 0.03,
   word: 0.12,
   judge: 0.06,
   choice: 0.06,
@@ -148,13 +147,6 @@ export function typeVisibleInGrade(grade: Grade, type: AppType): boolean {
     if (grade === '3B') return true
     return units.some((unit) =>
       LEVELS.some((level) => compareUnitForms(unit.unitId, level).length > 0),
-    )
-  }
-
-  if (type === 'angle') {
-    return angleUnitsSupported(
-      grade,
-      units.map((unit) => unit.unitId),
     )
   }
 
@@ -359,13 +351,13 @@ export function typeAvailability(
         reason:
           levels.length > 0
             ? `所选单元在 ${config.level} 没有可用于${label}的计算/填空内容，可切到 ${levels.join('/')}`
-            : `所选单元（${units.map((unit) => unit.unitName).join('、')}）没有可用于${label}的单值计算/填空内容（角与图形计数、数学广场图形玩法由对应题型承载）`,
+            : `所选单元（${units.map((unit) => unit.unitName).join('、')}）没有可用于${label}的单值计算/填空内容（角与图形计数已并入带图填空，数学广场为图形玩法，均不适合单值判断/选择）`,
         source: levels.length > 0 ? undefined : 'na',
       }
       continue
     }
 
-    if (type === 'compare' || type === 'geom' || type === 'angle') {
+    if (type === 'compare' || type === 'geom') {
       const flag = type === 'compare' ? template?.compare : template?.geom
       const label = typeLabel(type)
       if (template == null) {
@@ -401,27 +393,18 @@ export function typeAvailability(
         }
         continue
       }
-      if (type === 'angle') {
-        if (angleUnitsSupported(config.grade, unitIds)) {
+      if (type === 'geom') {
+        if (geomUnitsSupported(config.grade, unitIds)) {
           result[type] = { enabled: true, reason: '', source: 'rule' }
           continue
         }
         result[type] = {
           enabled: false,
-          reason: '所选单元不含三上 U3「角的初步认识」，不出角与图形计数题',
+          reason: '所选单元不含认识图形（U3）或周长（U6）内容，不出图形题',
           source: 'na',
         }
-        continue
       }
-      if (geomUnitsSupported(config.grade, unitIds)) {
-        result[type] = { enabled: true, reason: '', source: 'rule' }
-        continue
-      }
-      result[type] = {
-        enabled: false,
-        reason: '所选单元不含认识图形（U3）或周长（U6）内容，不出图形题',
-        source: 'na',
-      }
+      continue
     }
   }
 
@@ -521,10 +504,6 @@ function capacityOf(type: AppType, config: AppConfig): number {
     const unitIds = selectedUnits(config).map((unit) => unit.unitId)
     return geomUnitsSupported(config.grade, unitIds) ? Number.POSITIVE_INFINITY : 0
   }
-  if (type === 'angle') {
-    const unitIds = selectedUnits(config).map((unit) => unit.unitId)
-    return angleUnitsSupported(config.grade, unitIds) ? Number.POSITIVE_INFINITY : 0
-  }
   if (type === 'judge' || type === 'choice') {
     const unitIds = selectedUnits(config).map((unit) => unit.unitId)
     return formatSupports(config.grade, unitIds, config.level) ? Number.POSITIVE_INFINITY : 0
@@ -588,6 +567,26 @@ export function migrateCounts(oldCount: number, types: AppType[]): Partial<Recor
   return counts
 }
 
+/**
+ * 旧配置 counts 迁移：角与图形计数已并入填空。
+ * 累加到 fill；若 fill 为 0 或未设置，则直接取 angle 的值，不静默丢弃。
+ */
+export function migrateLegacyCounts(
+  stored: Record<string, unknown> | null | undefined,
+): Partial<Record<AppType, number>> | null {
+  if (stored == null) return null
+  const counts: Partial<Record<AppType, number>> = {}
+  for (const [type, value] of Object.entries(stored)) {
+    if (TYPE_ORDER.includes(type as AppType) && typeof value === 'number') {
+      counts[type as AppType] = clampTypeCount(value)
+    }
+  }
+  if (typeof stored.angle === 'number') {
+    counts.tiankong = clampTypeCount((counts.tiankong ?? 0) + clampTypeCount(stored.angle))
+  }
+  return counts
+}
+
 function splitQuota(total: number, parts: number): number[] {
   if (parts <= 0) return []
   const base = Math.floor(total / parts)
@@ -607,7 +606,6 @@ function prioritizeUnits(units: Unit[], type: AppType, level: Level): Unit[] {
     }
     if (type === 'compare') return compareUnitForms(unit.unitId, level).length > 0 ? 1 : 0
     if (type === 'geom') return geomUnitForms(unit.unitId, level).length > 0 ? 1 : 0
-    if (type === 'angle') return angleUnitForms(unit.unitId, level).length > 0 ? 1 : 0
     if (type === 'judge' || type === 'choice') {
       return formatSourceUnits(unit.grade, [unit.unitId], level).length > 0 ? 1 : 0
     }
@@ -648,6 +646,7 @@ function fillQuestionToItem(question: FillQuestion): TypstItem {
     parts: splitFill(question.stem, question.answers),
     answers: question.answers,
     solution: [question.answer],
+    fig: question.fig,
   }
 }
 
@@ -878,9 +877,12 @@ function buildGeneratedType(input: {
   skeletonUsed: UsedSets
   memory: MemoryStore
   sourceUsed?: Set<string>
+  /** 为并入填空的角形态预留题位（只有 U3 会返回正数） */
+  reserveAngles?: (unit: Unit) => number
   runLegacy: (unit: Unit, count: number, seed: number) => { pieces: GeneratedPiece[]; crossReused: number }
 }): TypeBuild {
   const { type, label, quota, config, seed, used, skeletonUsed, memory, sourceUsed, runLegacy } = input
+  const reserveAngles = input.reserveAngles ?? (() => 0)
   const build = emptyBuild()
   if (quota <= 0) return build
 
@@ -998,7 +1000,9 @@ function buildGeneratedType(input: {
       const unitSeed = seed + index * 131
       const hasSkeleton = skeletonCombo(unit.unitId, type, config.level) != null
       let added = 0
-      if (hasSkeleton) added = takeSkeleton(unit, quotas[index], unitSeed)
+      // 角形态并入填空：先给角留出位置，避免骨架包把配额占满
+      const reserve = Math.min(reserveAngles(unit), quotas[index]!)
+      if (hasSkeleton) added = takeSkeleton(unit, Math.max(quotas[index] - reserve, 0), unitSeed)
       if (added === 0 && supportsLegacy(unit.unitId, type, config.level)) {
         added = takeLegacy(unit, quotas[index], unitSeed)
         if (added > 0) {
@@ -1052,6 +1056,8 @@ function buildFillType(
     skeletonUsed,
     memory,
     sourceUsed,
+    // 角形态并入填空：U3 预留 1/3 配额，避免骨架题占满
+    reserveAngles: (unit) => (fillAngleUnit(unit.unitId) ? Math.floor(quota / 3) : 0),
     runLegacy: (unit, count, unitSeed) => {
       const result = generateFill({
         grade: config.grade,
@@ -1060,6 +1066,8 @@ function buildFillType(
         count,
         seed: unitSeed,
         memory,
+        // 角与图形计数已并入填空：整卷最多占填空配额的 1/3
+        maxAngle: Math.floor(quota / 3),
       })
       return {
         pieces: result.questions.map((question) => ({
@@ -1156,17 +1164,6 @@ function geomToItem(piece: GeomPiece, index: number): TypstItem {
   }
 }
 
-function angleToItem(piece: AnglePiece, index: number): TypstItem {
-  return {
-    id: `ang-${index}-${piece.form}`,
-    kind: 'geom',
-    text: piece.text,
-    fig: piece.fig,
-    blank: piece.blank,
-    audit: { form: piece.form, answer: piece.answer, params: { ...piece.params } },
-  }
-}
-
 function formatToItem(piece: FormatPiece, index: number): TypstItem {
   return {
     id: `fmt-${piece.kind}-${index + 1}`,
@@ -1235,9 +1232,9 @@ function buildFormatType(
   return build
 }
 
-/** 比大小 / 图形与周长 / 角与图形计数：走规则生成器，经运行时复核后再上卷 */
+/** 比大小 / 图形与周长：走规则生成器，经运行时复核后再上卷 */
 function buildRuleType(
-  type: 'compare' | 'geom' | 'angle',
+  type: 'compare' | 'geom',
   quota: number,
   config: AppConfig,
   seed: number,
@@ -1250,9 +1247,7 @@ function buildRuleType(
   const generated =
     type === 'compare'
       ? generateCompare({ grade: config.grade, unitIds, level: config.level, count: quota, seed, memory })
-      : type === 'geom'
-        ? generateGeom({ grade: config.grade, unitIds, level: config.level, count: quota, seed, memory })
-        : generateAngle({ grade: config.grade, unitIds, level: config.level, count: quota, seed, memory })
+      : generateGeom({ grade: config.grade, unitIds, level: config.level, count: quota, seed, memory })
   build.crossReused += generated.crossReused
 
   for (const note of generated.notes) if (!build.notes.includes(note)) build.notes.push(note)
@@ -1262,9 +1257,7 @@ function buildRuleType(
     const item =
       type === 'compare'
         ? compareToItem(piece as ComparePiece, index)
-        : type === 'geom'
-          ? geomToItem(piece as GeomPiece, index)
-          : angleToItem(piece as AnglePiece, index)
+        : geomToItem(piece as GeomPiece, index)
     const outcome = admitWithRetry<TypstItem>({
       initial: item,
       verify: verifyItemStructure,
@@ -1355,7 +1348,7 @@ export function buildPaper(input: {
       builds.set(
         type,
         availability[type].source === 'rule'
-          ? buildRuleType(type as 'compare' | 'geom' | 'angle', quota, config, seed, used, memory)
+          ? buildRuleType(type as 'compare' | 'geom', quota, config, seed, used, memory)
           : buildSampleType(type, quota, used, memory),
       )
     }

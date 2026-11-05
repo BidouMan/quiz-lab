@@ -1,66 +1,52 @@
-import { createRng, randInt, type Rng } from './rng.ts'
-import type { MemoryStore } from './memory.ts'
-import { shortHash, stableStringify } from './normalize.ts'
+import { randInt, type Rng } from './rng.ts'
 import { renderRayScene, renderSegmentScene, type RayCellModel, type RaySpec } from './figure.ts'
 import type { FigureSpec } from './skeleton/types.ts'
-import type { Grade, Level } from './types.ts'
+import type { FillDraft, FillFormName, Grade, Level } from './types.ts'
 
 /**
- * 「角与图形计数」规则生成器（沪教版 2024 修订·五·四学制 三上 U3「三角形与四边形」）。
+ * 「角与图形计数」填空子形态（沪教版 2024 修订·五·四学制 三上 U3「三角形与四边形」）。
  *
- * 与 FigureKit 的边界一致：figure.ts 只负责画射线/弧线/直角符号/线段，
- * 本文件负责题面、答案与复核参数；答案的计算与独立重算都留在题型层。
+ * 角类题不再单开题型：三种点/线/分类形态都产出 FillDraft，由 fill.ts 统一
+ * 走题干空位、答案、去重、跨卷记忆与运行时复核。figure.ts 只负责画图。
  */
-export type AngleForm = 'point-angles' | 'classify-angles' | 'add-line-angles'
+export type AngleFillForm = 'angle-count' | 'angle-classify' | 'angle-add-line'
 export type CountForm = 'count-triangles' | 'count-rectangles'
-export type AnyAngleForm = AngleForm | CountForm
 
-export interface AnglePiece {
+/** 未接入出卷的计数方案小样（保留验证用，不参与填空生成） */
+export interface CountPiece {
   text: string
   fig: FigureSpec
   blank: number
-  /** 答案：点角类为数字，辨认类为「直角，锐角，钝角」计数串 */
   answer: string
-  form: AnyAngleForm
+  form: CountForm
   params: Record<string, number | string>
   kpName: string
 }
 
-export interface AngleOptions {
-  grade: Grade
-  unitIds: string[]
-  level: Level
-  count: number
-  seed: number
-  memory?: MemoryStore
+const BLANK = '____'
+
+/** 角类形态挂三上 U3；其他单元没有角内容 */
+export function angleUnitSupported(unitId: string): boolean {
+  return unitId === '3A-U3'
 }
 
-/** 「角的初步认识」挂三上 U3；三下与 3B 无角单元，不出题 */
 export function angleSupported(grade: Grade, unitIds: string[]): boolean {
   return grade === '3A' && unitIds.includes('3A-U3')
 }
 
-export function angleUnitsSupported(grade: Grade, unitIds: string[]): boolean {
-  return angleSupported(grade, unitIds)
+const FORMS_BY_LEVEL: Record<Level, AngleFillForm[]> = {
+  // L1 只出单空、正向题；分类计三空、添线求总数属于两步，放 L2/L3
+  L1: ['angle-count', 'angle-add-line'],
+  L2: ['angle-count', 'angle-classify', 'angle-add-line'],
+  L3: ['angle-count', 'angle-classify', 'angle-add-line'],
 }
 
-const FORMS_BY_LEVEL: Record<Level, AngleForm[]> = {
-  L1: ['point-angles', 'classify-angles', 'add-line-angles'],
-  L2: ['point-angles', 'classify-angles', 'add-line-angles'],
-  L3: ['point-angles', 'classify-angles', 'add-line-angles'],
-}
-
-export function angleUnitForms(unitId: string, level: Level): AngleForm[] {
-  if (unitId !== '3A-U3') return []
+export function angleFillForms(level: Level): AngleFillForm[] {
   return FORMS_BY_LEVEL[level]
 }
 
-const KP: Record<AnyAngleForm, string> = {
-  'point-angles': '数角（一点引出 n 条射线）',
-  'classify-angles': '直角、锐角、钝角的辨认与计数',
-  'add-line-angles': '添线后数角',
-  'count-triangles': '数三角形',
-  'count-rectangles': '数长方形',
+export function isAngleForm(form: FillFormName | string): form is AngleFillForm {
+  return form === 'angle-count' || form === 'angle-classify' || form === 'angle-add-line'
 }
 
 const round1 = (value: number): number => Math.round(value * 10) / 10
@@ -72,6 +58,8 @@ type AngleKind = 'acute' | 'right' | 'obtuse'
 
 const pick = <T,>(rng: Rng, list: readonly T[]): T => list[randInt(rng, 0, list.length - 1)]!
 
+const combination = (n: number): number => (n * (n - 1)) / 2
+
 const angleKindOf = (degree: number): AngleKind =>
   degree < 90 ? 'acute' : degree === 90 ? 'right' : 'obtuse'
 
@@ -81,7 +69,7 @@ const degreesFor = (rng: Rng, kind: AngleKind): number => {
 }
 
 /** 一点引出 n 条射线：方向铺满上半平面，任意两条都不共线，答案 C(n,2) */
-export function makePointAngles(rng: Rng, level: Level): AnglePiece {
+export function makeAngleCount(rng: Rng, level: Level): FillDraft {
   // 示例档位为 L1 3–4、L2 5–6、L3 7–9；为降低同卷同答案重复，每档放宽一档
   const range: Record<Level, [number, number]> = { L1: [3, 5], L2: [5, 7], L3: [7, 9] }
   const [minN, maxN] = range[level]
@@ -94,19 +82,19 @@ export function makePointAngles(rng: Rng, level: Level): AnglePiece {
     length: 5,
   }))
   const fig = renderRayScene({ cells: [{ origin: [0, 0], rays }] })
+  const answer = String(combination(n))
   return {
-    text: `从一点引出 ${n} 条射线（如图），一共可以数出多少个角？`,
+    stem: `从一点引出 ${n} 条射线（如图），一共可以数出 ${BLANK} 个角。`,
+    answers: [answer],
+    values: [combination(n)],
     fig,
-    blank: 1,
-    answer: String((n * (n - 1)) / 2),
-    form: 'point-angles',
-    params: { form: 'point-angles', n, start, end },
-    kpName: KP['point-angles'],
+    params: { form: 'angle-count', n, start, end },
+    features: { form: 'angle-count', level, figure: 1, reverse: 0 },
   }
 }
 
-/** 5–6 个互相独立的角，按直角/锐角/钝角分别计数；直角一律画直角符号 */
-export function makeClassifyAngles(rng: Rng, level: Level): AnglePiece {
+/** 4–6 个互相独立的角，按直角/锐角/钝角分别计数；直角一律画直角符号 */
+export function makeAngleClassify(rng: Rng, level: Level): FillDraft {
   const total = level === 'L1' ? 4 : level === 'L2' ? 5 : 6
   const kinds: AngleKind[] = ['right', 'acute', 'obtuse']
   while (kinds.length < total) {
@@ -158,20 +146,19 @@ export function makeClassifyAngles(rng: Rng, level: Level): AnglePiece {
   for (const degree of degrees) counts[angleKindOf(degree)]++
   const fig = renderRayScene({ cells })
   return {
-    text: `图中标出了 ${total} 个角。直角有（ ）个，锐角有（ ）个，钝角有（ ）个。`,
+    stem: `图中标出了 ${total} 个角。直角有 ${BLANK} 个，锐角有 ${BLANK} 个，钝角有 ${BLANK} 个。`,
+    answers: [String(counts.right), String(counts.acute), String(counts.obtuse)],
+    values: [counts.right, counts.acute, counts.obtuse],
     fig,
-    blank: 1,
-    answer: `${counts.right}，${counts.acute}，${counts.obtuse}`,
-    form: 'classify-angles',
-    params: { form: 'classify-angles', angles: degrees.join(','), marks: counts.right },
-    kpName: KP['classify-angles'],
+    params: { form: 'angle-classify', angles: degrees.join(','), marks: counts.right },
+    features: { form: 'angle-classify', level, figure: 1, reverse: 0 },
   }
 }
 
 /** 已有 m 条射线，再添一条（虚线）；新线与每条已有线各成一个角 */
-export function makeAddLineAngles(rng: Rng, level: Level): AnglePiece {
+export function makeAngleAddLine(rng: Rng, level: Level): FillDraft {
   const range: Record<Level, [number, number]> = { L1: [3, 5], L2: [4, 6], L3: [6, 8] }
-  const ask: 'added' | 'total' = randInt(rng, 0, 1) === 0 ? 'added' : 'total'
+  const ask: 'added' | 'total' = level === 'L1' ? 'added' : randInt(rng, 0, 1) === 0 ? 'added' : 'total'
   const [minM, maxM] = range[level]
   const m = randInt(rng, minM, maxM)
   const start = randInt(rng, 22, 28)
@@ -195,19 +182,53 @@ export function makeAddLineAngles(rng: Rng, level: Level): AnglePiece {
       },
     ],
   })
-  const text =
+  const answer = ask === 'added' ? m : ((m + 1) * m) / 2
+  const stem =
     ask === 'added'
-      ? `图中从一点引出 ${m} 条射线。如果再添一条射线（图中虚线），会增加多少个角？`
-      : `图中从一点引出 ${m} 条射线。如果再添一条射线（图中虚线），现在一共有多少个角？`
+      ? `图中从一点引出 ${m} 条射线。如果再添一条射线（图中虚线），会增加 ${BLANK} 个角。`
+      : `图中从一点引出 ${m} 条射线。如果再添一条射线（图中虚线），现在一共有 ${BLANK} 个角。`
   return {
-    text,
+    stem,
+    answers: [String(answer)],
+    values: [answer],
     fig,
-    blank: 1,
-    answer: String(ask === 'added' ? m : (m * (m + 1)) / 2),
-    form: 'add-line-angles',
-    params: { form: 'add-line-angles', m, ask, gap, added: addedAngle },
-    kpName: KP['add-line-angles'],
+    params: { form: 'angle-add-line', m, ask, gap, added: addedAngle },
+    features: { form: 'angle-add-line', level, figure: 1, reverse: 0 },
   }
+}
+
+export function buildAngleFill(form: AngleFillForm, rng: Rng, level: Level): FillDraft {
+  switch (form) {
+    case 'angle-count':
+      return makeAngleCount(rng, level)
+    case 'angle-classify':
+      return makeAngleClassify(rng, level)
+    case 'angle-add-line':
+      return makeAngleAddLine(rng, level)
+  }
+}
+
+/** 独立重算：只依赖 params，不复用生成时的中间结果 */
+export function verifyAngleFill(form: AngleFillForm, params: Record<string, number | string | undefined>): string[] {
+  if (form === 'angle-count') {
+    const n = Number(params.n)
+    return [String(combination(n))]
+  }
+  if (form === 'angle-classify') {
+    const degrees = String(params.angles ?? '')
+      .split(',')
+      .map(Number)
+      .filter((degree) => Number.isFinite(degree))
+    const right = degrees.filter((degree) => degree === 90).length
+    const acute = degrees.filter((degree) => degree < 90).length
+    const obtuse = degrees.filter((degree) => degree > 90).length
+    return [String(right), String(acute), String(obtuse)]
+  }
+  if (form === 'angle-add-line') {
+    const m = Number(params.m)
+    return [String(params.ask === 'added' ? m : ((m + 1) * m) / 2)]
+  }
+  return []
 }
 
 /**
@@ -215,7 +236,7 @@ export function makeAddLineAngles(rng: Rng, level: Level): AnglePiece {
  * 只数由图中已有线段围成的三角形。底边 AB 上有 k 个分点，顶点 C 向每个分点连线段，
  * 每个三角形都必须以 C 为一个顶点、从底边 k+2 个点中取两个，答案 C(k+2,2)。
  */
-export function makeCountTriangles(rng: Rng): AnglePiece {
+export function makeCountTriangles(rng: Rng): CountPiece {
   const k = randInt(rng, 1, 4)
   const base = randInt(rng, 8, 12)
   const height = randInt(rng, 6, 9)
@@ -240,7 +261,7 @@ export function makeCountTriangles(rng: Rng): AnglePiece {
     answer: String(answer),
     form: 'count-triangles',
     params: { form: 'count-triangles', k, base, height, apex: apexX },
-    kpName: KP['count-triangles'],
+    kpName: '数三角形',
   }
 }
 
@@ -248,7 +269,7 @@ export function makeCountTriangles(rng: Rng): AnglePiece {
  * 【方案验证·未接入出卷】数长方形：
  * m×n 的完整方格网，所有边都落在已有网格线上；答案 C(m+1,2)×C(n+1,2)。
  */
-export function makeCountRectangles(rng: Rng): AnglePiece {
+export function makeCountRectangles(rng: Rng): CountPiece {
   // 旋转视为同一种网格：固定 m ≥ n，2–5 共 10 种
   const a = randInt(rng, 2, 5)
   const b = randInt(rng, 2, 5)
@@ -269,101 +290,6 @@ export function makeCountRectangles(rng: Rng): AnglePiece {
     answer: String(answer),
     form: 'count-rectangles',
     params: { form: 'count-rectangles', m, n },
-    kpName: KP['count-rectangles'],
+    kpName: '数长方形',
   }
-}
-
-const makeOne = (form: AngleForm, rng: Rng, level: Level): AnglePiece => {
-  switch (form) {
-    case 'point-angles':
-      return makePointAngles(rng, level)
-    case 'classify-angles':
-      return makeClassifyAngles(rng, level)
-    case 'add-line-angles':
-      return makeAddLineAngles(rng, level)
-  }
-}
-
-/** 跨卷记忆键：fig 规格（短哈希）+ 关键数值 + 求解目标 */
-export function angleKey(piece: AnglePiece): string {
-  const params = Object.keys(piece.params)
-    .sort()
-    .map((key) => `${key}=${piece.params[key]}`)
-    .join('&')
-  return `angle:${piece.form}:${shortHash(stableStringify(piece.fig))}:${params}`
-}
-
-export function generateAngle(options: AngleOptions): {
-  items: AnglePiece[]
-  notes: string[]
-  crossReused: number
-} {
-  const { grade, unitIds, level, count, seed, memory } = options
-  if (!angleSupported(grade, unitIds)) {
-    return {
-      items: [],
-      notes: ['角与图形计数：所选单元不含三上 U3「角的初步认识」，已跳过'],
-      crossReused: 0,
-    }
-  }
-  const forms = FORMS_BY_LEVEL[level]
-  const rng = createRng(seed)
-  const items: AnglePiece[] = []
-  const used = new Set<string>()
-  // 点角/添线角只按图变化时答案会重复，同卷内再按「题型+答案」去重
-  const answerKeys = new Set<string>()
-  const exhausted = new Set<AngleForm>()
-  const maxAttemptsPerItem = 220
-  let cursor = 0
-  let crossReused = 0
-
-  while (items.length < count) {
-    const remaining = forms.filter((form) => !exhausted.has(form))
-    if (remaining.length === 0) break
-    let form = forms[cursor % forms.length]!
-    if (exhausted.has(form)) {
-      form = remaining[0]!
-    }
-    cursor++
-    if (exhausted.has(form)) continue
-
-    let fresh: AnglePiece | null = null
-    let stale: AnglePiece | null = null
-    for (let attempt = 0; attempt < maxAttemptsPerItem; attempt++) {
-      const piece = makeOne(form, rng, level)
-      const key = angleKey(piece)
-      if (used.has(key)) continue
-      if (
-        (form === 'point-angles' || form === 'add-line-angles') &&
-        answerKeys.has(`${form}:${piece.answer}`)
-      ) {
-        continue
-      }
-      if (memory?.recentlyUsed(key)) {
-        if (stale == null || memory.lastPaper(key) < memory.lastPaper(angleKey(stale))) {
-          stale = piece
-        }
-        continue
-      }
-      fresh = piece
-      break
-    }
-    const chosen = fresh ?? stale
-    if (chosen == null) {
-      exhausted.add(form)
-      continue
-    }
-    const key = angleKey(chosen)
-    if (memory?.crossPaperUsed(key)) crossReused++
-    memory?.record(key)
-    used.add(key)
-    if (chosen.form === 'point-angles' || chosen.form === 'add-line-angles') {
-      answerKeys.add(`${chosen.form}:${chosen.answer}`)
-    }
-    items.push(chosen)
-  }
-
-  const notes: string[] = []
-  if (items.length < count) notes.push(`本版角与图形计数规则最多可出 ${items.length} 道不重复题`)
-  return { items, notes, crossReused }
 }
