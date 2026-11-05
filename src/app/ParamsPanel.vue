@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Level } from '../quiz/types.ts'
 import {
   panelUnits,
-  recommendedCount,
   typeAvailability,
+  typeVisibleInGrade,
 } from './paperBuilder'
-import type { AppConfig, AppType, TemplateInfo, TypstInfo } from './types'
+import { MAX_TYPE_COUNT, type AppConfig, type AppType, type TemplateInfo, type TypstInfo } from './types'
 import { TYPE_OPTIONS } from './typstData'
 
 const props = defineProps<{
@@ -15,6 +15,8 @@ const props = defineProps<{
   typst: TypstInfo | null
   typstError: string
   checking: boolean
+  /** 排版回填的实际页数；未排版时为空，界面用总数粗估 */
+  pageEstimate?: number
 }>()
 
 const emit = defineEmits<{ checkTypst: [] }>()
@@ -27,7 +29,39 @@ const LEVELS: { level: Level; label: string; hint: string }[] = [
 
 const units = computed(() => panelUnits())
 const availability = computed(() => typeAvailability(props.config, props.template))
+const visibleOptions = computed(() =>
+  TYPE_OPTIONS.filter((option) => typeVisibleInGrade(props.config.grade, option.type)),
+)
 const allSelected = computed(() => props.config.unitIds.length === units.value.length)
+
+/** 已勾选且当前单元确实能出的题型 */
+const activeTypes = computed(() =>
+  visibleOptions.value
+    .map((option) => option.type)
+    .filter((type) => props.config.types.includes(type) && availability.value[type].enabled),
+)
+const totalCount = computed(() => activeTypes.value.reduce((sum, type) => sum + countFor(type), 0))
+/** 出卷前按题型数量粗估页数（仅用于界面提示，排版后一律以实际页数为准） */
+const PAGE_COST: Record<AppType, number> = {
+  kousuan: 0.02,
+  chushi: 0.06,
+  tuoshi: 0.06,
+  jianbian: 0.06,
+  tiankong: 0.06,
+  compare: 0.06,
+  geom: 0.2,
+  angle: 0.2,
+  word: 0.08,
+}
+const roughPages = computed(() => {
+  if (activeTypes.value.length === 0) return 0
+  const pages = activeTypes.value.reduce((sum, type) => sum + countFor(type) * (PAGE_COST[type] ?? 0.06), 0)
+  return Math.max(1, Math.round(pages + activeTypes.value.length * 0.5))
+})
+const estimatedPages = computed(() => {
+  const actual = props.pageEstimate ?? 0
+  return actual > 0 ? actual : roughPages.value
+})
 
 const SOURCE_LABELS: Record<string, string> = {
   skeleton: '骨架包',
@@ -42,10 +76,22 @@ function sourceLabel(type: AppType): string {
   return source ? SOURCE_LABELS[source] : ''
 }
 
-const suggestedCount = computed(() => recommendedCount(props.config, props.config.pages))
+function countFor(type: AppType): number {
+  return Math.max(0, Math.round(Number(props.config.counts?.[type] ?? 0)) || 0)
+}
 
-function adoptSuggestion() {
-  props.config.count = suggestedCount.value
+const countNotice = ref('')
+const optionLabels = new Map(TYPE_OPTIONS.map((option) => [option.type, option.label]))
+
+function setCount(type: AppType, raw: string) {
+  const value = Number(raw)
+  const rounded = Number.isFinite(value) ? Math.round(value) : 0
+  const next = Math.min(MAX_TYPE_COUNT, Math.max(0, rounded))
+  countNotice.value =
+    rounded > MAX_TYPE_COUNT
+      ? `${optionLabels.get(type) ?? type} 单题型上限 ${MAX_TYPE_COUNT} 题，已从 ${rounded} 夹到 ${MAX_TYPE_COUNT}。出卷时引擎也会按 ${MAX_TYPE_COUNT} 题处理。`
+      : ''
+  props.config.counts = { ...(props.config.counts ?? {}), [type]: next }
 }
 
 function toggleType(type: AppType, checked: boolean) {
@@ -68,12 +114,6 @@ function toggleUnit(unitId: string, checked: boolean) {
 
 function toggleAll(checked: boolean) {
   props.config.unitIds = checked ? units.value.map((unit) => unit.unitId) : []
-}
-
-function clampInt(raw: string, min: number, max: number, fallback: number) {
-  const value = Number(raw)
-  if (!Number.isFinite(value)) return fallback
-  return Math.min(max, Math.max(min, Math.round(value)))
 }
 </script>
 
@@ -128,16 +168,26 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
     </section>
 
     <section class="group">
-      <h2>题型</h2>
-      <template v-for="option in TYPE_OPTIONS" :key="option.type">
-        <label class="row">
+      <h2>题型与题量</h2>
+      <template v-for="option in visibleOptions" :key="option.type">
+        <label class="row type-row">
           <input
             type="checkbox"
-            :checked="config.types.includes(option.type)"
+            :checked="config.types.includes(option.type) && availability[option.type].enabled"
             :disabled="!availability[option.type].enabled"
             @change="toggleType(option.type, ($event.target as HTMLInputElement).checked)"
           />
           <span :class="{ muted: !availability[option.type].enabled }">{{ option.label }}</span>
+          <input
+            type="number"
+            class="count"
+            min="0"
+            :max="MAX_TYPE_COUNT"
+            step="1"
+            :value="countFor(option.type)"
+            :disabled="!config.types.includes(option.type) || !availability[option.type].enabled"
+            @input="setCount(option.type, ($event.target as HTMLInputElement).value)"
+          />
           <em
             v-if="sourceLabel(option.type)"
             class="src"
@@ -153,40 +203,29 @@ function clampInt(raw: string, min: number, max: number, fallback: number) {
         >
           {{ availability[option.type].reason }}
         </p>
+        <p v-if="option.type === 'geom' && availability[option.type].enabled" class="hint">
+          图形建议 30–50 题（约 5–9 页），单题型上限 {{ MAX_TYPE_COUNT }} 题。
+        </p>
+        <p v-if="option.type === 'angle' && availability[option.type].enabled" class="hint">
+          角与图形计数建议 4–8 题（约 1–2 页），需选择三上第三单元。
+        </p>
       </template>
+      <p v-if="countNotice" class="type-reason warn">{{ countNotice }}</p>
+      <p class="hint">勾选后填写题量；0 或留空表示不出该题型，单题型上限 {{ MAX_TYPE_COUNT }} 题。</p>
     </section>
 
     <section class="group">
       <h2>数量与版面</h2>
-      <label class="row field">
-        <span>题量</span>
-        <input
-          type="number"
-          min="1"
-          max="100"
-          :value="config.count"
-          @input="
-            config.count = clampInt(($event.target as HTMLInputElement).value, 1, 100, config.count)
-          "
-        />
-      </label>
-      <p class="hint">
-        建议 {{ suggestedCount }} 题（按当前题型与目标页数估算，仅供参考）
-        <button class="link" type="button" @click="adoptSuggestion">采用建议</button>
-      </p>
-      <label class="row field">
-        <span>目标页数</span>
-        <input
-          type="number"
-          min="1"
-          max="10"
-          :value="config.pages"
-          @input="
-            config.pages = clampInt(($event.target as HTMLInputElement).value, 1, 10, config.pages)
-          "
-        />
-      </label>
-      <p class="hint">实际页数由排版引擎决定，目标页数用于对照。</p>
+      <div class="row field readonly">
+        <span>总题数</span>
+        <strong>{{ totalCount }}</strong>
+        <em>按题型题量自动汇总</em>
+      </div>
+      <div class="row field readonly">
+        <span>预计页数</span>
+        <strong>{{ estimatedPages }}</strong>
+        <em>{{ (pageEstimate ?? 0) > 0 ? '已按排版结果回填' : '粗估，出卷后回填' }}</em>
+      </div>
     </section>
 
     <section class="group">
@@ -309,6 +348,9 @@ input:disabled {
 .type-reason.off {
   color: #8a4b00;
 }
+.type-reason.warn {
+  color: #8a3a3a;
+}
 .levels {
   display: flex;
   gap: 8px;
@@ -332,6 +374,29 @@ input:disabled {
 .field {
   justify-content: space-between;
   cursor: default;
+}
+.field.readonly strong {
+  font-size: 14px;
+}
+.field.readonly em {
+  font-size: 11px;
+  font-style: normal;
+  color: #888;
+}
+.type-row .count {
+  width: 58px;
+  margin-left: auto;
+  font: inherit;
+  font-size: 12px;
+  text-align: right;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: #fff;
+}
+.type-row .count:disabled {
+  background: #f4f4f4;
+  color: #aaa;
 }
 .field input[type='number'] {
   width: 72px;

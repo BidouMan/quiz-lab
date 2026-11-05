@@ -15,10 +15,13 @@ import {
 } from './api'
 import ParamsPanel from './ParamsPanel.vue'
 import PdfPreview from './PdfPreview.vue'
-import { buildPaper, defaultUnitIds, panelUnits } from './paperBuilder'
+import { buildPaper, defaultUnitIds, migrateCounts, panelUnits, typeVisibleInGrade } from './paperBuilder'
 import { TYPE_OPTIONS } from './typstData'
 import {
+  clampTypeCount,
   DEFAULT_CONFIG,
+  PRACTICE_DEFAULT_COUNTS,
+  PRACTICE_DEFAULT_TYPES,
   type AppConfig,
   type AppType,
   type BuildResult,
@@ -50,7 +53,8 @@ function persistMemory(store: MemoryStore) {
 const config = reactive<AppConfig>({
   ...DEFAULT_CONFIG,
   unitIds: defaultUnitIds(DEFAULT_CONFIG.grade),
-  types: [...DEFAULT_CONFIG.types],
+  types: [...PRACTICE_DEFAULT_TYPES],
+  counts: { ...PRACTICE_DEFAULT_COUNTS },
 })
 
 const memory = loadMemory()
@@ -99,25 +103,29 @@ const paperSummary = computed(() => {
   const build = lastBuild.value
   if (!build || !result.value) return ''
   const s = build.stats
-  const kps = s.kpNames.length > 0 ? s.kpNames.join('、') : '无'
-  const calc = Math.max(0, s.generated - s.skeleton - s.legacy)
   const parts = [`本次 ${build.count} 题`]
-  if (s.skeleton > 0) parts.push(`骨架 ${s.skeleton}${s.reused > 0 ? `（复用 ${s.reused}）` : ''}`)
-  if (s.legacy > 0) parts.push(`旧生成器 ${s.legacy}`)
-  if (calc > 0) parts.push(`计算生成 ${calc}`)
+  const typePart = s.typeStats
+    .filter((row) => row.requested > 0 || row.actual > 0)
+    .map((row) => {
+      const label = typeLabels.get(row.type) ?? row.type
+      const extra = row.reused > 0 ? `，其中复用 ${row.reused}` : '，复用 0'
+      return `${label} ${row.requested} 题（实出 ${row.actual}${extra}）`
+    })
+  if (typePart.length > 0) parts.push(typePart.join('；'))
   const check = s.runtimeCheck
   parts.push(`复核 ${check.checked} 题（失败 ${check.failed} / 剔除 ${check.dropped}）`)
   if (check.regenerated > 0) parts.push(`重生成后通过 ${check.regenerated}`)
-  parts.push(`去重命中 ${s.duplicates}`, `知识点：${kps}`)
+  parts.push(`去重命中 ${s.duplicates}`)
   return parts.join(' · ')
 })
 
 const pageCompare = computed(() => {
-  if (!result.value || actualPages.value === 0) return ''
-  return actualPages.value === config.pages
-    ? `目标 ${config.pages} 页，已达成`
-    : `目标 ${config.pages} 页，实际 ${actualPages.value} 页`
+  if (actualPages.value === 0) return ''
+  return `实际 ${actualPages.value} 页`
 })
+
+/** 只有排版回填的实际页数；未排版时由 ParamsPanel 按题型粗估 */
+const previewPages = computed(() => actualPages.value)
 
 function base64ToBytes(base64: string): Uint8Array {
   const binary = atob(base64)
@@ -167,6 +175,7 @@ async function generate() {
       template: template.value,
       seed,
       memory,
+      mode: 'practice',
     })
     lastBuild.value = built
 
@@ -178,7 +187,7 @@ async function generate() {
 
     const notes = [...built.notes]
     if (built.shortage) {
-      notes.push(`未达目标题量：实际 ${built.count} 题 / 目标 ${built.stats.requested} 题（已尽量补足）`)
+      notes.push(`未达设定题量：实际 ${built.count} 题 / 按题型设定共 ${built.stats.requested} 题（已尽量补足）`)
     }
     notice.value = notes.join('；')
     persistMemory(memory)
@@ -230,7 +239,15 @@ function scheduleSave() {
   if (!ready.value) return
   window.clearTimeout(saveTimer)
   saveTimer = window.setTimeout(() => {
-    void saveConfig({ ...config, types: [...config.types] }).catch((reason) => {
+    void saveConfig({
+      ...config,
+      types: config.types.filter((type) => typeVisibleInGrade(config.grade, type)),
+      counts: Object.fromEntries(
+        Object.entries(config.counts ?? {})
+          .filter(([type]) => typeVisibleInGrade(config.grade, type as AppType))
+          .map(([type, value]) => [type, clampTypeCount(value)]),
+      ),
+    }).catch((reason) => {
       errorMessage.value = errorText(reason)
     })
   }, 400)
@@ -244,7 +261,11 @@ onMounted(async () => {
     // 范围锁定三上：旧配置里的三下年级/单元一律钳回三上 8 个包单元
     const grade: AppConfig['grade'] = '3A'
     const allowedUnits = new Set(panelUnits().map((unit) => unit.unitId))
-    const types = Array.isArray(stored.types) ? stored.types.filter(isAppType) : []
+    const types = Array.isArray(stored.types)
+      ? stored.types
+          .filter(isAppType)
+          .filter((type) => typeVisibleInGrade(grade, type))
+      : []
     const storedUnits = Array.isArray(stored.unitIds)
       ? stored.unitIds.filter(
           (id): id is string => typeof id === 'string' && allowedUnits.has(id) && findUnit(id)?.grade === grade,
@@ -256,7 +277,18 @@ onMounted(async () => {
       grade,
       level,
       unitIds: storedUnits && storedUnits.length > 0 ? storedUnits : defaultUnitIds(grade),
-      types: types.length > 0 ? types : [...DEFAULT_CONFIG.types],
+      types: types.length > 0 ? types : PRACTICE_DEFAULT_TYPES.filter((type) => typeVisibleInGrade(grade, type)),
+      counts:
+        stored.counts != null && typeof stored.counts === 'object'
+          ? {
+              ...PRACTICE_DEFAULT_COUNTS,
+              ...Object.fromEntries(
+                Object.entries(stored.counts)
+                  .filter(([type, value]) => isAppType(type) && typeof value === 'number')
+                  .map(([type, value]) => [type, clampTypeCount(value)]),
+              ),
+            }
+          : migrateCounts(typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count, types),
       count: typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count,
       pages: typeof stored.pages === 'number' ? stored.pages : DEFAULT_CONFIG.pages,
       typstPath: typeof stored.typstPath === 'string' ? stored.typstPath : '',
@@ -278,7 +310,15 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.clearTimeout(saveTimer)
   if (ready.value) {
-    void saveConfig({ ...config, types: [...config.types] })
+    void saveConfig({
+      ...config,
+      types: config.types.filter((type) => typeVisibleInGrade(config.grade, type)),
+      counts: Object.fromEntries(
+        Object.entries(config.counts ?? {})
+          .filter(([type]) => typeVisibleInGrade(config.grade, type as AppType))
+          .map(([type, value]) => [type, clampTypeCount(value)]),
+      ),
+    })
   }
 })
 </script>
@@ -296,6 +336,7 @@ onBeforeUnmount(() => {
         :typst="typst"
         :typst-error="typstError"
         :checking="checking"
+        :page-estimate="previewPages"
         @check-typst="runCheckTypst"
       />
     </aside>
