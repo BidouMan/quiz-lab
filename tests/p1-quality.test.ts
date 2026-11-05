@@ -18,8 +18,8 @@ const skeletonQuestions = (comboId: string, count = 30, seed = 1305) =>
   buildComboPaper(getCombo(comboId), { count, seed }).questions
 const skeletonStems = (comboId: string, count = 30, seed = 1305) =>
   skeletonQuestions(comboId, count, seed).map((q) => q.stem)
-/** 原 U8 搬入的变式骨架 id 一律以 u8 开头 */
-const isVariant = (id: string) => id.startsWith('u8')
+/** 数学广场搬入的变式骨架 id 一律以 mp 开头 */
+const isVariant = (id: string) => id.startsWith('mp')
 
 const calc = (
   grade: '3A' | '3B',

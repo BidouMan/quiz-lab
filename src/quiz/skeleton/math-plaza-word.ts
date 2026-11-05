@@ -1,6 +1,6 @@
 /**
- * 【已拆解】U8 已并入 U6/U3/U4/U2；本文件仅作 u8-variants.ts 的数据源，不再注册为骨架包。
- * 3A-U8 数学广场 · 应用题（基线段 = L2：两步）
+ * 【已拆解】数学广场已并入 U6/U3/U4/U2；本文件仅作 variants.ts 的数据源，不再注册为骨架包。
+ * 数学广场 · 应用题（基线段 = L2：两步）
  * 覆盖七巧板拼摆、篱笆（含靠墙）、找规律、周长最值；30 条骨架 = 5 类做法 × 6。
  * L1 单点辨认/直接求、L3 最值或判断，见 .bands.ts。
  *
@@ -11,10 +11,10 @@
  */
 import type { Skeleton } from './types.ts'
 
-export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
+export const MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
   // ---------- 直接求 ----------
   {
-    id: 'u8w-d1',
+    id: 'mpw-d1',
     practice: 'direct',
     template: '{place}有一块长方形{item}，长 {a} 米、宽 {b} 米，四周要围篱笆。',
     asks: ['篱笆长多少米？'],
@@ -25,7 +25,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-d2',
+    id: 'mpw-d2',
     practice: 'direct',
     template: '{person}给一块正方形{item}围篱笆，边长 {a} 米，每米篱笆 {c} 元。',
     asks: ['篱笆一共多少元？'],
@@ -35,7 +35,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-d3',
+    id: 'mpw-d3',
     practice: 'direct',
     template: '{place}的长方形{item}长 {a} 米、宽 {b} 米，长边靠墙，只围三边。',
     asks: ['篱笆长多少米？'],
@@ -46,7 +46,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-d4',
+    id: 'mpw-d4',
     practice: 'direct',
     template: '{place}的长方形{item}长 {a} 米、宽 {b} 米，宽边靠墙，只围三边。',
     asks: ['篱笆长多少米？'],
@@ -57,7 +57,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-d5',
+    id: 'mpw-d5',
     practice: 'direct',
     template: '{person}给长方形{item}围篱笆，长 {a} 米、宽 {b} 米，留一个 {c} 米宽的门。',
     asks: ['篱笆长多少米？'],
@@ -68,7 +68,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-d6',
+    id: 'mpw-d6',
     practice: 'direct',
     template: '{person}有 {a} 副七巧板，每副 7 块，平均分给 {b} 人。',
     asks: ['每人分多少块？'],
@@ -81,7 +81,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
 
   // ---------- 逆向求 ----------
   {
-    id: 'u8w-i1',
+    id: 'mpw-i1',
     practice: 'inverse',
     template: '{person}用 {a} 米篱笆正好围一块长方形{item}，长 {b} 米。',
     asks: ['宽多少米？'],
@@ -92,7 +92,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-i2',
+    id: 'mpw-i2',
     practice: 'inverse',
     template: '{person}用 {a} 米篱笆围着长方形{item}，长边靠墙，两条宽边各 {b} 米。',
     asks: ['长边多少米？'],
@@ -103,7 +103,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-i3',
+    id: 'mpw-i3',
     practice: 'inverse',
     template: '一根 {a} 米长的篱笆正好围成正方形{item}。',
     asks: ['边长多少米？', '改成长 {b} 米的长方形，宽多少米？'],
@@ -114,7 +114,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-i4',
+    id: 'mpw-i4',
     practice: 'inverse',
     template: '{person}围长方形{item}，四边篱笆共 {a} 米，留门 {c} 米，长 {b} 米。',
     asks: ['宽多少米？'],
@@ -125,7 +125,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-i5',
+    id: 'mpw-i5',
     practice: 'inverse',
     template: '{person}用 {a} 块七巧板三角形拼正方形，每 2 块拼 1 个，拼好后还剩 {b} 块。',
     asks: ['拼了几个正方形？'],
@@ -136,7 +136,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-i6',
+    id: 'mpw-i6',
     practice: 'inverse',
     template: '{person}有小棒连排摆正方形，共 {n} 根，摆完后还剩 {r} 根。',
     asks: ['摆了几个正方形？'],
@@ -149,7 +149,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
 
   // ---------- 比较 ----------
   {
-    id: 'u8w-c1',
+    id: 'mpw-c1',
     practice: 'compare',
     template: '{person}在{place}围两块正方形{item}，边长分别为 {a} 米和 {b} 米。',
     asks: ['两块篱笆相差多少米？'],
@@ -160,7 +160,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-c2',
+    id: 'mpw-c2',
     practice: 'compare',
     template: '长方形{item}长 {a} 米、宽 {b} 米，四周围篱笆；长边靠墙只围三边。',
     asks: ['可少用多少米？'],
@@ -171,7 +171,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-c3',
+    id: 'mpw-c3',
     practice: 'compare',
     template: '一根 {a} 米篱笆围成正方形；长方形长 {b} 米、宽 {c} 米。',
     asks: ['正方形边长多少米？', '周长相差多少米？'],
@@ -182,7 +182,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-c4',
+    id: 'mpw-c4',
     practice: 'compare',
     template: '长方形{item}长 {a} 米、宽 {b} 米，长边靠墙围和宽边靠墙围相比。',
     asks: ['省多少米？'],
@@ -193,7 +193,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-c5',
+    id: 'mpw-c5',
     practice: 'compare',
     template: '{person}有 {a} 副七巧板，{place}的学具箱里有 {b} 副，每副 7 块。',
     asks: ['两处一共多少块？'],
@@ -203,7 +203,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-c6',
+    id: 'mpw-c6',
     practice: 'compare',
     template: '{person}单独摆 {a} 个正方形用了一些小棒，若连排摆 {b} 个。',
     asks: ['可少用多少根？'],
@@ -216,7 +216,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
 
   // ---------- 组合 ----------
   {
-    id: 'u8w-p1',
+    id: 'mpw-p1',
     practice: 'compose',
     template: '长方形{item}长 {a} 米、宽 {b} 米，两面靠墙，只围相邻两边，要围 {c} 圈。',
     asks: ['篱笆长多少米？'],
@@ -227,7 +227,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-p2',
+    id: 'mpw-p2',
     practice: 'compose',
     template: '两个边长 {a} 米的正方形{item}并排拼在一起，外框围 {c} 圈。',
     asks: ['外框篱笆共多少米？'],
@@ -237,7 +237,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-p3',
+    id: 'mpw-p3',
     practice: 'compose',
     template: '{person}用七巧板三角形拼正方形，每 2 块拼 1 个，拼了 {a} 个，还剩 {m} 块。',
     asks: ['原来有多少块三角形？'],
@@ -247,7 +247,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-p4',
+    id: 'mpw-p4',
     practice: 'compose',
     template: '每副七巧板 7 块，三角形 5 块。{person}有 {a} 副，又借来 {b} 副。',
     asks: ['一共多少块？', '三角形多少块？'],
@@ -257,7 +257,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-p5',
+    id: 'mpw-p5',
     practice: 'compose',
     template: '{person}连排摆 {a} 个正方形，又连排摆 {b} 个三角形。',
     asks: ['正方形用小棒多少根？', '三角形用小棒多少根？'],
@@ -267,7 +267,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-p6',
+    id: 'mpw-p6',
     practice: 'compose',
     template: '{person}用小棒连排摆三角形 {a} 个，再连排摆 {b} 个正方形。',
     asks: ['一共用多少根？'],
@@ -279,7 +279,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
 
   // ---------- 找规律 ----------
   {
-    id: 'u8w-m1',
+    id: 'mpw-m1',
     practice: 'pattern',
     template: '按 4、7、10…的规律连排摆正方形，第 {a} 个和第 {b} 个。',
     asks: ['两个共用多少根小棒？'],
@@ -290,7 +290,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-m2',
+    id: 'mpw-m2',
     practice: 'pattern',
     template: '按 3、5、7…的规律连排摆三角形，第 {a} 个和第 {b} 个。',
     asks: ['第 {b} 个比第 {a} 个多用多少根？'],
@@ -301,7 +301,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-m3',
+    id: 'mpw-m3',
     practice: 'pattern',
     template: '按 6、11、16…的规律连排摆六边形，第 {a} 个和第 {b} 个。',
     asks: ['第 {b} 个比第 {a} 个多用多少根？'],
@@ -312,7 +312,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-m4',
+    id: 'mpw-m4',
     practice: 'pattern',
     template: '{person}有 {n} 根小棒，摆一个正方形用 4 根，摆了 {a} 个。',
     asks: ['还剩多少根？'],
@@ -323,7 +323,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-m5',
+    id: 'mpw-m5',
     practice: 'pattern',
     template: '{person}单独摆 {a} 个正方形和 {b} 个三角形，每个图形都不相连。',
     asks: ['一共用多少根小棒？'],
@@ -333,7 +333,7 @@ export const U8_MATH_PLAZA_WORD_SKELETONS: Skeleton[] = [
     workLines: 4,
   },
   {
-    id: 'u8w-m6',
+    id: 'mpw-m6',
     practice: 'pattern',
     template: '{person}有 {n} 根小棒，先用掉 {m} 根，剩下每 4 根摆 1 个正方形。',
     asks: ['最多摆几个？', '还剩几根？'],

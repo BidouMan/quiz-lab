@@ -802,7 +802,7 @@ const buildSquareArea: FillBuilder = (rng, level) => {
   }
 }
 
-// 找规律摆图形（原 U8 玩法，现按乘加/除法分别归 U2、U3、U4）
+// 找规律摆图形（原数学广场玩法，现按乘加/除法分别归 U2、U3、U4）
 const buildPattern: FillBuilder = (rng, level) => {
   if (level === 'L1') {
     const count = randInt(rng, 2, 8)
@@ -837,7 +837,7 @@ const buildPattern: FillBuilder = (rng, level) => {
   }
 }
 
-// 七巧板拼摆（原 U8 玩法，乘法版归 U3、除法版归 U4）
+// 七巧板拼摆（原数学广场玩法，乘法版归 U3、除法版归 U4）
 const buildTangram: FillBuilder = (rng, level) => {
   if (level === 'L1') {
     const mode = randInt(rng, 0, 2)

@@ -1,6 +1,6 @@
 /**
- * 【已拆解】U8 已并入 U6/U3/U4/U2；本文件仅作 u8-variants.ts 的数据源，不再注册为骨架包。
- * 3A-U8 数学广场 · 应用 · 三档
+ * 【已拆解】数学广场已并入 U6/U3/U4/U2；本文件仅作 variants.ts 的数据源，不再注册为骨架包。
+ * 数学广场 · 应用 · 三档
  * L1：单点辨认或直接求（周长、边长、块数、根数）。
  * L3：最值或判断（“最多/省多少”方向明确），并保留靠墙、七巧板、找规律的综合。
  */
@@ -8,8 +8,8 @@ import type { Level } from '../types.ts'
 import type { SkeletonBand } from './types.ts'
 import { band, R } from './bands.ts'
 
-export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, SkeletonBand>>> = {
-  'u8w-d1': {
+export const MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, SkeletonBand>>> = {
+  'mpw-d1': {
     L1: band(
       { a: R(4, 5) },
       { template: '{place}有一块正方形{item}，边长 {a} 米，围一圈篱笆。', asks: ['篱笆长多少米？'], formulas: ['4*a'], unit: '米', guard: () => true, workLines: 2 },
@@ -26,7 +26,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-d2': {
+  'mpw-d2': {
     L1: band(
       { a: R(10, 50, 2), b: R(3, 24, 2) },
       { template: '长方形{item}长 {a} 米、宽 {b} 米，只围一条长边和一条宽边。', asks: ['篱笆长多少米？'], formulas: ['a+b'], unit: '米', guard: (p) => p.a > p.b, workLines: 2 },
@@ -43,7 +43,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-d3': {
+  'mpw-d3': {
     L1: band(
       { a: R(12, 50, 2), b: R(3, 24, 2) },
       { template: '{place}的长方形{item}长 {a} 米、宽 {b} 米。', asks: ['长比宽多多少米？'], formulas: ['a-b'], unit: '米', guard: (p) => p.a > p.b + 2, workLines: 2 },
@@ -60,7 +60,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-d4': {
+  'mpw-d4': {
     L1: band(
       { a: R(6, 7) },
       { template: '{person}的长方形{item}长 {a} 米。', asks: ['两条长边共多少米？'], formulas: ['2*a'], unit: '米', guard: () => true, workLines: 2 },
@@ -77,7 +77,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-d5': {
+  'mpw-d5': {
     L1: band(
       { a: R(8, 9) },
       { template: '正方形{item}边长 {a} 米，只围三条边（一边留门）。', asks: ['篱笆长多少米？'], formulas: ['3*a'], unit: '米', guard: () => true, workLines: 2 },
@@ -94,7 +94,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-d6': {
+  'mpw-d6': {
     L1: band(
       { a: R(2, 3) },
       { template: '一副七巧板有 7 块，{person}有 {a} 副。', asks: ['共多少块？'], formulas: ['7*a'], unit: '块', guard: () => true, workLines: 2 },
@@ -113,7 +113,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
     ),
   },
 
-  'u8w-i1': {
+  'mpw-i1': {
     L1: band(
       { a: R(48, 52, 4) },
       { template: '{person}用 {a} 米篱笆正好围一圈正方形{item}。', asks: ['边长多少米？'], formulas: ['a/4'], unit: '米', guard: () => true, workLines: 2 },
@@ -130,7 +130,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-i2': {
+  'mpw-i2': {
     L1: band(
       { b: R(10, 11) },
       { template: '{place}的长方形{item}两条宽边各 {b} 米。', asks: ['两条宽边共多少米？'], formulas: ['2*b'], unit: '米', guard: () => true, workLines: 2 },
@@ -147,7 +147,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-i3': {
+  'mpw-i3': {
     L1: band(
       { a: R(40, 44, 4) },
       { template: '一根 {a} 米长的绳子正好围成正方形。', asks: ['边长多少米？'], formulas: ['a/4'], unit: '米', guard: () => true, workLines: 2 },
@@ -164,7 +164,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-i4': {
+  'mpw-i4': {
     L1: band(
       { a: R(12, 13) },
       { template: '{person}给正方形{item}围三边篱笆，每边 {a} 米。', asks: ['篱笆长多少米？'], formulas: ['3*a'], unit: '米', guard: () => true, workLines: 2 },
@@ -181,7 +181,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-i5': {
+  'mpw-i5': {
     L1: band(
       { a: R(20, 24, 4) },
       { template: '每 2 块三角形拼 1 个正方形，{person}有 {a} 块。', asks: ['能拼几个？'], formulas: ['a/2'], unit: '个', guard: () => true, workLines: 2 },
@@ -199,7 +199,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-i6': {
+  'mpw-i6': {
     L1: band(
       { a: R(14, 15) },
       { template: '摆 1 个正方形用 4 根小棒，单独摆 {a} 个。', asks: ['用多少根？'], formulas: ['4*a'], unit: '根', guard: () => true, workLines: 2 },
@@ -218,7 +218,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
     ),
   },
 
-  'u8w-c1': {
+  'mpw-c1': {
     L1: band(
       { a: R(8, 30), b: R(2, 20) },
       { template: '两个正方形边长 {a} 米、{b} 米。', asks: ['周长相差多少米？'], formulas: ['4*(a-b)'], unit: '米', guard: (p) => p.a > p.b + 2, workLines: 2 },
@@ -235,7 +235,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-c2': {
+  'mpw-c2': {
     L1: band(
       { a: R(12, 50, 2), b: R(3, 24, 2) },
       { template: '长方形{item}长 {a} 米、宽 {b} 米，长边靠墙只围三边。', asks: ['三边篱笆共多少米？'], formulas: ['a+2*b'], unit: '米', guard: (p) => p.a > p.b + 2, workLines: 2 },
@@ -252,7 +252,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-c3': {
+  'mpw-c3': {
     L1: band(
       { a: R(28, 32, 4) },
       { template: '正方形篱笆共 {a} 米。', asks: ['边长多少米？'], formulas: ['a/4'], unit: '米', guard: () => true, workLines: 2 },
@@ -269,7 +269,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-c4': {
+  'mpw-c4': {
     L1: band(
       { a: R(14, 50, 2), b: R(4, 24, 2) },
       { template: '长方形{item}长 {a} 米、宽 {b} 米。', asks: ['长边靠墙比宽边靠墙省多少米？'], formulas: ['a-b'], unit: '米', guard: (p) => p.a > p.b + 2, workLines: 2 },
@@ -286,7 +286,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-c5': {
+  'mpw-c5': {
     L1: band(
       { a: R(2, 8), b: R(1, 5) },
       { template: '{person}有 {a} 副七巧板，同伴只有 {b} 副，每副 7 块。', asks: ['多多少块？'], formulas: ['7*(a-b)'], unit: '块', guard: (p) => p.a > p.b, workLines: 2 },
@@ -303,7 +303,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-c6': {
+  'mpw-c6': {
     L1: band(
       { a: R(16, 17) },
       { template: '单独摆 {a} 个正方形，每个 4 根。', asks: ['连排摆同样多可少多少根？'], formulas: ['a-1'], unit: '根', guard: () => true, workLines: 2 },
@@ -321,7 +321,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
     ),
   },
 
-  'u8w-p1': {
+  'mpw-p1': {
     L1: band(
       { a: R(10, 50, 2), b: R(3, 24, 2) },
       { template: '长方形{item}长 {a} 米、宽 {b} 米，只围相邻两边。', asks: ['篱笆长多少米？'], formulas: ['a+b'], unit: '米', guard: (p) => p.a > p.b, workLines: 2 },
@@ -338,7 +338,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-p2': {
+  'mpw-p2': {
     L1: band(
       { a: R(18, 19) },
       { template: '两个边长 {a} 米的正方形并排。', asks: ['外框共多少米？'], formulas: ['6*a'], unit: '米', guard: () => true, workLines: 2 },
@@ -355,7 +355,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-p3': {
+  'mpw-p3': {
     L1: band(
       { a: R(25, 27) },
       { template: '每 2 块三角形拼 1 个正方形，拼 {a} 个。', asks: ['用多少块三角形？'], formulas: ['2*a'], unit: '块', guard: () => true, workLines: 2 },
@@ -372,7 +372,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-p4': {
+  'mpw-p4': {
     L1: band(
       { a: R(33, 35) },
       { template: '{place}有 {a} 副七巧板，每副 7 块。', asks: ['共多少块？'], formulas: ['7*a'], unit: '块', guard: () => true, workLines: 2 },
@@ -389,7 +389,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-p5': {
+  'mpw-p5': {
     L1: band(
       { a: R(36, 37) },
       { template: '单独摆 {a} 个正方形，每个用 4 根小棒。', asks: ['共多少根？'], formulas: ['4*a'], unit: '根', guard: () => true, workLines: 2 },
@@ -406,7 +406,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-p6': {
+  'mpw-p6': {
     L1: band(
       { a: R(38, 39) },
       { template: '摆 1 个三角形用 3 根小棒，单独摆 {a} 个。', asks: ['用多少根？'], formulas: ['3*a'], unit: '根', guard: () => true, workLines: 2 },
@@ -425,7 +425,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
     ),
   },
 
-  'u8w-m1': {
+  'mpw-m1': {
     L1: band(
       { a: R(45, 47) },
       { template: '单独摆 {a} 个正方形，每个 4 根。', asks: ['共多少根？'], formulas: ['4*a'], unit: '根', guard: () => true, workLines: 2 },
@@ -442,7 +442,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-m2': {
+  'mpw-m2': {
     L1: band(
       { a: R(53, 55) },
       { template: '单独摆 {a} 个三角形，每个 3 根。', asks: ['共多少根？'], formulas: ['3*a'], unit: '根', guard: () => true, workLines: 2 },
@@ -459,7 +459,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-m3': {
+  'mpw-m3': {
     L1: band(
       { a: R(56, 57) },
       { template: '单独摆 {a} 个六边形，每个 6 根。', asks: ['共多少根？'], formulas: ['6*a'], unit: '根', guard: () => true, workLines: 2 },
@@ -476,7 +476,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-m4': {
+  'mpw-m4': {
     L1: band(
       { n: R(58, 60, 2) },
       { template: '有 {n} 根小棒，摆 1 个正方形用 4 根。', asks: ['还剩多少根？'], formulas: ['n-4'], unit: '根', guard: (p) => p.n > 5, workLines: 2 },
@@ -493,7 +493,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-m5': {
+  'mpw-m5': {
     L1: band(
       { a: R(29, 30) },
       { template: '摆正方形每个 4 根，{a} 个。', asks: ['共用多少根？'], formulas: ['4*a'], unit: '根', guard: () => true, workLines: 2 },
@@ -510,7 +510,7 @@ export const U8_MATH_PLAZA_WORD_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8w-m6': {
+  'mpw-m6': {
     L1: band(
       { n: R(21, 23) },
       { template: '有 {n} 根小棒，每 4 根摆 1 个正方形。', asks: ['还剩多少根？'], formulas: ['n-4'], unit: '根', answerUnits: [], guard: (p) => p.n > 5, workLines: 2 },

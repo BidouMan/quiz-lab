@@ -40,7 +40,7 @@ import {
   U4_DIVISION_WORD_VARIANTS, U4_DIVISION_WORD_VARIANT_BANDS,
   U2_SEQ_FILL_VARIANTS, U2_SEQ_FILL_VARIANT_BANDS,
   U2_SEQ_WORD_VARIANTS, U2_SEQ_WORD_VARIANT_BANDS,
-} from './u8-variants.ts'
+} from './variants.ts'
 import { U3_SHAPES_FILL_SKELETONS } from './u3-shapes-fill.ts'
 import { U3_SHAPES_FILL_BANDS } from './u3-shapes-fill.bands.ts'
 import { U3_SHAPES_WORD_SKELETONS } from './u3-shapes-word.ts'

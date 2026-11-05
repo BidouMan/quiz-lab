@@ -7,6 +7,7 @@ import {
   typeVisibleInGrade,
 } from './paperBuilder'
 import { MAX_TYPE_COUNT, type AppConfig, type AppType, type TemplateInfo, type TypstInfo } from './types'
+import { PARENT_SOURCE_LABELS, readableAvailabilityReason } from './wording'
 import { TYPE_OPTIONS } from './typstData'
 
 const props = defineProps<{
@@ -66,17 +67,11 @@ const estimatedPages = computed(() => {
   return actual > 0 ? actual : roughPages.value
 })
 
-const SOURCE_LABELS: Record<string, string> = {
-  skeleton: '骨架包',
-  rule: '规则库',
-  legacy: '旧生成器',
-  static: '静态题库',
-  na: '不适用',
-}
+const SOURCE_LABELS = PARENT_SOURCE_LABELS
 
 function sourceLabel(type: AppType): string {
   const source = availability.value[type].source
-  return source ? SOURCE_LABELS[source] : ''
+  return source ? SOURCE_LABELS[source] ?? '' : ''
 }
 
 function countFor(type: AppType): number {
@@ -92,7 +87,7 @@ function setCount(type: AppType, raw: string) {
   const next = Math.min(MAX_TYPE_COUNT, Math.max(0, rounded))
   countNotice.value =
     rounded > MAX_TYPE_COUNT
-      ? `${optionLabels.get(type) ?? type} 单题型上限 ${MAX_TYPE_COUNT} 题，已从 ${rounded} 夹到 ${MAX_TYPE_COUNT}。出卷时引擎也会按 ${MAX_TYPE_COUNT} 题处理。`
+      ? `${optionLabels.get(type) ?? '这类题'}最多 ${MAX_TYPE_COUNT} 题，已从 ${rounded} 调整为 ${MAX_TYPE_COUNT} 题。`
       : ''
   props.config.counts = { ...(props.config.counts ?? {}), [type]: next }
 }
@@ -148,7 +143,7 @@ function toggleAll(checked: boolean) {
         <em v-if="unit.unconfirmed" class="tag">推定</em>
       </label>
       <p v-if="config.unitIds.length === 0" class="hint">至少选择一个单元才能出题。</p>
-      <p v-else class="hint">只列三上已建骨架包的 9 个单元。</p>
+      <p v-else class="hint">只列三上能出题的 {{ units.length }} 个单元。</p>
     </section>
 
     <section class="group">
@@ -204,7 +199,7 @@ function toggleAll(checked: boolean) {
           class="type-reason"
           :class="{ off: !availability[option.type].enabled }"
         >
-          {{ availability[option.type].reason }}
+          {{ readableAvailabilityReason(availability[option.type].reason) }}
         </p>
         <p v-if="option.type === 'geom' && availability[option.type].enabled" class="hint">
           图形建议 30–50 题（约 5–9 页），单题型上限 {{ MAX_TYPE_COUNT }} 题。

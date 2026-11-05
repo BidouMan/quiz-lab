@@ -1,16 +1,16 @@
 /**
- * 【已拆解】U8 已并入 U6/U3/U4/U2；本文件仅作 u8-variants.ts 的数据源，不再注册为骨架包。
- * 3A-U8 数学广场 · 填空 · 三档
- * 基线（L2）在 u8-math-plaza-fill.ts；本文件补 L1（单点辨认/直接求）与 L3（最值/判断）。
+ * 【已拆解】数学广场已并入 U6/U3/U4/U2；本文件仅作 variants.ts 的数据源，不再注册为骨架包。
+ * 数学广场 · 填空 · 三档
+ * 基线（L2）在 math-plaza-fill.ts；本文件补 L1（单点辨认/直接求）与 L3（最值/判断）。
  * 尺寸沿用周长包 guard：宽 < 长；篱笆题一律同一单位（米），不混厘米。
  */
 import type { Level } from '../types.ts'
 import type { SkeletonBand } from './types.ts'
 import { band, R } from './bands.ts'
 
-export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, SkeletonBand>>> = {
+export const MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, SkeletonBand>>> = {
   // ---------- 直接求 ----------
-  'u8f-d1': {
+  'mpf-d1': {
     L1: band(
       { a: R(6, 12, 2), b: R(3, 6) },
       {
@@ -28,7 +28,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-d2': {
+  'mpf-d2': {
     L1: band(
       { a: R(4, 9), b: R(10, 16) },
       {
@@ -48,7 +48,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-d3': {
+  'mpf-d3': {
     L1: band(
       { a: R(6, 12, 2), b: R(3, 6) },
       {
@@ -66,7 +66,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-d4': {
+  'mpf-d4': {
     L1: band(
       { a: R(2, 5), b: R(6, 10) },
       {
@@ -88,7 +88,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-d5': {
+  'mpf-d5': {
     L1: band(
       { a: R(2, 5), b: R(6, 10) },
       {
@@ -110,7 +110,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-d6': {
+  'mpf-d6': {
     L1: band(
       { a: R(2, 6), b: R(7, 11) },
       {
@@ -134,7 +134,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
   },
 
   // ---------- 逆向求 ----------
-  'u8f-i1': {
+  'mpf-i1': {
     L1: band(
       { a: R(10, 20, 2), b: R(3, 6) },
       {
@@ -153,7 +153,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-i2': {
+  'mpf-i2': {
     L1: band(
       { a: R(16, 30, 2), b: R(4, 10) },
       {
@@ -172,7 +172,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-i3': {
+  'mpf-i3': {
     L1: band(
       { a: R(4, 12, 2), b: R(14, 20, 2) },
       {
@@ -194,7 +194,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-i4': {
+  'mpf-i4': {
     L1: band(
       { a: R(9, 15, 3), b: R(18, 24, 3) },
       {
@@ -216,7 +216,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-i5': {
+  'mpf-i5': {
     L1: band(
       { a: R(4, 22), b: R(25, 40) },
       {
@@ -238,7 +238,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-i6': {
+  'mpf-i6': {
     L1: band(
       { a: R(10, 20, 2), b: R(4, 8) },
       {
@@ -259,7 +259,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
   },
 
   // ---------- 比较与最值 ----------
-  'u8f-c1': {
+  'mpf-c1': {
     L1: band(
       { a: R(4, 9), b: R(10, 16) },
       {
@@ -281,7 +281,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-c2': {
+  'mpf-c2': {
     L1: band(
       { a: R(20, 36, 2), b: R(4, 10, 2) },
       {
@@ -302,7 +302,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-c3': {
+  'mpf-c3': {
     L1: band(
       { a: R(6, 14, 2), b: R(15, 21, 2) },
       {
@@ -323,7 +323,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-c4': {
+  'mpf-c4': {
     L1: band(
       { a: R(8, 14, 2), b: R(4, 7) },
       {
@@ -341,7 +341,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-c5': {
+  'mpf-c5': {
     L1: band(
       { a: R(20, 32, 4), b: R(36, 48, 4) },
       {
@@ -362,7 +362,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-c6': {
+  'mpf-c6': {
     L1: band(
       { a: R(20, 36, 4), b: R(4, 10, 2) },
       {
@@ -385,7 +385,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
   },
 
   // ---------- 组合与拆分 ----------
-  'u8f-p1': {
+  'mpf-p1': {
     L1: band(
       { a: R(2, 6), b: R(7, 12) },
       {
@@ -407,7 +407,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-p2': {
+  'mpf-p2': {
     L1: band(
       { a: R(2, 6), b: R(7, 12) },
       {
@@ -429,7 +429,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-p3': {
+  'mpf-p3': {
     L1: band(
       { a: R(3, 9), b: R(10, 16) },
       {
@@ -451,7 +451,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-p4': {
+  'mpf-p4': {
     L1: band(
       { a: R(9, 24, 3), b: R(27, 36, 3) },
       {
@@ -473,7 +473,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-p5': {
+  'mpf-p5': {
     L1: band(
       { a: R(8, 14, 2), b: R(4, 7) },
       {
@@ -491,7 +491,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-p6': {
+  'mpf-p6': {
     L1: band(
       { a: R(8, 14, 2), b: R(4, 7) },
       {
@@ -513,7 +513,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
   },
 
   // ---------- 找规律 ----------
-  'u8f-m1': {
+  'mpf-m1': {
     L1: band(
       { a: R(2, 6), b: R(7, 11) },
       {
@@ -535,7 +535,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-m2': {
+  'mpf-m2': {
     L1: band(
       { a: R(2, 6), b: R(7, 12) },
       {
@@ -557,7 +557,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-m3': {
+  'mpf-m3': {
     L1: band(
       { a: R(2, 5), b: R(6, 9) },
       {
@@ -579,7 +579,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-m4': {
+  'mpf-m4': {
     L1: band(
       { a: R(8, 12), b: R(13, 20) },
       {
@@ -601,7 +601,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-m5': {
+  'mpf-m5': {
     L1: band(
       { a: R(8, 14), b: R(15, 22) },
       {
@@ -623,7 +623,7 @@ export const U8_MATH_PLAZA_FILL_BANDS: Record<string, Partial<Record<Level, Skel
       },
     ),
   },
-  'u8f-m6': {
+  'mpf-m6': {
     L1: band(
       { a: R(2, 6), b: R(2, 6) },
       {

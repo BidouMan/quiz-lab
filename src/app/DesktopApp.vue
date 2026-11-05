@@ -29,6 +29,7 @@ import {
   type TemplateInfo,
   type TypstInfo,
 } from './types'
+import { formatPaperSummary, readableNotes, shortageNote } from './wording'
 
 const MEMORY_KEY = 'quizlab:quiz-memory.v1'
 
@@ -102,21 +103,7 @@ const layoutSkippedNote = computed(() => {
 const paperSummary = computed(() => {
   const build = lastBuild.value
   if (!build || !result.value) return ''
-  const s = build.stats
-  const parts = [`本次 ${build.count} 题`]
-  const typePart = s.typeStats
-    .filter((row) => row.requested > 0 || row.actual > 0)
-    .map((row) => {
-      const label = typeLabels.get(row.type) ?? row.type
-      const extra = row.reused > 0 ? `，其中复用 ${row.reused}` : '，复用 0'
-      return `${label} ${row.requested} 题（实出 ${row.actual}${extra}）`
-    })
-  if (typePart.length > 0) parts.push(typePart.join('；'))
-  const check = s.runtimeCheck
-  parts.push(`复核 ${check.checked} 题（失败 ${check.failed} / 剔除 ${check.dropped}）`)
-  if (check.regenerated > 0) parts.push(`重生成后通过 ${check.regenerated}`)
-  parts.push(`去重命中 ${s.duplicates}`)
-  return parts.join(' · ')
+  return formatPaperSummary(build.stats, build.count, typeLabels)
 })
 
 const pageCompare = computed(() => {
@@ -180,16 +167,16 @@ async function generate() {
     lastBuild.value = built
 
     if (built.count === 0) {
-      const reasons = built.notes.length > 0 ? `：${built.notes.join('；')}` : '，请选择单元与题型。'
+      const reasons = built.notes.length > 0 ? `：${readableNotes(built.notes).join('；')}` : '，请选择单元与题型。'
       errorMessage.value = `当前条件下没有可生成的题目${reasons}`
       return
     }
 
     const notes = [...built.notes]
     if (built.shortage) {
-      notes.push(`未达设定题量：实际 ${built.count} 题 / 按题型设定共 ${built.stats.requested} 题（已尽量补足）`)
+      notes.push(shortageNote(built.count, built.stats.requested))
     }
-    notice.value = notes.join('；')
+    notice.value = readableNotes(notes).join('；')
     persistMemory(memory)
 
     const generated = await generatePaper(built.data, config.typstPath)

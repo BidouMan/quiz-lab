@@ -1662,7 +1662,7 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     pickCategory(category, perCategory)
   }
 
-  // 第三轮：还有缺口时，让参数池未用尽的类别继续补足（如 U9 只有 4 个 T2 类别）
+  // 第三轮：还有缺口时，让参数池未用尽的类别继续补足（如可用类别少于所需题量）
   for (let round = 0; round < 40 && questions.length < count; round++) {
     const before = questions.length
     for (const category of shuffle(rng, categories)) {

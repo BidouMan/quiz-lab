@@ -1,16 +1,16 @@
 /**
- * 【已拆解】U8 已并入 U6/U3/U4/U2；本文件仅作 u8-variants.ts 的数据源，不再注册为骨架包。
- * 3A-U8 数学广场 · 填空（基线段 = L2：两步）
+ * 【已拆解】数学广场已并入 U6/U3/U4/U2；本文件仅作 variants.ts 的数据源，不再注册为骨架包。
+ * 数学广场 · 填空（基线段 = L2：两步）
  * 覆盖四类综合实践内容：篱笆靠墙、七巧板拼摆、小棒找规律、周长最值。
  * 30 条骨架，5 类做法各 6 条；L1（单点辨认/直接求）与 L3（最值/判断）在 .bands.ts。
  * 与 3A-U6 周长包错开句式：本包一律用「围篱笆 / 围一圈 / 改围」，不写「周长是」。
  */
 import type { Skeleton } from './types.ts'
 
-export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
+export const MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
   // ---------- 直接求 ----------
   {
-    id: 'u8f-d1',
+    id: 'mpf-d1',
     practice: 'direct',
     template: '{person}给一块长方形菜地围篱笆，长 {a} 米、宽 {b} 米，长边靠墙，共 ____ 米。',
     asks: [],
@@ -20,7 +20,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.b < p.a,
   },
   {
-    id: 'u8f-d2',
+    id: 'mpf-d2',
     practice: 'direct',
     template: '{person}给一块长方形菜地围篱笆，长 {a} 米、宽 {b} 米，宽边靠墙，共 ____ 米。',
     asks: [],
@@ -30,7 +30,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.b < p.a,
   },
   {
-    id: 'u8f-d3',
+    id: 'mpf-d3',
     practice: 'direct',
     template: '{person}给一块长方形菜地围篱笆，长 {a} 米、宽 {b} 米，留 {c} 米宽的门，篱笆长 ____ 米。',
     asks: [],
@@ -40,7 +40,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.b < p.a,
   },
   {
-    id: 'u8f-d4',
+    id: 'mpf-d4',
     practice: 'direct',
     template: '一副七巧板有 7 块，{person}有 {a} 副，共 ____ 块；又买 {b} 副，现在共 ____ 块。',
     asks: [],
@@ -51,7 +51,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-d5',
+    id: 'mpf-d5',
     practice: 'direct',
     template: '每副七巧板有 5 块三角形，{a} 副共 ____ 块；另有 {b} 块散装，共 ____ 块。',
     asks: [],
@@ -62,7 +62,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-d6',
+    id: 'mpf-d6',
     practice: 'direct',
     template: '摆正方形从 4 根起每多 1 个多 3 根，{person}摆 {a} 个用 ____ 根；摆 {b} 个用 ____ 根。',
     asks: [],
@@ -75,7 +75,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
 
   // ---------- 逆向求 ----------
   {
-    id: 'u8f-i1',
+    id: 'mpf-i1',
     practice: 'inverse',
     template: '一块长方形菜地长边靠墙，篱笆共 {a} 米，宽 {b} 米，长 ____ 米。',
     asks: [],
@@ -85,7 +85,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.a > 2 * p.b + 2,
   },
   {
-    id: 'u8f-i2',
+    id: 'mpf-i2',
     practice: 'inverse',
     template: '一块长方形菜地四周围篱笆，共 {a} 米，长 {b} 米，宽 ____ 米。',
     asks: [],
@@ -95,7 +95,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.a > 2 * p.b + 2 && p.a < 4 * p.b,
   },
   {
-    id: 'u8f-i3',
+    id: 'mpf-i3',
     practice: 'inverse',
     template: '每 2 块小三角形拼 1 个正方形，{person}有 {a} 块，拼了 {b} 个，还剩 ____ 块。',
     asks: [],
@@ -106,7 +106,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.a > 2 * p.b,
   },
   {
-    id: 'u8f-i4',
+    id: 'mpf-i4',
     practice: 'inverse',
     template: '{person}有 {a} 块小三角形，每 3 块拼 1 个梯形，能拼 ____ 个，剩 ____ 块。',
     asks: [],
@@ -117,7 +117,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.a % 3 !== 0,
   },
   {
-    id: 'u8f-i5',
+    id: 'mpf-i5',
     practice: 'inverse',
     template: '照 4、7、10… 摆正方形，{person}用 {a} 根摆 {b} 个，还剩 ____ 根。',
     asks: [],
@@ -128,7 +128,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.a > 3 * p.b + 1,
   },
   {
-    id: 'u8f-i6',
+    id: 'mpf-i6',
     practice: 'inverse',
     template: '长边靠墙围篱笆共 {a} 米，长 {b} 米，两条宽边共 ____ 米。',
     asks: [],
@@ -140,7 +140,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
 
   // ---------- 比较与最值 ----------
   {
-    id: 'u8f-c1',
+    id: 'mpf-c1',
     practice: 'compare',
     template: '{a} 米篱笆围正方形边长 ____ 米，{b} 米篱笆围正方形边长 ____ 米。',
     asks: [],
@@ -151,7 +151,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-c2',
+    id: 'mpf-c2',
     practice: 'compare',
     template: '用 {a} 米篱笆围长方形，长 {b} 米，宽 ____ 米。',
     asks: [],
@@ -161,7 +161,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.a > 2 * p.b + 2 && p.a < 4 * p.b,
   },
   {
-    id: 'u8f-c3',
+    id: 'mpf-c3',
     practice: 'compare',
     template: '甲菜地长 {a} 米、宽 {b} 米，乙菜地边长 {c} 米，甲围篱笆比乙多 ____ 米。',
     asks: [],
@@ -171,7 +171,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.b < p.a && (p.a + p.b) * 2 > 4 * p.c,
   },
   {
-    id: 'u8f-c4',
+    id: 'mpf-c4',
     practice: 'compare',
     template: '一块长方形菜地长 {a} 米、宽 {b} 米，改围正方形，边长 ____ 米。',
     asks: [],
@@ -181,7 +181,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.b < p.a && (p.a + p.b) % 2 === 0,
   },
   {
-    id: 'u8f-c5',
+    id: 'mpf-c5',
     practice: 'compare',
     template: '{a} 米篱笆围长方形宽最大 ____ 米，{b} 米篱笆围长方形宽最大 ____ 米。',
     asks: [],
@@ -192,7 +192,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-c6',
+    id: 'mpf-c6',
     practice: 'compare',
     template: '用 {a} 米篱笆围长方形，长比宽多 {d} 米，宽 ____ 米。',
     asks: [],
@@ -204,7 +204,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
 
   // ---------- 组合与拆分 ----------
   {
-    id: 'u8f-p1',
+    id: 'mpf-p1',
     practice: 'compose',
     template: '每副七巧板有 1 块正方形和 1 块平行四边形，{a} 副共 ____ 块；{b} 副共 ____ 块。',
     asks: [],
@@ -215,7 +215,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-p2',
+    id: 'mpf-p2',
     practice: 'compose',
     template: '每副七巧板三角形比正方形多 4 块，{a} 副多 ____ 块；{b} 副多 ____ 块。',
     asks: [],
@@ -226,7 +226,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-p3',
+    id: 'mpf-p3',
     practice: 'compose',
     template: '2 块小三角形拼 1 个正方形，{person}拼 {a} 个用 ____ 块；拼 {b} 个用 ____ 块。',
     asks: [],
@@ -237,7 +237,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-p4',
+    id: 'mpf-p4',
     practice: 'compose',
     template: '{person}把 {a} 块小三角形每 3 块放一起，能放 ____ 组；{b} 块能放 ____ 组。',
     asks: [],
@@ -248,7 +248,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-p5',
+    id: 'mpf-p5',
     practice: 'compose',
     template: '一块长方形菜地相邻两边靠墙，只围另外两边，长 {a} 米、宽 {b} 米，篱笆长 ____ 米。',
     asks: [],
@@ -258,7 +258,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: (p) => p.b < p.a,
   },
   {
-    id: 'u8f-p6',
+    id: 'mpf-p6',
     practice: 'compose',
     template: '两块同样的长方形菜地并排，各长 {a} 米、宽 {b} 米，长边靠墙，两处篱笆共 ____ 米。',
     asks: [],
@@ -270,7 +270,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
 
   // ---------- 找规律 ----------
   {
-    id: 'u8f-m1',
+    id: 'mpf-m1',
     practice: 'pattern',
     template: '摆正方形从 4 根起每多 1 个多 3 根，摆 {a} 个要 ____ 根，摆 {b} 个要 ____ 根。',
     asks: [],
@@ -281,7 +281,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-m2',
+    id: 'mpf-m2',
     practice: 'pattern',
     template: '摆三角形从 3 根起每多 1 个多 2 根，摆 {a} 个要 ____ 根，摆 {b} 个要 ____ 根。',
     asks: [],
@@ -292,7 +292,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-m3',
+    id: 'mpf-m3',
     practice: 'pattern',
     template: '摆六边形从 6 根起每多 1 个多 5 根，摆 {a} 个要 ____ 根，摆 {b} 个要 ____ 根。',
     asks: [],
@@ -303,7 +303,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-m4',
+    id: 'mpf-m4',
     practice: 'pattern',
     template: '照 4、7、10… 第 {a} 个用 ____ 根，第 {b} 个用 ____ 根。',
     asks: [],
@@ -314,7 +314,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-m5',
+    id: 'mpf-m5',
     practice: 'pattern',
     template: '摆三角形按 3、5、7… 排，第 {a} 个用 ____ 根，第 {b} 个用 ____ 根。',
     asks: [],
@@ -325,7 +325,7 @@ export const U8_MATH_PLAZA_FILL_SKELETONS: Skeleton[] = [
     guard: () => true,
   },
   {
-    id: 'u8f-m6',
+    id: 'mpf-m6',
     practice: 'pattern',
     template: '摆 {a} 个正方形和 {b} 个三角形（连排），一共用 ____ 根小棒。',
     asks: [],

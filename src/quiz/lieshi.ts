@@ -1327,11 +1327,11 @@ const shapeOps = (shape: string): Set<LieOp> => {
 
 /**
  * 由结构映射单元：
- * - 含除法 → U4 / U9；
- * - 含乘法且同时含加减（两步四则） → U1 / U9；
- * - 纯乘法 → U2 / U9；
- * - 纯加减 → U1 / U9。
- * “倍”的模板用 units 覆盖为 U4 / U9（倍在 U4-K3）。
+ * - 含除法 → U4；
+ * - 含乘法且同时含加减（两步四则） → U1；
+ * - 纯乘法 → U2；
+ * - 纯加减 → U1。
+ * “倍”的模板用 units 覆盖为 U4（倍在 U4-K3）。
  */
 export function lieTemplateUnits(template: LieTemplate): string[] {
   if (template.units) return template.units
@@ -1501,7 +1501,7 @@ export function generateLie(options: GenerateLieOptions): LieResult {
     return {
       questions,
       notes: [
-        `列式计算：所选单元在 ${level} 没有可用运算结构（加减→U1/U9，乘法→U2，除法→U4，倍→U4）`,
+        `列式计算：所选单元在 ${level} 没有可用运算结构（加减→U1，乘法→U2，除法→U4，倍→U4）`,
       ],
       crossReused: 0,
     }
