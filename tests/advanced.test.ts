@@ -54,8 +54,8 @@ const recordOf = (question: {
   key: question.key,
 })
 
-test('拓展题：13 类可做，每类每一步都只挂三上知识点', () => {
-  assert.equal(ADV_CATEGORIES.length, 13, `可做类别应为 13，实际 ${ADV_CATEGORIES.length}`)
+test('拓展题：14 类可做，每类每一步都只挂三上知识点', () => {
+  assert.equal(ADV_CATEGORIES.length, 14, `可做类别应为 14，实际 ${ADV_CATEGORIES.length}`)
   for (const category of ADV_CATEGORIES) {
     for (const kp of category.kpKeys) {
       assert.ok(ADV_3A_KP[kp], `${category.id} 的 ${kp} 不在三上允许集合`)
@@ -65,7 +65,7 @@ test('拓展题：13 类可做，每类每一步都只挂三上知识点', () =>
   }
 })
 
-test('拓展题：三档平均步骤数实测严格递增（T1 2–2.5 / T2 3 / T3 5）', () => {
+test('拓展题：三档平均步骤数实测严格递增（T1 2–2.5 / T2 3 / T3 4.5）', () => {
   const averages: number[] = []
   for (const level of ['L1', 'L2', 'L3'] as const) {
     const result = generateAdvanced({ grade: '3A', unitIds: UNITS_3A, level, count: 10, seed: 20261105 })
@@ -79,7 +79,7 @@ test('拓展题：三档平均步骤数实测严格递增（T1 2–2.5 / T2 3 / 
   assert.ok(averages[1]! < averages[2]!, `T2 ${averages[1]} 不小于 T3 ${averages[2]}`)
   assert.ok(averages[0]! >= 2 && averages[0]! < 3, `T1 平均 ${averages[0]} 不在 [2,3)`)
   assert.equal(averages[1], 3)
-  assert.equal(averages[2], 5)
+  assert.equal(averages[2], 4.5)
 })
 
 test('拓展题：同卷按“结构 + 知识点”去重，不按题干字符串', () => {
@@ -366,7 +366,38 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
     'adv-symbol': 4,
     'adv-weekday': 4,
     'adv-rent-plan': 8,
+    'adv-arrange-rect': 6,
   })
+})
+
+test('固定周长摆长方形：枚举计数正确、唯一答案、退化情形排除', () => {
+  const category = advancedCategory('adv-arrange-rect')
+  assert.ok(category)
+  const cases = [
+    { perimeter: 12, count: 3, pairs: '长5宽1、长4宽2、长3宽3' },
+    { perimeter: 14, count: 3, pairs: '长6宽1、长5宽2、长4宽3' },
+    { perimeter: 16, count: 4, pairs: '长7宽1、长6宽2、长5宽3、长4宽4' },
+    { perimeter: 24, count: 6, pairs: '长11宽1、长10宽2、长9宽3、长8宽4、长7宽5、长6宽6' },
+  ]
+  for (const item of cases) {
+    const built = category.build({ perimeter: item.perimeter })
+    assert.equal(built.answer, `共${item.count}种：${item.pairs}`)
+    assert.equal(category.recompute({ perimeter: item.perimeter }), built.answer)
+    assert.equal(category.invariant({ perimeter: item.perimeter }), null)
+  }
+  // 周长 10：半周长 5，只能摆成长3宽2（长≥宽），仍可出；9 为奇数必须拒
+  assert.equal(category.invariant({ perimeter: 10 }), '周长限定 12–24')
+  assert.equal(category.invariant({ perimeter: 23 }), '周长必须是偶数，长和宽才是整数')
+  const rng = createRng(303)
+  let min = 99
+  let max = 0
+  for (let index = 0; index < 1000; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    min = Math.min(min, Number(params.perimeter))
+    max = Math.max(max, Number(params.perimeter))
+  }
+  assert.ok(min >= 12 && max <= 24, `周长实测 ${min}–${max} 超出 12–24`)
 })
 
 test('反例：星期几写成“3÷7=0……3”或剪拼缺“从一端”必须被拒', () => {

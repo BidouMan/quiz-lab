@@ -202,7 +202,7 @@ export function evalArithmetic(source: string): number {
   return value
 }
 
-// ---------- 13 类拓展题 ----------
+// ---------- 14 类拓展题 ----------
 
 const dCycle = (rng: Rng): AdvParams | null =>
   retry(() => {
@@ -1301,6 +1301,80 @@ const rentPlan: AdvancedCategory = {
   },
 }
 
+const dArrangeRect = (rng: Rng): AdvParams | null =>
+  retry(() => {
+    const perimeter = 2 * randInt(rng, 6, 12)
+    // 周长 12–24 的偶数，保证长、宽都是整数；正方形也算长方形，题干里写死
+    return { perimeter }
+  })
+
+const arrangeRect: AdvancedCategory = {
+  id: 'adv-arrange-rect',
+  label: '固定周长摆长方形',
+  tier: 'T3',
+  units: ['3A-U6', '3A-U9'],
+  primaryKp: '3A-PERIMETER',
+  kpKeys: ['3A-PERIMETER', '3A-STRATEGY'],
+  sample: '用12根同样长的小棒摆长方形（每根算一条边，正方形也算长方形），一共有几种摆法？',
+  pool: '周长 12–24 的偶数 7 种（每种 2–6 个组合，低频）',
+  workLines: 6,
+  draw: dArrangeRect,
+  stem: (p) =>
+    `用${num(p, 'perimeter')}根同样长的小棒摆长方形（每根算一条边，正方形也算长方形）。一共有几种摆法？列出每种摆法的长和宽。`,
+  build: (p) => {
+    const perimeter = num(p, 'perimeter')
+    const half = perimeter / 2
+    const pairs: string[] = []
+    for (let long = half - 1; long * 2 >= half; long--) {
+      pairs.push(`长${long}宽${half - long}`)
+    }
+    const count = pairs.length
+    return {
+      known: [`${perimeter}根小棒`, `每根算一条边`, `正方形也算长方形`],
+      unknown: '一共有几种摆法（列出长和宽）',
+      steps: [
+        {
+          text: `长+宽=周长÷2：${perimeter}÷2=${half}（根）`,
+          kp: '3A-PERIMETER',
+          expr: `${perimeter}/2`,
+          result: half,
+        },
+        {
+          text: `有序枚举长和宽：${pairs.join('、')}`,
+          kp: '3A-STRATEGY',
+        },
+        {
+          text: `从长最大开始，长每次少1、宽每次多1，正好不重复、不遗漏`,
+          kp: '3A-STRATEGY',
+        },
+        {
+          text: `数一数：长和宽的组数共${count}种`,
+          kp: '3A-STRATEGY',
+        },
+      ],
+      answer: `共${count}种：${pairs.join('、')}`,
+    }
+  },
+  recompute: (p) => {
+    const perimeter = num(p, 'perimeter')
+    const half = perimeter / 2
+    // 独立路径：宽从 1 往上枚举，长 = 半周长 - 宽，只保留长 ≥ 宽（含正方形）
+    const pairs: string[] = []
+    for (let width = 1; width * 2 <= half; width++) {
+      pairs.push(`长${half - width}宽${width}`)
+    }
+    return `共${pairs.length}种：${pairs.join('、')}`
+  },
+  invariant: (p) => {
+    const perimeter = num(p, 'perimeter')
+    if (perimeter % 2 !== 0) return '周长必须是偶数，长和宽才是整数'
+    if (perimeter < 12 || perimeter > 24) return '周长限定 12–24'
+    const half = perimeter / 2
+    if (half < 6) return '半周长过小，凑不出至少一种长方形'
+    return null
+  },
+}
+
 export const ADV_CATEGORIES: AdvancedCategory[] = [
   cycle,
   normalize,
@@ -1315,6 +1389,7 @@ export const ADV_CATEGORIES: AdvancedCategory[] = [
   symbol,
   weekday,
   rentPlan,
+  arrangeRect,
 ]
 
 export const advancedCategory = (id: string): AdvancedCategory | undefined =>
