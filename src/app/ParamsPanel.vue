@@ -52,6 +52,8 @@ const PAGE_COST: Record<AppType, number> = {
   geom: 0.2,
   angle: 0.2,
   word: 0.08,
+  judge: 0.06,
+  choice: 0.08,
 }
 const roughPages = computed(() => {
   if (activeTypes.value.length === 0) return 0

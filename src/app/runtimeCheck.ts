@@ -6,6 +6,7 @@
  * 静态兜底题至少校验结构与答案非空。复核失败先有限次重生成，仍失败则剔除。
  */
 import { evalLatex } from '../quiz/expr.ts'
+import { deriveWrongValues, verifyFormatSource } from '../quiz/formats.ts'
 import { verifyQuestion } from '../quiz/skeleton/index.ts'
 import type { Combo, PilotQuestion } from '../quiz/skeleton/types.ts'
 import type { FillQuestion, GeneratedQuestion } from '../quiz/types.ts'
@@ -188,6 +189,8 @@ export function verifyItemStructure(item: TypstItem): string[] {
     return issues
   }
 
+  if (kind === 'judge' || kind === 'choice') return verifyFormatItem(item)
+
   // 比大小 / 图形题：按题面独立重算，再与标注答案核对
   if (kind === 'compare') {
     if (!(item.pre ?? '').trim() || !(item.post ?? '').trim()) {
@@ -222,6 +225,71 @@ export function verifyItemStructure(item: TypstItem): string[] {
         issues.push(`题干单位与答案单位不一致：答案按${unit}，题干未写`)
       }
     }
+  }
+  return issues
+}
+
+/**
+ * 判断题 / 选择题复核：
+ * 1) 正确值从来源参数独立重算（不是信题面里写的答案）；
+ * 2) 假命题/干扰项逐个用错因规则重新推导，确认「确实错」「错因对得上」；
+ * 3) 选择题必须恰好一个选项与标答等值。
+ */
+function verifyFormatItem(item: TypstItem): string[] {
+  const issues: string[] = []
+  const fmt = item.fmt
+  if (!fmt) return ['缺少判断/选择复核字段']
+  const source = verifyFormatSource(fmt.data)
+  if (!source.ok) issues.push(`来源重算失败：${source.error}`)
+  const correct = fmt.data.correct.trim()
+  const derived = deriveWrongValues(fmt.data)
+  const derivedValues = new Set(derived.map((item) => item.value.trim()))
+  const stemText = (item.parts ?? [])
+    .map((part) => ('t' in part ? part.t : ''))
+    .join('')
+
+  if (item.kind === 'judge') {
+    if (typeof item.truth !== 'boolean') issues.push('判断题缺少真假标注')
+    const expectedAnswer = item.truth ? '√' : '×'
+    if ((item.answers?.[0] ?? '') !== expectedAnswer) issues.push('答案符号与真假标注不一致')
+    if (item.truth) {
+      if (stemText && !stemText.includes(correct)) issues.push('真命题题干没有出现标答值')
+      if ((fmt.causes ?? []).length > 0) issues.push('真命题不应带错因')
+    } else {
+      const causes = fmt.causes ?? []
+      if (causes.length !== 1) {
+        issues.push('假命题必须且只能带 1 条错因')
+      }
+      const cause = causes[0]
+      if (cause) {
+        if (cause.value.trim() === correct) issues.push('假命题的值与标答相同，实际为真')
+        const matched = derived.find(
+          (candidate) => candidate.value.trim() === cause.value.trim() && candidate.rule === cause.rule,
+        )
+        if (!matched) issues.push(`假命题错因无法由规则重算：${cause.rule}`)
+        if (stemText && !stemText.includes(cause.value.trim())) issues.push('题干没有出现假命题的值')
+      }
+    }
+  } else {
+    const options = (item.options ?? []).map((option) => option.trim())
+    if (options.length !== 4) issues.push(`选择题选项应为 4 个，实际 ${options.length}`)
+    if (new Set(options).size !== options.length) issues.push('选择题存在重复选项')
+    const index = item.answerIndex
+    if (typeof index !== 'number' || index < 0 || index > 3) issues.push('选择题标答下标越界')
+    const correctHits = options.filter((option) => option === correct).length
+    if (correctHits !== 1) issues.push(`正确选项应恰好 1 个，实际 ${correctHits}`)
+    if (typeof index === 'number' && options[index] !== correct) issues.push('标答下标指向的不是正确值')
+    const causes = fmt.causes ?? []
+    if (causes.length !== 3) issues.push(`干扰项错因应为 3 条，实际 ${causes.length}`)
+    for (const option of options) {
+      if (option === correct) continue
+      if (!derivedValues.has(option)) issues.push(`干扰项「${option}」无法由错因规则重算`)
+      if (!causes.some((cause) => cause.value.trim() === option)) {
+        issues.push(`干扰项「${option}」缺少错因标注`)
+      }
+    }
+    const letter = typeof index === 'number' ? ['A', 'B', 'C', 'D'][index] : undefined
+    if (letter && (item.answers?.[0] ?? '') !== letter) issues.push('答案字母与标答下标不一致')
   }
   return issues
 }

@@ -208,6 +208,45 @@
     } else {
       body
     }
+  } else if it.kind == "judge" {
+    // 判断题：命题后接「（　　）」供打勾/叉，模板不预先印答案
+    [
+      #lead
+      #for p in it.parts {
+        if "t" in p {
+          p.t
+        } else if "m" in p {
+          [$#m(p.m)$]
+        } else {
+          blank(p.b * 1mm)
+        }
+      }
+      #h(1mm)
+      #box[（　　　）]
+    ]
+  } else if it.kind == "choice" {
+    // 选择题：选项随题干排；短选项一行 4 个 / 2 个，长选项一列一个
+    let cols = it.at("optionCols", default: 2)
+    let opts = it.at("options", default: ())
+    [
+      #lead
+      #for p in it.parts {
+        if "t" in p {
+          p.t
+        } else if "m" in p {
+          [$#m(p.m)$]
+        } else {
+          blank(p.b * 1mm)
+        }
+      }
+      #v(1.2mm)
+      #grid(
+        columns: (1fr,) * cols,
+        column-gutter: 4mm,
+        row-gutter: 1.2mm,
+        ..range(opts.len()).map(i => [#("A", "B", "C", "D").at(i)．#opts.at(i)]),
+      )
+    ]
   } else if it.kind == "word" {
     // 应用题恒定通栏：题干自然折行，下方纯留白作答（不画横线）
     let body = [
@@ -255,7 +294,7 @@
 
 // 有题号的题型：题号作为行内前导，靠悬挂缩进让折行回到题干起点
 // 比大小首格是块级公式，行内前导会自成一段，仍用二列布局
-#let numbered-kind(kind) = kind in ("fill", "word", "geom")
+#let numbered-kind(kind) = kind in ("fill", "word", "geom", "judge", "choice")
 
 #let item-cell(sec, it, no) = {
   let lead = if no == none { [] } else { qno-mark(no) + h(qno-gap) }
@@ -297,7 +336,7 @@
 }
 
 // 恒定通栏的题型：填空整行一题；应用题与图形题占满整行
-#let full-width-kind(kind) = kind in ("fill", "geom", "word")
+#let full-width-kind(kind) = kind in ("fill", "geom", "word", "judge", "choice")
 
 #let section-rows(sec) = {
   let rows = ()
@@ -311,7 +350,7 @@
         rows.push((full: false, gap: row-gap, cells: (pending,)))
         pending = none
       }
-      rows.push((full: true, gap: if it.kind == "fill" { line-gap } else { row-gap }, cells: (item-cell(sec, it, no),)))
+      rows.push((full: true, gap: if it.kind in ("fill", "judge") { line-gap } else { row-gap }, cells: (item-cell(sec, it, no),)))
     } else if pending == none {
       pending = item-cell(sec, it, no)
     } else {

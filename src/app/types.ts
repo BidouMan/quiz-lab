@@ -1,5 +1,6 @@
 import type { Level } from '../quiz/types.ts'
 import type { FigureSpec } from '../quiz/skeleton/types.ts'
+import type { FormatSourceData } from '../quiz/formats.ts'
 
 export type AppType =
   | 'kousuan'
@@ -11,6 +12,8 @@ export type AppType =
   | 'geom'
   | 'angle'
   | 'word'
+  | 'judge'
+  | 'choice'
 
 export type Grade = '3A' | '3B'
 
@@ -67,6 +70,8 @@ export const PRACTICE_DEFAULT_COUNTS: Record<AppType, number> = {
   geom: 4,
   angle: 4,
   word: 6,
+  judge: 4,
+  choice: 4,
 }
 
 /** 练习模式首启默认勾选题型 */
@@ -138,6 +143,23 @@ export interface TypstItem {
   solution?: string[]
   /** 比大小 / 图形题的复核字段（模板不渲染） */
   audit?: ItemAudit
+  /** 判断题：命题真假（模板按 kind 渲染，不直接显示此字段） */
+  truth?: boolean
+  /** 选择题：A/B/C/D 选项文本 */
+  options?: string[]
+  /** 选择题：正确选项下标（0=A） */
+  answerIndex?: number
+  /** 选择题：每行几个选项（4/2/1） */
+  optionCols?: number
+  /** 判断题/选择题的复核字段（来源描述 + 每个错误变体的错因） */
+  fmt?: FormatAudit
+}
+
+export interface FormatAudit {
+  data: FormatSourceData
+  causes: { value: string; rule: string; detail: string }[]
+  truth?: boolean
+  answerIndex?: number
 }
 
 export interface TypstSection {

@@ -16,6 +16,12 @@ import { compareUnitForms, generateCompare, type ComparePiece } from '../quiz/co
 import { geomUnitForms, geomUnitsSupported, generateGeom, type GeomPiece } from '../quiz/geom.ts'
 import { angleUnitForms, angleUnitsSupported, generateAngle, type AnglePiece } from '../quiz/angle.ts'
 import {
+  formatSourceUnits,
+  formatSupports,
+  generateFormat,
+  type FormatPiece,
+} from '../quiz/formats.ts'
+import {
   buildComboPaper,
   createUsedSets,
   rebuildQuestion,
@@ -65,6 +71,8 @@ const WEIGHTS: Record<AppType, number> = {
   geom: 0.03,
   angle: 0.03,
   word: 0.12,
+  judge: 0.06,
+  choice: 0.06,
 }
 
 const LEVELS: Level[] = ['L1', 'L2', 'L3']
@@ -148,6 +156,11 @@ export function typeVisibleInGrade(grade: Grade, type: AppType): boolean {
       grade,
       units.map((unit) => unit.unitId),
     )
+  }
+
+  if (type === 'judge' || type === 'choice') {
+    const unitIds = units.map((unit) => unit.unitId)
+    return LEVELS.some((level) => formatSupports(grade, unitIds, level))
   }
 
   return geomUnitsSupported(
@@ -330,6 +343,28 @@ export function typeAvailability(
       continue
     }
 
+    if (type === 'judge' || type === 'choice') {
+      if (units.length === 0) {
+        result[type] = { enabled: false, reason: '请先选择单元' }
+        continue
+      }
+      const unitIds = units.map((unit) => unit.unitId)
+      if (formatSupports(config.grade, unitIds, config.level)) {
+        result[type] = { enabled: true, reason: '', source: 'rule' }
+        continue
+      }
+      const levels = LEVELS.filter((level) => formatSupports(config.grade, unitIds, level))
+      result[type] = {
+        enabled: false,
+        reason:
+          levels.length > 0
+            ? `所选单元在 ${config.level} 没有可用于${label}的计算/填空内容，可切到 ${levels.join('/')}`
+            : `所选单元（${units.map((unit) => unit.unitName).join('、')}）没有可用于${label}的单值计算/填空内容（角与图形计数、数学广场图形玩法由对应题型承载）`,
+        source: levels.length > 0 ? undefined : 'na',
+      }
+      continue
+    }
+
     if (type === 'compare' || type === 'geom' || type === 'angle') {
       const flag = type === 'compare' ? template?.compare : template?.geom
       const label = typeLabel(type)
@@ -490,6 +525,10 @@ function capacityOf(type: AppType, config: AppConfig): number {
     const unitIds = selectedUnits(config).map((unit) => unit.unitId)
     return angleUnitsSupported(config.grade, unitIds) ? Number.POSITIVE_INFINITY : 0
   }
+  if (type === 'judge' || type === 'choice') {
+    const unitIds = selectedUnits(config).map((unit) => unit.unitId)
+    return formatSupports(config.grade, unitIds, config.level) ? Number.POSITIVE_INFINITY : 0
+  }
   // 其余题型没有静态样例池（STATIC_SAMPLES 仅有 compare/geom 两个键）
   return 0
 }
@@ -522,16 +561,15 @@ function capQuotas(quotas: Map<AppType, number>, active: AppType[], config: AppC
 
 /**
  * 旧配置兼容：只有全局 count、没有逐题型 counts 时，
- * 按默认题量权重重映射到当前勾选题型，总和尽量等于旧 count；未勾选题型保留默认记忆值。
+ * 按默认题量权重重映射到当前勾选题型，总和尽量等于旧 count；未勾选题型置 0。
  */
 export function migrateCounts(oldCount: number, types: AppType[]): Partial<Record<AppType, number>> {
-  const counts: Partial<Record<AppType, number>> = { ...PRACTICE_DEFAULT_COUNTS }
   const selected = types.filter((type) => (PRACTICE_DEFAULT_COUNTS[type] ?? 0) > 0)
   const target = Math.max(0, Math.round(Number(oldCount) || 0))
-  if (selected.length === 0 || target === 0) {
-    for (const type of types) counts[type] = 0
-    return counts
-  }
+  // 只给被选中的题型分配题量；未选中的题型保持 0，避免新增题型的默认值混进旧配置
+  const counts: Partial<Record<AppType, number>> = {}
+  for (const type of types) counts[type] = 0
+  if (selected.length === 0 || target === 0) return counts
   const weight = selected.reduce((sum, type) => sum + PRACTICE_DEFAULT_COUNTS[type], 0)
   const raw = selected.map((type) => ({ type, value: (PRACTICE_DEFAULT_COUNTS[type] / weight) * target }))
   const base = raw.map((row) => Math.floor(row.value))
@@ -570,6 +608,9 @@ function prioritizeUnits(units: Unit[], type: AppType, level: Level): Unit[] {
     if (type === 'compare') return compareUnitForms(unit.unitId, level).length > 0 ? 1 : 0
     if (type === 'geom') return geomUnitForms(unit.unitId, level).length > 0 ? 1 : 0
     if (type === 'angle') return angleUnitForms(unit.unitId, level).length > 0 ? 1 : 0
+    if (type === 'judge' || type === 'choice') {
+      return formatSourceUnits(unit.grade, [unit.unitId], level).length > 0 ? 1 : 0
+    }
     return unitSupports(unit.unitId, type, level) ? 1 : 0
   }
   return [...units].sort((a, b) => score(b) - score(a))
@@ -585,6 +626,12 @@ const itemKey = (item: TypstItem): string => {
     return `fill:${text.replace(/\s+/g, '')}`
   }
   if (item.kind === 'word') return `word:${(item.text ?? '').replace(/\s+/g, '')}`
+  if (item.kind === 'judge' || item.kind === 'choice') {
+    const text = (item.parts ?? [])
+      .map((part) => ('t' in part ? part.t : 'm' in part ? part.m : '_'))
+      .join('')
+    return `${item.kind}:${text.replace(/\s+/g, '')}|${(item.options ?? []).join(',')}`
+  }
   if (item.kind === 'compare') return `compare:${(item.pre ?? '').replace(/\s+/g, '')}|${(item.post ?? '').replace(/\s+/g, '')}`
   // 图形题的题干可能重复（如“右边的图形是什么形状？”），真正区分题目的是图形规格与参数，
   // 因此用 form + fig + params 作为卷内去重键
@@ -668,6 +715,7 @@ function buildCalcType(
   seed: number,
   memory: MemoryStore,
   used: Set<string>,
+  sourceUsed?: Set<string>,
 ): TypeBuild {
   const build = emptyBuild()
   if (quota <= 0) return build
@@ -716,6 +764,7 @@ function buildCalcType(
       recordCheck(build.check, outcome, `${unit.unitName}·${typeLabel(type)}`)
       if (outcome.accepted == null) continue
       const accepted = outcome.accepted
+      sourceUsed?.add(`calc:${accepted.fingerprint}`)
       if (add(questionToItem(accepted))) {
         build.generated++
         if (!build.kpNames.includes(accepted.kpName)) build.kpNames.push(accepted.kpName)
@@ -781,6 +830,8 @@ function buildCalcType(
 interface GeneratedPiece {
   item: TypstItem
   kpName: string
+  /** 来源题目指纹：判断题/选择题据此避开同卷已用的计算/填空题 */
+  sourceKey?: string
 }
 
 /** 骨架题必须同时保留可复核的 PilotQuestion，复核只从参数重算，不回看组装结果 */
@@ -826,9 +877,10 @@ function buildGeneratedType(input: {
   used: Set<string>
   skeletonUsed: UsedSets
   memory: MemoryStore
+  sourceUsed?: Set<string>
   runLegacy: (unit: Unit, count: number, seed: number) => { pieces: GeneratedPiece[]; crossReused: number }
 }): TypeBuild {
-  const { type, label, quota, config, seed, used, skeletonUsed, memory, runLegacy } = input
+  const { type, label, quota, config, seed, used, skeletonUsed, memory, sourceUsed, runLegacy } = input
   const build = emptyBuild()
   if (quota <= 0) return build
 
@@ -927,6 +979,7 @@ function buildGeneratedType(input: {
         })
         recordCheck(build.check, outcome, `${unit.unitName}·旧${label}生成器`)
         if (outcome.accepted == null) continue
+        if (outcome.accepted.sourceKey) sourceUsed?.add(outcome.accepted.sourceKey)
         if (add(outcome.accepted.item, 'legacy', outcome.accepted.kpName)) added++
       }
       build.crossReused += produced.crossReused
@@ -987,6 +1040,7 @@ function buildFillType(
   memory: MemoryStore,
   used: Set<string>,
   skeletonUsed: UsedSets,
+  sourceUsed?: Set<string>,
 ): TypeBuild {
   return buildGeneratedType({
     type: 'tiankong',
@@ -997,6 +1051,7 @@ function buildFillType(
     used,
     skeletonUsed,
     memory,
+    sourceUsed,
     runLegacy: (unit, count, unitSeed) => {
       const result = generateFill({
         grade: config.grade,
@@ -1007,7 +1062,11 @@ function buildFillType(
         memory,
       })
       return {
-        pieces: result.questions.map((question) => ({ item: fillQuestionToItem(question), kpName: question.kpName })),
+        pieces: result.questions.map((question) => ({
+          item: fillQuestionToItem(question),
+          kpName: question.kpName,
+          sourceKey: `fill:${question.fingerprint}`,
+        })),
         crossReused: result.crossReused ?? 0,
       }
     },
@@ -1106,6 +1165,74 @@ function angleToItem(piece: AnglePiece, index: number): TypstItem {
     blank: piece.blank,
     audit: { form: piece.form, answer: piece.answer, params: { ...piece.params } },
   }
+}
+
+function formatToItem(piece: FormatPiece, index: number): TypstItem {
+  return {
+    id: `fmt-${piece.kind}-${index + 1}`,
+    kind: piece.kind,
+    parts: splitFill(piece.stem),
+    truth: piece.truth,
+    options: piece.options,
+    answerIndex: piece.answerIndex,
+    optionCols: piece.optionCols,
+    answers: piece.answers,
+    fmt: {
+      data: piece.data,
+      causes: piece.causes,
+      truth: piece.truth,
+      answerIndex: piece.answerIndex,
+    },
+  }
+}
+
+/** 判断题 / 选择题：从现有计算/填空内容池取题改问法，复核后上卷 */
+function buildFormatType(
+  type: 'judge' | 'choice',
+  quota: number,
+  config: AppConfig,
+  seed: number,
+  used: Set<string>,
+  memory: MemoryStore,
+  sourceUsed: Set<string>,
+): TypeBuild {
+  const build = emptyBuild()
+  if (quota <= 0) return build
+  const unitIds = selectedUnits(config).map((unit) => unit.unitId)
+  const generated = generateFormat({
+    kind: type,
+    grade: config.grade,
+    unitIds,
+    level: config.level,
+    count: quota,
+    seed,
+    memory,
+    sourceUsed,
+  })
+  build.crossReused += generated.crossReused
+  for (const note of generated.notes) if (!build.notes.includes(note)) build.notes.push(note)
+
+  generated.pieces.forEach((piece, index) => {
+    if (build.items.length >= quota) return
+    const item = formatToItem(piece, index)
+    const outcome = admitWithRetry<TypstItem>({
+      initial: item,
+      verify: verifyItemStructure,
+      regenerate: () => null,
+    })
+    recordCheck(build.check, outcome, `${typeLabel(type)}·格式改写`)
+    if (outcome.accepted == null) return
+    const key = itemKey(outcome.accepted)
+    if (used.has(key)) {
+      build.duplicates++
+      return
+    }
+    used.add(key)
+    build.items.push(outcome.accepted)
+    build.generated++
+    if (piece.kpName && !build.kpNames.includes(piece.kpName)) build.kpNames.push(piece.kpName)
+  })
+  return build
 }
 
 /** 比大小 / 图形与周长 / 角与图形计数：走规则生成器，经运行时复核后再上卷 */
@@ -1209,17 +1336,21 @@ export function buildPaper(input: {
 
   const used = new Set<string>()
   const skeletonUsed = createUsedSets()
+  /** 同卷来源去重：判断/选择题不复用已经作为计算/填空题出现的同一道来源题 */
+  const sourceUsed = new Set<string>()
   const builds = new Map<AppType, TypeBuild>()
 
   for (const type of active) {
     const quota = quotas.get(type) ?? 0
     if (quota <= 0) continue
     if (isCalcType(type)) {
-      builds.set(type, buildCalcType(type, quota, config, seed, memory, used))
+      builds.set(type, buildCalcType(type, quota, config, seed, memory, used, sourceUsed))
     } else if (type === 'tiankong') {
-      builds.set(type, buildFillType(quota, config, seed, memory, used, skeletonUsed))
+      builds.set(type, buildFillType(quota, config, seed, memory, used, skeletonUsed, sourceUsed))
     } else if (type === 'word') {
       builds.set(type, buildWordType(quota, config, seed, memory, used, skeletonUsed))
+    } else if (type === 'judge' || type === 'choice') {
+      builds.set(type, buildFormatType(type, quota, config, seed, used, memory, sourceUsed))
     } else {
       builds.set(
         type,
