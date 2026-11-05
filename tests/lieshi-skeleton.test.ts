@@ -5,6 +5,7 @@ import { MemoryStore } from '../src/quiz/memory.ts'
 import { U1_LIE_PACKAGE, U1_LIE_SKELETONS } from '../src/quiz/skeleton/u1-lieshi.ts'
 import { U2_LIE_PACKAGE, U2_LIE_SKELETONS } from '../src/quiz/skeleton/u2-lieshi.ts'
 import { U4_LIE_PACKAGE, U4_LIE_SKELETONS } from '../src/quiz/skeleton/u4-lieshi.ts'
+import { U6_LIE_PACKAGE, U6_LIE_SKELETONS } from '../src/quiz/skeleton/u6-lieshi.ts'
 import { renderLieSkeleton } from '../src/quiz/skeleton/lie-kit.ts'
 import { generateLie, validateLiePaper, verifyLieRecord } from '../src/quiz/lieshi.ts'
 
@@ -63,6 +64,24 @@ test('U4 列式骨架包：三档各 30 条、共 90 条，除数全为一位数
   }
 })
 
+test('U6 列式骨架包：三档各 30 条、共 90 条，只做周长', () => {
+  assert.equal(U6_LIE_PACKAGE.unitId, '3A-U6')
+  assert.equal(U6_LIE_SKELETONS.length, 90)
+  for (const level of ['L1', 'L2', 'L3']) {
+    const pool = U6_LIE_SKELETONS.filter((skeleton) => skeleton.level === level)
+    assert.equal(pool.length, 30, `${level} 应有 30 条骨架`)
+    assert.equal(new Set(pool.map((skeleton) => skeleton.id)).size, 30)
+  }
+  assert.equal(new Set(U6_LIE_SKELETONS.map((skeleton) => skeleton.id)).size, 90)
+  for (const skeleton of U6_LIE_SKELETONS) {
+    assert.ok(skeleton.shape.includes('*') || skeleton.shape.includes('/'), `${skeleton.id} 周长结构应含乘除`)
+    for (const [name, slot] of Object.entries(skeleton.slots)) {
+      const [min, max] = Object.values(slot) as [number, number]
+      assert.ok(min >= 2 && max <= 200, `${skeleton.id}.${name} 数值域 ${min}~${max} 超三上范围`)
+    }
+  }
+})
+
 test('U4 列式三档各出满 30 题，复核全过、无同卷重复', () => {
   for (const level of ['L1', 'L2', 'L3']) {
     const result = generateLie({ grade: '3A', unitIds: ['3A-U4'], level, count: 30, seed: 20261105 })
@@ -78,8 +97,23 @@ test('U4 列式三档各出满 30 题，复核全过、无同卷重复', () => {
   }
 })
 
-test('U4 列式连续两卷零复用', () => {
-  for (const unitId of ['3A-U4']) {
+test('U6 列式三档各出满 30 题，复核全过、无同卷重复', () => {
+  for (const level of ['L1', 'L2', 'L3']) {
+    const result = generateLie({ grade: '3A', unitIds: ['3A-U6'], level, count: 30, seed: 20261106 })
+    assert.equal(result.questions.length, 30, `${level} 实出 ${result.questions.length}`)
+    assert.equal(result.crossReused, 0)
+    assert.equal(new Set(result.questions.map((question) => question.templateId)).size, 30)
+    assert.equal(new Set(result.questions.map((question) => question.stem)).size, 30)
+    assert.equal(new Set(result.questions.map((question) => question.key)).size, 30)
+    assert.deepEqual(validateLiePaper(result.questions), [])
+    for (const question of result.questions) {
+      assert.deepEqual(verifyLieRecord(question), [], `${question.id} 复核失败`)
+    }
+  }
+})
+
+test('U4 / U6 列式连续两卷零复用', () => {
+  for (const unitId of ['3A-U4', '3A-U6']) {
     const memory = new MemoryStore()
     const first = generateLie({ grade: '3A', unitIds: [unitId], level: 'L2', count: 30, seed: 1 })
     memory.beginPaper()
@@ -124,7 +158,7 @@ test('U2 连续两卷零复用', () => {
 
 test('骨架自带反解：题干抽回槽位与渲染参数一致', () => {
   const rng = createRng(20261105)
-  for (const skeleton of [...U1_LIE_SKELETONS, ...U2_LIE_SKELETONS, ...U4_LIE_SKELETONS]) {
+  for (const skeleton of [...U1_LIE_SKELETONS, ...U2_LIE_SKELETONS, ...U4_LIE_SKELETONS, ...U6_LIE_SKELETONS]) {
     let checked = 0
     for (let attempt = 0; attempt < 10 && checked < 3; attempt++) {
       const params = skeleton.draw(rng)

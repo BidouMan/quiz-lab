@@ -21,6 +21,7 @@ import { renderLieSkeleton } from './skeleton/lie-kit.ts'
 import { U1_LIE_SKELETONS } from './skeleton/u1-lieshi.ts'
 import { U2_LIE_SKELETONS } from './skeleton/u2-lieshi.ts'
 import { U4_LIE_SKELETONS } from './skeleton/u4-lieshi.ts'
+import { U6_LIE_SKELETONS } from './skeleton/u6-lieshi.ts'
 
 export type LieOp = '+' | '-' | '×' | '÷'
 
@@ -1290,9 +1291,9 @@ export const LIE_TEMPLATES: LieTemplate[] = [
   },
 ]
 
-// ---------- 骨架包迁移：U1 / U2 / U4 列式骨架 → 生成/复核可用的句式 ----------
+// ---------- 骨架包迁移：U1 / U2 / U4 / U6 列式骨架 → 生成/复核可用的句式 ----------
 
-const SKELETON_LIE = [...U1_LIE_SKELETONS, ...U2_LIE_SKELETONS, ...U4_LIE_SKELETONS]
+const SKELETON_LIE = [...U1_LIE_SKELETONS, ...U2_LIE_SKELETONS, ...U4_LIE_SKELETONS, ...U6_LIE_SKELETONS]
 
 const SKELETON_TEMPLATES: LieTemplate[] = SKELETON_LIE.map((skeleton) => ({
   id: skeleton.id,

@@ -132,30 +132,31 @@ test('单元映射：U3 不适用，U2 用骨架包出满', () => {
   assert.equal(u2l1.questions.length, 20)
 })
 
-test('U6 周长列式：长方形（长+宽）×2 与正方形 边长×4', () => {
-  const l2 = generateLie({ grade: '3A', unitIds: ['3A-U6'], level: 'L2', count: 20 })
-  assert.equal(l2.questions.length, 4, 'U6 L2 两种问法，各出 2 题')
-  for (const question of l2.questions) {
-    assert.equal(question.unitId, '3A-U6')
-    assert.equal(question.kpName, '周长')
-    assert.ok(question.expression.endsWith(')×2'), `长方形周长应为（长+宽）×2：${question.expression}`)
+test('U6 周长列式：骨架包三档各出满 30 题，问法保持多样', () => {
+  const kindOf = (expression: string): string => {
+    if (expression.includes('/')) return '逆推'
+    if (expression.endsWith(')×2')) return '长方形周长'
+    if (expression.endsWith('×4')) return '正方形周长'
+    return '比较/求和'
   }
-  assert.deepEqual(validateLiePaper(l2.questions), [])
+  for (const level of ['L1', 'L2', 'L3']) {
+    const result = generateLie({ grade: '3A', unitIds: ['3A-U6'], level, count: 30 })
+    assert.equal(result.questions.length, 30, `${level} 实出 ${result.questions.length}`)
+    assert.equal(new Set(result.questions.map((question) => question.stem)).size, 30)
+    for (const question of result.questions) {
+      assert.equal(question.unitId, '3A-U6')
+      assert.equal(question.kpName, '周长')
+      assert.deepEqual(verifyLieRecord(question), [], `${question.id} 复核失败`)
+    }
+    assert.ok(new Set(result.questions.map((question) => kindOf(question.expression))).size >= 3, `${level} 问法应多样`)
+    assert.deepEqual(validateLiePaper(result.questions), [])
+  }
 
-  const sample = l2.questions.find((question) => question.params.a === 12 && question.params.b === 5)
-  // 12、5 不保证被抽到；直接按目标算式复核同结构记录
+  // 旧模板保留作对照：同结构算式仍可独立复核
   const target = recordOf('l2-rect-perimeter', { a: 12, b: 5 })
   assert.equal(target.expression, '(12+5)×2')
   assert.equal(target.answer, '34')
   assert.deepEqual(verifyLieRecord(target), [])
-  assert.ok(sample === undefined || sample.expression === '(12+5)×2')
-
-  const l1 = generateLie({ grade: '3A', unitIds: ['3A-U6'], level: 'L1', count: 20 })
-  assert.equal(l1.questions.length, 2)
-  for (const question of l1.questions) {
-    assert.ok(question.expression.endsWith('×4'), `正方形周长应为 边长×4：${question.expression}`)
-  }
-  assert.deepEqual(validateLiePaper(l1.questions), [])
 })
 
 test('跨卷同句式同结构不再重复（记忆池有记录时换题）', () => {
