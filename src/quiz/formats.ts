@@ -1171,10 +1171,7 @@ export function generateFormat(options: FormatOptions): FormatResult {
 
   // 概念命题：默认整卷最多 1/3；只有该单元组合没有任何数值判断来源时，才放宽到 100%
   const conceptSources = collectConceptSources(grade, units, level)
-  const numericSources = collectSources({ grade, unitIds: units, level, seed }).filter(
-    // 年月日来源先只接判断题，选择题下一轮再放开
-    (source) => kind === 'judge' || source.pool !== 'dateKousuan',
-  )
+  const numericSources = collectSources({ grade, unitIds: units, level, seed })
   const conceptOnly = kind === 'judge' && conceptSources.length > 0 && numericSources.length === 0
   // 选择题没有任何数值来源时（例如单独选 U3），用概念命题兜底成“说法选择题”
   const conceptChoiceOnly = kind === 'choice' && conceptSources.length > 0 && numericSources.length === 0
@@ -1262,10 +1259,7 @@ export function generateFormat(options: FormatOptions): FormatResult {
   } else {
     for (let round = 0; round < 10 && pieces.length < count; round++) {
       fillConceptSlots(round)
-      const collected = collectSources({ grade, unitIds: units, level, seed: seed + round * 7919 }).filter(
-        // 年月日来源先只接判断题，选择题下一轮再放开
-        (source) => kind === 'judge' || source.pool !== 'dateKousuan',
-      )
+      const collected = collectSources({ grade, unitIds: units, level, seed: seed + round * 7919 })
       if (collected.length === 0) {
         // 只有概念命题可用（例如单选 U3）：按答案位顺序补齐，仍受 1/3 上限
         while (tryConcept(round)) {
