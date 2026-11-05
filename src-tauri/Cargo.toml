@@ -1,6 +1,6 @@
 [package]
 name = "quizlab"
-version = "0.4.0-beta.2"
+version = "0.4.0"
 description = "QuizLab 数学每日一练"
 edition = "2021"
 
