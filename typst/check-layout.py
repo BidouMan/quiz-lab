@@ -6,7 +6,8 @@
 2. 节标题与下方第一行题干间距 ≥ 1.8mm（目标 2mm）；节说明（13pt 缩进行）算标题的一部分
 3. 任何两个字符（char 级 bbox）不得同时横向、纵向重叠（分式的分子/分母只纵向分离，不会误报）
 4. 口算行距（以每题末尾“=”所在基线计）≈ 8.89mm（仅 --compact 样张强制校验）
-5. 页眉规则：
+5. 比大小题号与题干首字同基线（基线差 ≤ 0.25pt）
+6. 页眉规则：
    - 第 1 页页眉有且仅有 1 个文字块（居中主标题）；
    - 第 2 页及之后页眉必须为空（不得出现标题、页码或任何其他文字）；
    - 页眉区域内任意两个文字块的 bbox 不得横向或纵向重叠。
@@ -77,6 +78,7 @@ def extract(pdf):
                     zone = "footer"
                 lines.append(dict(page=pno + 1, x0=x0, y0=y0, x1=x1, y1=y1, text=txt, size=size, zone=zone, lid=len(lines)))
                 lid = len(lines) - 1
+                line_first = True
                 for s in ln["spans"]:
                     st = "".join(c["c"] for c in s["chars"]).strip()
                     if not st:
@@ -89,10 +91,13 @@ def extract(pdf):
                     for c in s["chars"]:
                         if not c["c"].isspace():
                             cx0, cy0, cx1, cy1 = c["bbox"]
+                            origin = c.get("origin", (cx0, cy1))
                             chars.append(dict(
                                 page=pno + 1, x0=cx0, y0=cy0, x1=cx1, y1=cy1,
+                                oy=origin[1], first=line_first,
                                 text=c["c"], size=s["size"], zone=zone, line=txt, lid=lid,
                             ))
+                            line_first = False
     return doc, lines, spans, chars
 
 
@@ -236,6 +241,53 @@ def main():
             gap = mm(min(s["y0"] for s in foot) - max(s["y1"] for s in body))
             if gap < 0:
                 errors.append(f"第{pno}页: 页脚与正文重叠 {-gap:.2f}mm")
+    print()
+
+    # ---- 5. 比大小题号与题干首字同基线 ----
+    def number_marks():
+        out = []
+        body = [c for c in chars if c["zone"] == "body"]
+        for i, c in enumerate(body):
+            if c["text"] != "(" or not c["first"]:
+                continue
+            j = i + 1
+            digits = ""
+            while j < len(body) and body[j]["page"] == c["page"] and body[j]["text"].isdigit():
+                digits += body[j]["text"]
+                j += 1
+            if not digits or j >= len(body) or body[j]["text"] != ")":
+                continue
+            if abs(body[j]["oy"] - c["oy"]) > 1.0:
+                continue
+            out.append((c, body[j], i, j))
+        return body, out
+
+    print("比大小题号基线（题号与题干首字 origin y 差）：")
+    body_chars, marks = number_marks()
+    diffs, gaps = [], []
+    for open_c, close_c, i, j in marks:
+        cand = [
+            c for k, c in enumerate(body_chars)
+            if not (i <= k <= j)
+            and c["page"] == open_c["page"]
+            and c["x0"] > close_c["x1"] + 0.5
+            and c["x0"] < close_c["x1"] + 45.0
+            and abs(c["oy"] - open_c["oy"]) < 20.0
+        ]
+        if not cand:
+            continue
+        first = min(cand, key=lambda c: (round(abs(c["oy"] - open_c["oy"]), 1), c["x0"]))
+        diffs.append(first["oy"] - open_c["oy"])
+        gaps.append(mm(first["x0"] - close_c["x1"]))
+    if marks:
+        worst = max(abs(v) for v in diffs) if diffs else 0.0
+        ok = worst <= 0.25 and len(diffs) == len(marks)
+        print(f"  题号 {len(marks)} 个，已配对 {len(diffs)} 个；最大基线差 {worst:.2f}pt；"
+              f"水平间距 {min(gaps):.2f}–{max(gaps):.2f}mm   {'PASS' if ok else 'FAIL'}")
+        if not ok:
+            errors.append(f"比大小题号与题干首字基线差 {worst:.2f}pt > 0.25pt（{len(diffs)}/{len(marks)} 已配对）")
+    else:
+        print("  未检测到比大小题号，跳过")
     print()
 
     # ---- 3. 字符级碰撞（同时横向+纵向重叠才算） ----

@@ -272,7 +272,8 @@
         columns: (auto, auto, auto),
         column-gutter: 2.4mm,
         align: horizon,
-        [#eq(it.pre, display: disp)],
+        // 题号与左式同处首格：同一段落同一基线，避免二列顶对齐 + pad 造成的错位
+        [#lead#eq(it.pre, display: disp)],
         box(width: 4.2mm, height: 4.2mm, radius: 50%, stroke: 0.5pt),
         eq(it.post, display: disp),
       )
@@ -293,8 +294,8 @@
 })
 
 // 有题号的题型：题号作为行内前导，靠悬挂缩进让折行回到题干起点
-// 比大小首格是块级公式，行内前导会自成一段，仍用二列布局
-#let numbered-kind(kind) = kind in ("fill", "word", "geom", "judge", "choice")
+// 比大小的题号放进首格与左式同行，保证同一基线（此前用二列顶对齐会偏移约 2.6mm）
+#let numbered-kind(kind) = kind in ("fill", "word", "geom", "judge", "choice", "compare")
 
 #let item-cell(sec, it, no) = {
   let lead = if no == none { [] } else { qno-mark(no) + h(qno-gap) }
