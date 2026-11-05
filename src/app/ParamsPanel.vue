@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Level } from '../quiz/types.ts'
 import {
   panelUnits,
@@ -9,6 +9,12 @@ import {
 import { MAX_TYPE_COUNT, type AppConfig, type AppType, type TemplateInfo, type TypstInfo } from './types'
 import { PARENT_SOURCE_LABELS, readableAvailabilityReason } from './wording'
 import { TYPE_OPTIONS } from './typstData'
+import {
+  CAPACITY_PROBE_MIN_COUNT,
+  estimateTypeCapacity,
+  type TypeCapacityResult,
+  typeCapacityHint,
+} from './typeCapacity'
 
 const props = defineProps<{
   config: AppConfig
@@ -81,6 +87,34 @@ function countFor(type: AppType): number {
 const countNotice = ref('')
 const optionLabels = new Map(TYPE_OPTIONS.map((option) => [option.type, option.label]))
 
+/** 单题型可用量提示：只对题量较大的已选题型做采样，避免面板启动变慢 */
+const capacity = ref<Partial<Record<AppType, TypeCapacityResult>>>({})
+let capacityTimer = 0
+
+function scheduleCapacity() {
+  window.clearTimeout(capacityTimer)
+  capacityTimer = window.setTimeout(() => {
+    const next: Partial<Record<AppType, TypeCapacityResult>> = {}
+    if (props.config.unitIds.length === 0) {
+      capacity.value = next
+      return
+    }
+    for (const type of activeTypes.value) {
+      if (countFor(type) <= CAPACITY_PROBE_MIN_COUNT) continue
+      next[type] = estimateTypeCapacity(props.config, type)
+    }
+    capacity.value = next
+  }, 350)
+}
+
+function capacityMessage(type: AppType): string {
+  if (!props.config.types.includes(type) || !availability.value[type].enabled) return ''
+  const result = capacity.value[type]
+  if (!result) return ''
+  const text = typeCapacityHint(result, countFor(type))
+  return text ? `${optionLabels.get(type) ?? '这类题'}：${text}` : ''
+}
+
 function setCount(type: AppType, raw: string) {
   const value = Number(raw)
   const rounded = Number.isFinite(value) ? Math.round(value) : 0
@@ -113,6 +147,22 @@ function toggleUnit(unitId: string, checked: boolean) {
 function toggleAll(checked: boolean) {
   props.config.unitIds = checked ? units.value.map((unit) => unit.unitId) : []
 }
+
+watch(
+  () => [
+    props.config.grade,
+    props.config.level,
+    props.config.unitIds.join(','),
+    props.config.types.join(','),
+    Object.entries(props.config.counts ?? {})
+      .map(([type, value]) => `${type}:${value}`)
+      .join(','),
+  ],
+  scheduleCapacity,
+)
+
+onMounted(scheduleCapacity)
+onBeforeUnmount(() => window.clearTimeout(capacityTimer))
 </script>
 
 <template>
@@ -200,6 +250,9 @@ function toggleAll(checked: boolean) {
           :class="{ off: !availability[option.type].enabled }"
         >
           {{ readableAvailabilityReason(availability[option.type].reason) }}
+        </p>
+        <p v-if="capacityMessage(option.type)" class="type-reason warn">
+          {{ capacityMessage(option.type) }}
         </p>
         <p v-if="option.type === 'geom' && availability[option.type].enabled" class="hint">
           图形建议 30–50 题（约 5–9 页），单题型上限 {{ MAX_TYPE_COUNT }} 题。
