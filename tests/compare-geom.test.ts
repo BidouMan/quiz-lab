@@ -241,8 +241,13 @@ test('图形与周长：只在所选单元内出图，不含 U3/U6 时不出', (
   assert.ok(u1Only.notes.some((note) => note.includes('不含认识图形')))
 
   const u3Only = generateGeom({ grade: '3A', unitIds: ['3A-U3'], level: 'L2', count: 10, seed: 9 })
-  const u3Forms = new Set(u3Only.items.map((piece) => piece.form))
-  assert.deepEqual([...u3Forms].sort(), ['classify', 'count-shapes', 'recognize-name'])
+  const u3Forms = u3Only.items.map((piece) => piece.form)
+  for (const form of ['classify', 'count-shapes', 'recognize-name']) {
+    assert.ok(u3Forms.includes(form), `U3 原有形态 ${form} 被挤掉`)
+  }
+  const u3Counts = u3Forms.filter((form) => form === 'count-triangles' || form === 'count-rectangles')
+  assert.ok(u3Counts.length <= 2, `U3 数图形配额应为 2（10 题的 20%），实际 ${u3Counts.length}`)
+  assert.ok(u3Counts.length >= 1, 'U3 应小配额开数图形')
 
   const u6Only = generateGeom({ grade: '3A', unitIds: ['3A-U6'], level: 'L2', count: 10, seed: 9 })
   const u6Forms = new Set(u6Only.items.map((piece) => piece.form))

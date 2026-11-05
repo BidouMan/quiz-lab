@@ -943,9 +943,9 @@ function makeCountTriangles(rng: Rng): GeomPiece {
  * 答案 C(m+1,2)×C(n+1,2)，只由 m、n 独立重算。
  */
 function makeCountRectangles(rng: Rng): GeomPiece {
-  // 旋转视为同一种网格：固定 m ≥ n，2–5 共 10 种
-  const a = randInt(rng, 2, 5)
-  const b = randInt(rng, 2, 5)
+  // 旋转视为同一种网格：固定 m ≥ n，2–4 共 6 种（上限收到 4，避免孩子数到眼花）
+  const a = randInt(rng, 2, 4)
+  const b = randInt(rng, 2, 4)
   const m = Math.max(a, b)
   const n = Math.min(a, b)
   const segments: Array<{ from: [number, number]; to: [number, number] }> = []
@@ -1046,9 +1046,9 @@ export function geomMissingLabels(piece: GeomPiece): string[] {
 
 /** 3A-U3 认识图形：只做认名称、数个数、按边分类、小棒、拼组，不涉及周长计算 */
 const U3_FORMS: Record<Level, GeomForm[]> = {
-  L1: ['recognize-name', 'count-shapes'],
-  L2: ['count-shapes', 'classify', 'recognize-name'],
-  L3: ['sticks', 'compose', 'classify'],
+  L1: ['recognize-name', 'count-shapes', 'count-triangles', 'count-rectangles'],
+  L2: ['count-shapes', 'classify', 'recognize-name', 'count-triangles', 'count-rectangles'],
+  L3: ['sticks', 'compose', 'classify', 'count-triangles', 'count-rectangles'],
 }
 
 /** 3A-U8 数学广场：数图形玩法，只画图、答案按参数独立重算 */
@@ -1201,6 +1201,19 @@ export function generateGeom(options: GeomOptions): {
   const items: GeomPiece[] = []
   const used = new Set<string>()
   const exhausted = new Set<GeomForm>()
+  // U3 单开时数图形只做少量补充，避免挤掉该单元原有的认图形形态
+  const countForms: GeomForm[] = ['count-triangles', 'count-rectangles']
+  const countCap =
+    unitIds.includes('3A-U3') && !unitIds.includes('3A-U8')
+      ? Math.max(1, Math.ceil(count / 5))
+      : Number.POSITIVE_INFINITY
+  let countUsed = 0
+  // 数长方形网格收到 2–4 后只有 6 种，U8/U9 里同样限流，避免跨卷反复撞同一批
+  const rectCap =
+    unitIds.includes('3A-U8') || unitIds.includes('3A-U3')
+      ? Math.max(1, Math.ceil(count / 5))
+      : Number.POSITIVE_INFINITY
+  let rectUsed = 0
   let crossReused = 0
   const maxAttemptsPerItem = 240
   let cursor = 0
@@ -1211,6 +1224,14 @@ export function generateGeom(options: GeomOptions): {
     const form = forms[cursor % forms.length]
     cursor++
     if (exhausted.has(form)) continue
+    if (countForms.includes(form) && countUsed >= countCap) {
+      exhausted.add(form)
+      continue
+    }
+    if (form === 'count-rectangles' && rectUsed >= rectCap) {
+      exhausted.add(form)
+      continue
+    }
 
     let fresh: GeomPiece | null = null
     let stale: GeomPiece | null = null
@@ -1237,6 +1258,8 @@ export function generateGeom(options: GeomOptions): {
     memory?.record(key)
     used.add(key)
     items.push(chosen)
+    if (countForms.includes(chosen.form)) countUsed++
+    if (chosen.form === 'count-rectangles') rectUsed++
   }
 
   const notes: string[] = []
