@@ -8,13 +8,52 @@
 import type { Level } from '../types.ts'
 import { randInt, type Rng } from '../rng.ts'
 
-export type LieSlotRole = 'add' | 'paren' | 'tiny' | 'factor' | 'mul' | 'small' | 'minuend'
+export type LieSlotRole =
+  | 'add'
+  | 'paren'
+  | 'tiny'
+  | 'factor'
+  | 'mul'
+  | 'small'
+  | 'minuend'
+  | 'dividend'
+  | 'divisor'
 
 /** 数值域按档收紧；一位数乘除为主，两位数乘一位数只用在不超纲的写法里 */
 export const LIE_ROLE_RANGES: Record<Level, Record<LieSlotRole, [number, number]>> = {
-  L1: { add: [2, 20], paren: [2, 8], tiny: [2, 4], factor: [2, 9], mul: [2, 9], small: [2, 4], minuend: [20, 60] },
-  L2: { add: [5, 30], paren: [5, 20], tiny: [5, 12], factor: [3, 20], mul: [2, 9], small: [2, 6], minuend: [40, 90] },
-  L3: { add: [10, 60], paren: [10, 40], tiny: [10, 25], factor: [10, 40], mul: [2, 9], small: [2, 7], minuend: [60, 150] },
+  L1: {
+    add: [2, 20],
+    paren: [2, 8],
+    tiny: [2, 4],
+    factor: [2, 9],
+    mul: [2, 9],
+    small: [2, 4],
+    minuend: [20, 60],
+    dividend: [12, 81],
+    divisor: [2, 9],
+  },
+  L2: {
+    add: [5, 30],
+    paren: [5, 20],
+    tiny: [5, 12],
+    factor: [3, 20],
+    mul: [2, 9],
+    small: [2, 6],
+    minuend: [40, 90],
+    dividend: [12, 99],
+    divisor: [2, 9],
+  },
+  L3: {
+    add: [10, 60],
+    paren: [10, 40],
+    tiny: [10, 25],
+    factor: [10, 40],
+    mul: [2, 9],
+    small: [2, 7],
+    minuend: [60, 150],
+    dividend: [100, 999],
+    divisor: [2, 9],
+  },
 }
 
 export type LiePart = string | { slot: string }
