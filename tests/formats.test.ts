@@ -223,20 +223,14 @@ test('U3 单独选判断题：知识点池扩到 30，三档都能出满 20，�
   }
 })
 
-test('U3 单独选判断题：L1 容量 27（关系判断挪到 L2/L3），L2/L3 仍出满 30 且真假 15/15', () => {
+test('U3 单独选判断题：三档均出满 30 且真假 15/15', () => {
   for (const [index, level] of (['L1', 'L2', 'L3'] as const).entries()) {
     const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3'], level, count: 30, seed: 20261105 + index })
-    // L1 不含“正方形/平行四边形/梯形关系”这类关系判断后，源池回落到 27
-    const expected = level === 'L1' ? 27 : 30
-    assert.equal(result.pieces.length, expected, `${level} 实出 ${result.pieces.length} 道`)
+    assert.equal(result.pieces.length, 30, `${level} 实出 ${result.pieces.length} 道`)
     const truth = result.pieces.filter((piece) => piece.truth).length
     const falsy = result.pieces.filter((piece) => !piece.truth).length
-    if (level === 'L1') {
-      assert.ok(truth + falsy === 27 && Math.abs(truth - falsy) <= 1, `L1 真假失衡：${truth}/${falsy}`)
-    } else {
-      assert.equal(truth, 15, `${level} 真命题应为 15 道`)
-      assert.equal(falsy, 15, `${level} 假命题应为 15 道`)
-    }
+    assert.equal(truth, 15, `${level} 真命题应为 15 道`)
+    assert.equal(falsy, 15, `${level} 假命题应为 15 道`)
     const knowledgePoints = result.pieces.map((piece) => findConcept(piece.data.conceptId)!.knowledgePoint)
     assert.equal(new Set(knowledgePoints).size, result.pieces.length, `${level} 每题应落在不同知识点`)
     for (const [position, piece] of result.pieces.entries()) {

@@ -499,6 +499,38 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     rationale: '直角三角形和钝角三角形也有两个锐角，所以「有一个角是锐角」不能判定；锐角三角形要求三个角都是锐角。',
     singleError: '锐角三角形要求三个角都是锐角',
   },
+  // ---- U3 L1 补充：补足选择题 L1 的知识点池（30 个） ----
+  {
+    id: 'u3-l1-square-is-rect',
+    knowledgePoint: 'u3.square.isRectangle',
+    unitId: '3A-U3',
+    levels: ['L1'],
+    statement: '正方形是长方形。',
+    truth: true,
+    rationale: '正方形有4条边、4个角都是直角，符合长方形的特征，是特殊的长方形。',
+    source: '沪教版三上 U3《三角形与四边形》：正方形与长方形的关系（正方形是特殊的长方形）',
+  },
+  {
+    id: 'u3-l1-acute-triangle-def',
+    knowledgePoint: 'u3.triangle.acuteClassify',
+    unitId: '3A-U3',
+    levels: ['L1'],
+    statement: '三个角都是锐角的三角形是锐角三角形。',
+    truth: true,
+    rationale: '三个角都是锐角的三角形叫锐角三角形，这是锐角三角形的定义。',
+    source: '沪教版三上 U3《三角形与四边形》：三角形按角分类（锐角三角形）',
+    absoluteReview: '特例：无；三个角都是锐角的三角形按定义就是锐角三角形，不存在反例',
+  },
+  {
+    id: 'u3-l1-trapezoid-one-pair',
+    knowledgePoint: 'u3.trapezoid.parallelSides',
+    unitId: '3A-U3',
+    levels: ['L1'],
+    statement: '梯形有一组对边平行。',
+    truth: true,
+    rationale: '梯形只有一组对边平行，所以至少有一组对边平行。',
+    source: '沪教版三上 U3《三角形与四边形》：梯形的认识（只有一组对边平行）',
+  },
   // ---- U6 周长 ----
   {
     id: 'u6-perimeter-definition',

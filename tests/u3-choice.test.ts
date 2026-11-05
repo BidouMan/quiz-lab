@@ -42,10 +42,10 @@ test('U3 选择题：L2 出满 30 题，每题 1 真 + 3 假且干扰项来自�
   }
 })
 
-test('U3 选择题：L1/L3 按知识点池如实出题（L1 27 / L3 30）', () => {
+test('U3 选择题：L1/L3 出满 30，按知识点池去重', () => {
   const l1 = generateFormat({ kind: 'choice', grade: '3A', unitIds: ['3A-U3'], level: 'L1', count: 30, seed: 20261105 })
-  assert.equal(l1.pieces.length, 27, 'L1 知识点池只有 27 个，不拿同知识点反说法凑数')
-  assert.equal(new Set(l1.pieces.map((piece) => piece.kpName)).size, 27)
+  assert.equal(l1.pieces.length, 30, 'L1 知识点池已补齐到 30 个')
+  assert.equal(new Set(l1.pieces.map((piece) => piece.kpName)).size, 30)
   const l3 = generateFormat({ kind: 'choice', grade: '3A', unitIds: ['3A-U3'], level: 'L3', count: 30, seed: 20261105 })
   assert.equal(l3.pieces.length, 30)
   assert.equal(new Set(l3.pieces.map((piece) => piece.kpName)).size, 30)
