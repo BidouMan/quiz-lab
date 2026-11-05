@@ -17,6 +17,8 @@
 import { MemoryStore } from './memory.ts'
 import { createRng, randInt, type Rng } from './rng.ts'
 import type { Grade, Level } from './types.ts'
+import { renderLieSkeleton } from './skeleton/lie-kit.ts'
+import { U1_LIE_SKELETONS } from './skeleton/u1-lieshi.ts'
 
 export type LieOp = '+' | '-' | '×' | '÷'
 
@@ -51,6 +53,10 @@ export interface LieTemplate {
   /** “相差”类：复核要求大减小且差为正 */
   diff?: boolean
   draw: (rng: Rng) => LieParams | null
+  /** 骨架迁移：同卷同一骨架最多出几题（旧模板缺省 2，骨架为 1） */
+  maxPerPaper?: number
+  /** 骨架迁移：从题干反解槽位数值的自检（复核路径 2 优先用它） */
+  reverseStem?: (stem: string) => LieParams | null
 }
 
 // ---------- AST 基础 ----------
@@ -1282,6 +1288,25 @@ export const LIE_TEMPLATES: LieTemplate[] = [
   },
 ]
 
+// ---------- 骨架包迁移：U1 列式骨架 → 生成/复核可用的句式 ----------
+
+const SKELETON_TEMPLATES: LieTemplate[] = U1_LIE_SKELETONS.map((skeleton) => ({
+  id: skeleton.id,
+  label: skeleton.label,
+  levels: [skeleton.level],
+  shape: skeleton.shape,
+  params: Object.keys(skeleton.slots),
+  units: [skeleton.unitId],
+  stem: (params) => renderLieSkeleton(skeleton, params),
+  draw: (rng) => skeleton.draw(rng),
+  maxPerPaper: 1,
+  reverseStem: skeleton.reverse,
+}))
+
+const TEMPLATE_BY_ID = new Map<string, LieTemplate>(
+  [...LIE_TEMPLATES, ...SKELETON_TEMPLATES].map((template) => [template.id, template]),
+)
+
 // ---------- 单元归属（方案 A：只从所选单元出题） ----------
 
 const shapeOps = (shape: string): Set<LieOp> => {
@@ -1327,11 +1352,20 @@ const UNIT_NAME: Record<string, string> = {
 
 export function lieTemplatesFor(level: Level, unitIds: string[]): LieTemplate[] {
   const selected = new Set(unitIds)
-  return LIE_TEMPLATES.filter(
+  const skeletonTemplates = SKELETON_TEMPLATES.filter(
     (template) =>
       template.levels.includes(level) &&
-      lieTemplateUnits(template).some((unitId) => selected.has(unitId)),
+      (template.units ?? []).some((unitId) => selected.has(unitId)),
   )
+  // 已迁骨架的单元优先走骨架路径，旧模板留作对照/兜底，不与新路径混排
+  const migratedUnits = new Set(skeletonTemplates.flatMap((template) => template.units ?? []))
+  const legacy = LIE_TEMPLATES.filter((template) => {
+    if (!template.levels.includes(level)) return false
+    const units = lieTemplateUnits(template)
+    if (!units.some((unitId) => selected.has(unitId))) return false
+    return !units.some((unitId) => migratedUnits.has(unitId))
+  })
+  return [...skeletonTemplates, ...legacy]
 }
 
 export function lieSupports(grade: Grade, unitIds: string[], level: Level): boolean {
@@ -1400,6 +1434,8 @@ const shuffle = <T,>(rng: Rng, list: T[]): T[] => {
 export const lieKey = (templateId: string, ast: LieAst): string => `lieshi:${templateId}:${lieAstKey(ast)}`
 
 export const LIE_PATTERN_LIMIT = 2
+
+const templateLimit = (template: LieTemplate): number => template.maxPerPaper ?? LIE_PATTERN_LIMIT
 
 interface Candidate {
   template: LieTemplate
@@ -1505,7 +1541,7 @@ export function generateLie(options: GenerateLieOptions): LieResult {
     const order = shuffle(rng, templates)
     for (const template of order) {
       if (questions.length >= count) break
-      if ((patternCount.get(template.id) ?? 0) >= LIE_PATTERN_LIMIT) continue
+      if ((patternCount.get(template.id) ?? 0) >= templateLimit(template)) continue
       const units = lieTemplateUnits(template)
       let picked: Candidate | null = null
       for (let attempt = 0; attempt < 40 && picked == null; attempt++) {
@@ -1531,14 +1567,14 @@ export function generateLie(options: GenerateLieOptions): LieResult {
   for (const candidate of stale) {
     if (questions.length >= count) break
     if (seen.has(candidate.key)) continue
-    if ((patternCount.get(candidate.template.id) ?? 0) >= LIE_PATTERN_LIMIT) continue
+    if ((patternCount.get(candidate.template.id) ?? 0) >= templateLimit(candidate.template)) continue
     accept(candidate, true)
   }
 
   if (questions.length < count) {
-    const capacity = templates.length * LIE_PATTERN_LIMIT
+    const capacity = templates.reduce((sum, template) => sum + templateLimit(template), 0)
     notes.push(
-      `列式计算：本档可用句式 ${templates.length} 种，同卷同一句式最多 ${LIE_PATTERN_LIMIT} 次，最多 ${capacity} 题；实出 ${questions.length}/${count}（同句式不超限，不用重复句式凑数）`,
+      `列式计算：本档可用句式 ${templates.length} 种，按句式上限合计最多 ${capacity} 题；实出 ${questions.length}/${count}（同句式不超限，不用重复句式凑数）`,
     )
   }
   if (crossReused > 0) {
@@ -1562,7 +1598,7 @@ export interface LieRecord {
 /** 单题复核：结果重算 + 结构-语句一致性 */
 export function verifyLieRecord(record: LieRecord): string[] {
   const issues: string[] = []
-  const template = LIE_TEMPLATES.find((item) => item.id === record.templateId)
+  const template = TEMPLATE_BY_ID.get(record.templateId)
   if (!template) return [`未知句式模板：${record.templateId}`]
   if (!template.levels.includes(record.level)) {
     issues.push(`句式 ${template.id} 不在 ${record.level} 档`)
@@ -1590,9 +1626,26 @@ export function verifyLieRecord(record: LieRecord): string[] {
   if (template.diff && value <= 0) issues.push(`“相差”必须大减小且差为正，实际 ${value}`)
 
   // 路径 2：模板 ID + 参数反向解析出期望 AST，与实际 AST 比对
+  // 骨架迁移后的句式先从题干反解槽位，骨架自带反解自检；
+  // 反解失败/参数不一致都直接记为问题，不退回记录参数。
+  let shapeParams = record.params
+  if (template.reverseStem) {
+    const reversed = template.reverseStem(record.stem)
+    if (!reversed) {
+      issues.push(`题干反解失败：句式 ${template.id} 无法从「${record.stem}」抽回槽位`)
+      return issues
+    }
+    const mismatched = Object.keys(reversed).filter(
+      (name) => record.params[name] !== reversed[name],
+    )
+    if (mismatched.length > 0) {
+      issues.push(`题干反解参数与记录不一致：${mismatched.join('、')}`)
+    }
+    shapeParams = reversed
+  }
   let expected: LieAst
   try {
-    expected = parseLieShape(template.shape, record.params)
+    expected = parseLieShape(template.shape, shapeParams)
   } catch (error) {
     issues.push(`结构反解失败：${(error as Error).message}`)
     return issues
@@ -1642,8 +1695,9 @@ export function validateLiePaper(questions: LieQuestion[]): string[] {
     seen.add(question.key)
     const count = (perPattern.get(question.templateId) ?? 0) + 1
     perPattern.set(question.templateId, count)
-    if (count > LIE_PATTERN_LIMIT) {
-      issues.push(`同卷同句式超过 ${LIE_PATTERN_LIMIT} 次：${question.templateId}`)
+    const limit = templateLimit(TEMPLATE_BY_ID.get(question.templateId) ?? ({} as LieTemplate))
+    if (count > limit) {
+      issues.push(`同卷同句式超过 ${limit} 次：${question.templateId}`)
     }
   }
   return issues

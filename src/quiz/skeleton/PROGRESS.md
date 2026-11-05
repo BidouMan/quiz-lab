@@ -1719,3 +1719,13 @@ npx tsx scripts/pilot-drill.ts \
 - 测试 `tests/u3-choice.test.ts` 与 `tests/formats.test.ts` 中 L1 容量 27 的断言更新为 30；全套 161/161 通过，`npx vue-tsc -b` 0 错误。
 - 矩阵：U3 × 选择题由「满（L1 27）」改为「满」；84 格汇总不变（满 47 / 上限 7 / 不适用 30）。
 - 版本 `0.5.0-beta.1` → `0.5.0-beta.2`（package.json / Cargo.toml / Cargo.lock 的 quizlab 条目 / tauri.conf.json 四处一致）。
+
+## 三十六、0.5.0-beta.2：列式迁入骨架包（阶段 A：U1 三档 90 条骨架）（2026-11-05）
+
+- 新机制 `src/quiz/skeleton/lie-kit.ts`：列式骨架 = 句式 parts + 槽位数值角色 + guard + 自带 `reverse(stem)` 反解自检。渲染与反解共用同一份 parts，避免外部模板表与题干漂移。
+- U1 包 `src/quiz/skeleton/u1-lieshi.ts`：30 条句式 × L1/L2/L3 = 90 条骨架；数值按角色域收紧（L1 加减 2~20、乘数 2~9；L2/L3 扩展到两位数乘一位数），不含除法，减法一律 guard 保证差为正。
+- 生成路径：`lieshi.ts` 的 `lieTemplatesFor` 对已迁单元优先返回骨架句式（同骨架同卷最多 1 次），旧 U1 模板保留在 `LIE_TEMPLATES` 作对照/兜底，不与新路径混排。
+- 复核路径 2 升级：骨架句式先从题干反解槽位，再按 shape 重建 AST；反解失败或参数不一致直接记为问题，不退回记录参数。路径 1 仍为 AST 栈式独立重算。
+- 实测（seed 20261105，请求 30）：U1 L1/L2/L3 均 30/30，复核失败 0，同卷重复 0，跨卷复用 0；连续两卷（seed 1/2，带 MemoryStore）同键复用 0、题干重复 0。
+- 测试新增 `tests/lieshi-skeleton.test.ts` 5 条（骨架计数/自带反解/三档出满/连续两卷/篡改拦截）；全套 166/166 通过，`npx vue-tsc -b` 0 错误。
+- 矩阵：U1 × 列式计算「12（上限·句式）」→「满」；84 格汇总变为满 48 / 上限 6 / 不适用 30。
