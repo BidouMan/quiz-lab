@@ -342,6 +342,35 @@ test('P0 剪拼：长≠2宽、剩下部分不是正方形、长短边命名正�
   assert.deepEqual(violations.slice(0, 5), [], `剪拼长/宽命名问题 ${violations.length} 条`)
 })
 
+test('P0 经过时间：3000 题无绝对分钟相减、答案只有一种写法且与题干要求一致', () => {
+  const category = advancedCategory('adv-elapsed')
+  assert.ok(category)
+  const rng = createRng(20261107)
+  let scanned = 0
+  const violations: string[] = []
+  const answerPattern = /^(?:\d+小时(?:\d+分钟)?|\d+分钟)$/
+  for (let index = 0; index < 3000; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    scanned++
+    const stem = category.stem(params)
+    if (!stem.includes('用几小时几分钟表示')) violations.push(`题干未交代答案格式：${stem}`)
+    const built = category.build(params)
+    if (!answerPattern.test(built.answer)) violations.push(`答案写法不唯一：${built.answer}`)
+    if (built.answer.includes('（')) violations.push(`答案仍是双写法：${built.answer}`)
+    for (const step of built.steps) {
+      for (const match of step.text.matchAll(/(\d+)-(\d+)/g)) {
+        if (Number(match[1]) >= 60 || Number(match[2]) >= 60) {
+          violations.push(`步骤出现绝对分钟相减：${step.text}`)
+        }
+      }
+    }
+    if (built.answer !== category.recompute(params)) violations.push(`答案与独立重算不一致：${built.answer}`)
+  }
+  assert.ok(scanned >= 2900, `经过时间扫描量只有 ${scanned}`)
+  assert.deepEqual(violations.slice(0, 5), [], `经过时间问题 ${violations.length} 条`)
+})
+
 test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而非档位', () => {
   const category = advancedCategory('adv-rent-plan')
   assert.ok(category)

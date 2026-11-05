@@ -118,18 +118,17 @@ const MONTH_DAYS: Record<number, number> = {
 const durationText = (minutes: number): string => {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
-  if (hours === 0) return `${rest}分`
-  if (rest === 0) return `${hours}时`
-  return `${hours}时${rest}分`
+  if (hours === 0) return `${rest}分钟`
+  if (rest === 0) return `${hours}小时`
+  return `${hours}小时${rest}分钟`
 }
 
 /** 规范读法：分钟为 0 时只写“X时”，不写“X时0分” */
 const timeText = (hour: number, minute: number): string =>
   minute === 0 ? `${hour}时` : `${hour}时${minute}分`
 
-/** 答案双写：不足 1 小时只写分钟，超过 1 小时写“1时49分（109分）” */
-const elapsedAnswer = (minutes: number): string =>
-  minutes < 60 ? `${minutes}分` : `${durationText(minutes)}（${minutes}分）`
+/** 答案统一为一种写法：不足 1 小时只写分钟，满 1 小时写“X小时Y分钟” */
+const elapsedAnswer = (minutes: number): string => durationText(minutes)
 
 const UNIT_NAME: Record<string, string> = {
   '3A-U1': '两步四则运算与应用题',
@@ -462,12 +461,13 @@ const elapsed: AdvancedCategory = {
   units: ['3A-U5'],
   primaryKp: '3A-TIME-ELAPSED',
   kpKeys: ['3A-TIME-ELAPSED'],
-  sample: '8时40分开始读书，9时25分读完，一共用了多长时间？',
+  sample: '8时40分开始读书，9时25分读完，一共用了多长时间？（用几小时几分钟表示）',
   pool: '起点 7:00–11:30（5 分钟步进）× 时长 30–150 分 ≈ 400',
   workLines: 4,
   draw: dElapsed,
   stem: (p) =>
-    `丽丽${timeText(num(p, 'sh'), num(p, 'sm'))}开始读书，${timeText(num(p, 'eh'), num(p, 'em'))}读完。她读书用了多长时间？`,
+    `丽丽${timeText(num(p, 'sh'), num(p, 'sm'))}开始读书，${timeText(num(p, 'eh'), num(p, 'em'))}读完。` +
+    `她读书用了多长时间？（用几小时几分钟表示，不满1小时的只写分钟）`,
   build: (p) => {
     const sh = num(p, 'sh')
     const sm = num(p, 'sm')
@@ -476,40 +476,70 @@ const elapsed: AdvancedCategory = {
     const startMin = sh * 60 + sm
     const endMin = eh * 60 + em
     const duration = endMin - startMin
+    const hours = Math.floor(duration / 60)
+    const rest = duration % 60
     const startText = timeText(sh, sm)
     const endText = timeText(eh, em)
     const steps: AdvancedStep[] = []
     if (sh === eh) {
+      // 同一小时内只处理分钟部分，两个操作数都小于 60，不出现绝对分钟相减
       steps.push({
-        text: `开始和结束都在${sh}时内，直接算分钟`,
+        text: `开始和结束都在${sh}时内，只看分钟：${em}-${sm}=${duration}（分）`,
         kp: '3A-TIME-ELAPSED',
-      })
-      steps.push({
-        text: `${endMin}-${startMin}=${duration}（分）`,
-        kp: '3A-TIME-ELAPSED',
-        expr: `${endMin}-${startMin}`,
+        expr: `${em}-${sm}`,
         result: duration,
       })
-    } else {
-      const anchor = (sh + 1) * 60
+      steps.push({
+        text: `所以用了${durationText(duration)}`,
+        kp: '3A-TIME-ELAPSED',
+      })
+    } else if (hours === 0) {
+      // 跨过整点但不足 1 小时：以整点为界分成两段，每段都不超过 60 分钟
+      const anchor = eh * 60
       const first = anchor - startMin
       const second = endMin - anchor
       steps.push({
         text:
-          `分段算：${startText}到${sh + 1}时是${durationText(first)}；` +
-          `${sh + 1}时到${endText}是${second === 0 ? '整点' : durationText(second)}`,
+          second === 0
+            ? `跨过整点，分段算：${startText}到${endText}正好是${first}分钟`
+            : `跨过整点，分段算：${startText}到${eh}时是${first}分钟，${eh}时到${endText}是${second}分钟`,
         kp: '3A-TIME-ELAPSED',
       })
+      if (second === 0) {
+        steps.push({
+          text: `所以用了${durationText(duration)}`,
+          kp: '3A-TIME-ELAPSED',
+        })
+      } else {
+        steps.push({
+          text: `${first}+${second}=${duration}（分），就是${durationText(duration)}`,
+          kp: '3A-TIME-ELAPSED',
+          expr: `${first}+${second}`,
+          result: duration,
+        })
+      }
+    } else {
+      // 满 1 小时：先数整小时，再数剩下的分钟，分别处理
+      const midHour = sh + hours
+      const midText = timeText(midHour, sm)
       steps.push({
-        text: `${first}+${second}=${duration}（分），也就是${durationText(duration)}`,
+        text: `先算整小时：${startText}到${midText}是${hours}小时`,
         kp: '3A-TIME-ELAPSED',
-        expr: `${first}+${second}`,
-        result: duration,
+      })
+      if (rest > 0) {
+        steps.push({
+          text: `再算分钟：${midText}到${endText}是${rest}分钟`,
+          kp: '3A-TIME-ELAPSED',
+        })
+      }
+      steps.push({
+        text: `合起来：${durationText(duration)}`,
+        kp: '3A-TIME-ELAPSED',
       })
     }
     return {
       known: [`开始：${startText}`, `结束：${endText}`],
-      unknown: '一共用了多长时间',
+      unknown: '一共用了多长时间（用几小时几分钟表示）',
       steps,
       answer: elapsedAnswer(duration),
     }
