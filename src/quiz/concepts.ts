@@ -718,6 +718,54 @@ export function verifyConceptSource(id: string | undefined, correct: string): { 
   return { ok: true }
 }
 
+/** 复核概念选择题：四个选项必须在命题表里，真假分布与来源命题一致 */
+export function verifyConceptChoice(data: {
+  conceptId: string
+  options: string[]
+  answerIndex: number
+  want: 'true' | 'false'
+}): { ok: boolean; error?: string } {
+  const focal = findConcept(data.conceptId)
+  if (!focal) return { ok: false, error: '概念选择题来源命题不在命题表里' }
+  if (data.options.length !== 4) {
+    return { ok: false, error: `概念选择题应有 4 个选项，实际 ${data.options.length}` }
+  }
+  const statements = data.options.map((option) => option.trim())
+  if (new Set(statements).size !== statements.length) {
+    return { ok: false, error: '概念选择题存在重复选项' }
+  }
+  const records = statements.map((statement) =>
+    CONCEPT_PROPOSITIONS.find((record) => record.statement.trim() === statement),
+  )
+  const missing = statements.find((_, index) => !records[index])
+  if (missing) return { ok: false, error: `选项不在命题表里：${missing}` }
+  const trueCount = records.filter((record) => record!.truth).length
+  const expectedTrue = data.want === 'true' ? 1 : 3
+  if (trueCount !== expectedTrue) {
+    return {
+      ok: false,
+      error: `「${data.want === 'true' ? '正确' : '不正确'}」题应有 ${expectedTrue} 个正确陈述，实际 ${trueCount} 个`,
+    }
+  }
+  if (!Number.isInteger(data.answerIndex) || data.answerIndex < 0 || data.answerIndex > 3) {
+    return { ok: false, error: '概念选择题标答下标越界' }
+  }
+  const answerRecord = records[data.answerIndex]!
+  if (answerRecord.id !== focal.id) return { ok: false, error: '标答选项与来源命题不一致' }
+  if (focal.truth !== (data.want === 'true')) {
+    return { ok: false, error: '来源命题真值与题干问法不一致' }
+  }
+  for (const record of records) {
+    if (!record!.truth && !record!.singleError) {
+      return { ok: false, error: `干扰陈述缺少唯一错误点：${record!.id}` }
+    }
+    if (record!.truth && !record!.source) {
+      return { ok: false, error: `正确陈述缺少依据：${record!.id}` }
+    }
+  }
+  return { ok: true }
+}
+
 /** 复核成品题：题干原文、真值、标答、错因判据四处都要与命题表一致 */
 export function verifyConceptItem(input: {
   conceptId?: string

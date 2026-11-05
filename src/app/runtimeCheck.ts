@@ -280,6 +280,23 @@ function verifyFormatItem(item: TypstItem): string[] {
     return issues
   }
 
+  if (fmt.data.pool === 'conceptChoice') {
+    // 说法选择题：选项逐条回命题表查真值，标答必须是唯一符合问法的那条
+    const source = verifyFormatSource(fmt.data)
+    if (!source.ok) issues.push(`概念选择题来源复核失败：${source.error}`)
+    const options = (item.options ?? []).map((option) => option.trim())
+    if (options.length !== 4) issues.push(`选择题选项应为 4 个，实际 ${options.length}`)
+    if (new Set(options).size !== options.length) issues.push('选择题存在重复选项')
+    if (typeof item.answerIndex !== 'number' || item.answerIndex !== fmt.data.answerIndex) {
+      issues.push('标答下标与来源不一致')
+    }
+    const marker = fmt.data.want === 'true' ? '下面说法正确的是' : '下面说法不正确的是'
+    if (!stemText.includes(marker)) issues.push('题干问法与选项真假分布不一致')
+    const letter = ['A', 'B', 'C', 'D'][fmt.data.answerIndex ?? -1]
+    if ((item.answers?.[0] ?? '') !== letter) issues.push('答案字母与标答下标不一致')
+    return issues
+  }
+
   if (item.kind === 'judge') {
     if (typeof item.truth !== 'boolean') issues.push('判断题缺少真假标注')
     const expectedAnswer = item.truth ? '√' : '×'

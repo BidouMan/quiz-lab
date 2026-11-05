@@ -181,7 +181,7 @@ test('题型可用性：U3 通过填空可出，角不再作为独立题型；�
   assert.equal(availability.tiankong.enabled, true)
   assert.ok(availability.tiankong.source === 'rule' || availability.tiankong.source === 'skeleton')
   assert.equal((availability as Record<string, unknown>).angle, undefined)
-  // U3 的判断来源改由概念命题接入；选择题仍不引用角/U3
+  // U3 的判断与选择来源都由概念命题接入
   assert.equal(formatSupports('3A', ['3A-U3'], 'L2', 'judge'), true, 'U3 判断题靠概念命题可出')
-  assert.equal(formatSupports('3A', ['3A-U3'], 'L2', 'choice'), false, '选择题来源池只认单值计算/填空，不含角形态')
+  assert.equal(formatSupports('3A', ['3A-U3'], 'L2', 'choice'), true, 'U3 选择题用概念命题配 3 条相反真值干扰项')
 })

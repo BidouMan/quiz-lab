@@ -106,12 +106,12 @@ test('错因值可由规则独立重算，正确值由参数独立重算', () =>
   }
 })
 
-test('单元可用性：U3 判断题靠概念命题接入，选择题仍不适用', () => {
+test('单元可用性：U3 判断题与选择题都靠概念命题接入', () => {
   assert.equal(formatSupports('3A', ['3A-U1'], 'L1', 'judge'), true)
   assert.equal(formatSupports('3A', ['3A-U6'], 'L2', 'judge'), true)
   assert.deepEqual(formatSourceUnits('3A', ['3A-U3'], 'L1', 'judge'), ['3A-U3'])
-  assert.deepEqual(formatSourceUnits('3A', ['3A-U3'], 'L1', 'choice'), [])
-  assert.equal(formatSupports('3A', ['3A-U3'], 'L1', 'choice'), false)
+  assert.deepEqual(formatSourceUnits('3A', ['3A-U3'], 'L1', 'choice'), ['3A-U3'])
+  assert.equal(formatSupports('3A', ['3A-U3'], 'L1', 'choice'), true)
 })
 
 test('跨卷去重：连续 4 卷不重复', () => {

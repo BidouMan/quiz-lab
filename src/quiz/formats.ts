@@ -8,6 +8,7 @@ import { createRng, randInt, type Rng } from './rng.ts'
 import {
   conceptForUnit,
   findConcept,
+  verifyConceptChoice,
   verifyConceptSource,
   type ConceptProposition,
 } from './concepts.ts'
@@ -60,7 +61,7 @@ interface Wrong {
 
 /** 复核用的来源描述：够独立重算正确值与每个错因值 */
 export interface FormatSourceData {
-  pool: 'calc' | 'fill' | 'concept'
+  pool: 'calc' | 'fill' | 'concept' | 'conceptChoice'
   form: string
   correct: string
   latex?: string
@@ -68,6 +69,11 @@ export interface FormatSourceData {
   params?: Record<string, number | string>
   /** 概念命题 ID：复核按 ID 查命题表，不靠重算 */
   conceptId?: string
+  /** 概念选择题：四个陈述选项与标答下标 */
+  options?: string[]
+  answerIndex?: number
+  /** 概念选择题的问法：want=true 问“正确的是”，false 问“不正确的是” */
+  want?: 'true' | 'false'
 }
 
 export interface FormatPiece {
@@ -172,7 +178,7 @@ export function formatSourceUnits(
   grade: Grade,
   unitIds: string[],
   level: Level,
-  kind: FormatKind = 'judge',
+  _kind: FormatKind = 'judge',
 ): string[] {
   const out: string[] = []
   for (const unitId of unitIds) {
@@ -184,8 +190,8 @@ export function formatSourceUnits(
     const hasFill = unit.kps.some((kp) =>
       specsOf(kp.rules.tiankong?.[level]).some((spec) => FORM_LEVELS[spec.form]?.includes(level)),
     )
-    // 概念命题只进判断题；选择题仍要求有数值来源
-    const hasConcept = kind === 'judge' && conceptForUnit(grade, unitId, level).length > 0
+    // 概念命题：判断题整卷可用；选择题只有在没有任何数值来源时才用它兜底
+    const hasConcept = conceptForUnit(grade, unitId, level).length > 0
     if (hasCalc || hasFill || hasConcept) out.push(unitId)
   }
   return out
@@ -793,6 +799,84 @@ function buildChoice(source: Source, allowed: Wrong[], answerIndex: number, rng:
 }
 
 /**
+ * 概念选择题：焦点命题决定问法（真命题问“正确的是”，假命题问“不正确的是”），
+ * 另外 3 个选项取相反真值、且来自其他知识点的陈述 —— 这样每个错误选项只有一处可指认的错误。
+ */
+function buildConceptChoice(
+  focal: Source,
+  all: Source[],
+  answerIndex: number,
+  seed: number,
+  distractorUse: Map<string, number>,
+): FormatPiece | null {
+  const record = focal.concept!
+  const wantTrue = record.truth
+  const pool = all.filter(
+    (source) =>
+      source.concept!.truth !== wantTrue &&
+      source.concept!.knowledgePoint !== record.knowledgePoint &&
+      source.concept!.statement !== record.statement,
+  )
+  if (pool.length < 3) return null
+  // 优先用本卷里出现次数少的陈述，避免同一干扰项反复出现
+  const rng = createRng(seed)
+  const ordered = shuffle(rng, pool).sort(
+    (left, right) =>
+      (distractorUse.get(left.concept!.statement) ?? 0) - (distractorUse.get(right.concept!.statement) ?? 0),
+  )
+  const picks: Source[] = []
+  const used = new Set<string>()
+  for (const source of ordered) {
+    const statement = source.concept!.statement
+    if (used.has(statement)) continue
+    used.add(statement)
+    picks.push(source)
+    if (picks.length === 3) break
+  }
+  if (picks.length < 3) return null
+  const options = new Array<string>(4)
+  options[answerIndex] = record.statement
+  let cursor = 0
+  for (let slot = 0; slot < 4; slot++) {
+    if (slot === answerIndex) continue
+    options[slot] = picks[cursor++]!.concept!.statement
+  }
+  if (new Set(options.map((option) => option.trim())).size !== 4) return null
+  for (const pick of picks) {
+    const statement = pick.concept!.statement
+    distractorUse.set(statement, (distractorUse.get(statement) ?? 0) + 1)
+  }
+  const letter = ['A', 'B', 'C', 'D'][answerIndex]!
+  return {
+    kind: 'choice',
+    stem: wantTrue ? '下面说法正确的是（　）' : '下面说法不正确的是（　）',
+    options,
+    answerIndex,
+    optionCols: optionColumns(options),
+    answers: [letter],
+    kpName: record.knowledgePoint,
+    causes: picks.map((pick) => ({
+      value: pick.concept!.statement,
+      rule: 'concept-error' as ErrorRuleId,
+      // 问“不正确的是”时干扰项本身是正确说法，判据改为“不符合问法”
+      detail: pick.concept!.truth
+        ? '该说法本身正确，不符合“选出不正确说法”的问法'
+        : pick.concept!.singleError ?? pick.concept!.rationale,
+    })),
+    key: `fmt:choice:concept:${record.knowledgePoint}`,
+    data: {
+      pool: 'conceptChoice',
+      form: 'concept',
+      correct: letter,
+      conceptId: record.id,
+      options,
+      answerIndex,
+      want: wantTrue ? 'true' : 'false',
+    },
+  }
+}
+
+/**
  * 纯概念卷排卷：知识点是硬约束（同卷每个 knowledgePoint 最多 1 题），真假位是软约束。
  * 先按知识点在真假上的可用性分组，再按可出的知识点数决定实出量；
  * 知识点用尽就如实少出，不拿同一知识点的反说法凑数。
@@ -926,9 +1010,11 @@ export function generateFormat(options: FormatOptions): FormatResult {
   }
 
   // 概念命题：默认整卷最多 1/3；只有该单元组合没有任何数值判断来源时，才放宽到 100%
-  const conceptSources = kind === 'judge' ? collectConceptSources(grade, units, level) : []
-  const numericSources = kind === 'judge' ? collectSources({ grade, unitIds: units, level, seed }) : []
+  const conceptSources = collectConceptSources(grade, units, level)
+  const numericSources = collectSources({ grade, unitIds: units, level, seed })
   const conceptOnly = kind === 'judge' && conceptSources.length > 0 && numericSources.length === 0
+  // 选择题没有任何数值来源时（例如单独选 U3），用概念命题兜底成“说法选择题”
+  const conceptChoiceOnly = kind === 'choice' && conceptSources.length > 0 && numericSources.length === 0
   const conceptList = shuffle(createRng(seed + 8123), conceptSources)
   const conceptCap = conceptOnly
     ? Math.min(count, conceptList.length)
@@ -976,7 +1062,34 @@ export function generateFormat(options: FormatOptions): FormatResult {
     }
   }
 
-  if (conceptOnly) {
+  if (conceptChoiceOnly) {
+    // 纯概念选择题（如单选 U3）：每题 1 条焦点陈述 + 3 条相反真值陈述，按知识点去重
+    const distractorUse = new Map<string, number>()
+    const groups = new Map<string, Source[]>()
+    for (const source of conceptSources) {
+      const kp = source.concept!.knowledgePoint
+      const group = groups.get(kp) ?? []
+      group.push(source)
+      groups.set(kp, group)
+    }
+    const entries = shuffle(createRng(seed + 9173), [...groups.entries()])
+    for (const [kp, group] of entries) {
+      if (pieces.length >= count) break
+      const key = `concept:${kp}`
+      if (seen.has(key) || sourceUsed?.has(key)) continue
+      const fresh = group.filter((source) => !memory?.recentlyUsed(source.key))
+      const focal = fresh.length > 0 ? fresh[0]! : group[0]!
+      const piece = buildConceptChoice(
+        focal,
+        conceptSources,
+        choiceTarget![pieces.length] ?? 0,
+        seed + pieces.length * 31,
+        distractorUse,
+      )
+      if (!piece) continue
+      accept(piece, key, fresh.length === 0)
+    }
+  } else if (conceptOnly) {
     // 纯概念卷：按知识点池排卷，知识点用尽就如实少出
     for (const { source, reused } of planConceptOnly(conceptSources, count, seed, sourceUsed, memory)) {
       const piece = buildJudge(source, [], !source.concept!.truth, createRng(seed + pieces.length * 31))
@@ -1046,7 +1159,15 @@ export function generateFormat(options: FormatOptions): FormatResult {
     notes.push(
       conceptOnly
         ? `判断题：题池只凑到 ${pieces.length}/${count} 道（知识点去重后没有其他知识点的补充命题）`
-        : `${label}：题池只凑到 ${pieces.length}/${count} 道（受错因规则与单空来源限制）`,
+        : conceptChoiceOnly
+          ? `选择题：题池只凑到 ${pieces.length}/${count} 道（知识点去重 + 每题需 3 条相反真值干扰项）`
+          : `${label}：题池只凑到 ${pieces.length}/${count} 道（受错因规则与单空来源限制）`,
+    )
+  }
+  if (conceptChoiceOnly) {
+    const kpCount = new Set(conceptSources.map((source) => source.concept!.knowledgePoint)).size
+    notes.push(
+      `选择题：本卷全部为概念命题（实出 ${pieces.length} 题，该单元知识点 ${kpCount} 个；同知识点不重复，干扰项取其他知识点的相反真值陈述）`,
     )
   }
   if (kind === 'judge' && conceptSources.length > 0) {
@@ -1077,6 +1198,19 @@ export interface FormatVerifyResult {
 
 /** 从原始参数重算正确值；不看题面里写的答案 */
 export function verifyFormatSource(data: FormatSourceData): FormatVerifyResult {
+  if (data.pool === 'conceptChoice') {
+    // 概念选择题：逐项回命题表查真值，核对“恰好一真/一假”与标答下标
+    const result = verifyConceptChoice({
+      conceptId: data.conceptId ?? '',
+      options: data.options ?? [],
+      answerIndex: data.answerIndex ?? -1,
+      want: data.want ?? 'true',
+    })
+    if (!result.ok) return { ok: false, error: result.error }
+    const letter = ['A', 'B', 'C', 'D'][data.answerIndex ?? -1]
+    if (data.correct !== letter) return { ok: false, error: `标答字母 ${data.correct} 与下标不符` }
+    return { ok: true, correct: data.correct }
+  }
   if (data.pool === 'concept') {
     // 概念命题没有数值可重算：按命题 ID 查判据表，核对真值与标答
     const result = verifyConceptSource(data.conceptId, data.correct)
@@ -1124,6 +1258,7 @@ export function verifyFormatSource(data: FormatSourceData): FormatVerifyResult {
 
 /** 按错因规则重新推导错误值，供复核逐项对照 */
 export function deriveWrongValues(data: FormatSourceData): Wrong[] {
+  if (data.pool === 'conceptChoice') return []
   if (data.pool === 'concept') {
     const record = findConcept(data.conceptId)
     if (!record || record.truth) return []
