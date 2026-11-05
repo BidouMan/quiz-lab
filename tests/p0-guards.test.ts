@@ -71,7 +71,7 @@ test('P0-1 3A-U1 应用题不含除法与余数语义', () => {
 
 test('P0-2 口算 200 题全部落在心算范围', () => {
   const units = [
-    '3A-U1','3A-U2','3A-U3','3A-U4','3A-U5','3A-U6','3A-U7','3A-U8','3A-U9',
+    '3A-U1','3A-U2','3A-U3','3A-U4','3A-U5','3A-U6','3A-U7','3A-U8',
     '3B-U1','3B-U2','3B-U3','3B-U4','3B-U5','3B-U6','3B-U7',
   ]
   const samples: ReturnType<typeof generate>['questions'] = []

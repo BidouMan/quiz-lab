@@ -4,7 +4,7 @@
  */
 import type { Level } from '../types.ts'
 import type { Combo, Scene, Skeleton, SkeletonBand } from './types.ts'
-import { DIVISION_SCENES, PERIMETER_SCENES, DATE_SCENES, TWO_STEP_SCENES, MULDIV_SCENES, AREA_SCENES, MULTIPLICATION_SCENES, DIVISION_FILL_SCENES, MULTIPLICATION_FILL_SCENES, ROUTE_SCENES, MATH_PLAZA_SCENES, REVIEW_SCENES, SHAPE_SCENES } from './scenes.ts'
+import { DIVISION_SCENES, PERIMETER_SCENES, DATE_SCENES, TWO_STEP_SCENES, MULDIV_SCENES, AREA_SCENES, MULTIPLICATION_SCENES, DIVISION_FILL_SCENES, MULTIPLICATION_FILL_SCENES, ROUTE_SCENES, MATH_PLAZA_SCENES, SHAPE_SCENES } from './scenes.ts'
 import { U6_PERIMETER_SKELETONS } from './u6-perimeter.ts'
 import { U4_DIVISION_SKELETONS } from './u4-division.ts'
 import { U5_DATE_SKELETONS } from './u5-date.ts'
@@ -31,14 +31,10 @@ import { U7_MARATHON_FILL_SKELETONS } from './u7-marathon-fill.ts'
 import { U7_MARATHON_FILL_BANDS } from './u7-marathon-fill.bands.ts'
 import { U8_MATH_PLAZA_FILL_SKELETONS } from './u8-math-plaza-fill.ts'
 import { U8_MATH_PLAZA_FILL_BANDS } from './u8-math-plaza-fill.bands.ts'
-import { U9_REVIEW_FILL_SKELETONS } from './u9-review-fill.ts'
-import { U9_REVIEW_FILL_BANDS } from './u9-review-fill.bands.ts'
 import { U7_MARATHON_WORD_SKELETONS } from './u7-marathon-word.ts'
 import { U7_MARATHON_WORD_BANDS } from './u7-marathon-word.bands.ts'
 import { U8_MATH_PLAZA_WORD_SKELETONS } from './u8-math-plaza-word.ts'
 import { U8_MATH_PLAZA_WORD_BANDS } from './u8-math-plaza-word.bands.ts'
-import { U9_REVIEW_WORD_SKELETONS } from './u9-review-word.ts'
-import { U9_REVIEW_WORD_BANDS } from './u9-review-word.bands.ts'
 import { U3_SHAPES_FILL_SKELETONS } from './u3-shapes-fill.ts'
 import { U3_SHAPES_FILL_BANDS } from './u3-shapes-fill.bands.ts'
 import { U3_SHAPES_WORD_SKELETONS } from './u3-shapes-word.ts'
@@ -237,19 +233,6 @@ export const PACKAGES: SkeletonPackage[] = [
     matchSceneUnit: false,
   },
   {
-    id: '3A-U9|tiankong',
-    slug: 'u9-review-fill',
-    grade: '3A',
-    unitId: '3A-U9',
-    unitName: '复习',
-    type: 'tiankong',
-    title: '三上复习·综合填空',
-    scenes: REVIEW_SCENES,
-    skeletons: U9_REVIEW_FILL_SKELETONS,
-    bands: U9_REVIEW_FILL_BANDS,
-    matchSceneUnit: false,
-  },
-  {
     id: '3A-U7|word',
     slug: 'u7-marathon-word',
     grade: '3A',
@@ -273,19 +256,6 @@ export const PACKAGES: SkeletonPackage[] = [
     scenes: MATH_PLAZA_SCENES,
     skeletons: U8_MATH_PLAZA_WORD_SKELETONS,
     bands: U8_MATH_PLAZA_WORD_BANDS,
-    matchSceneUnit: false,
-  },
-  {
-    id: '3A-U9|word',
-    slug: 'u9-review-word',
-    grade: '3A',
-    unitId: '3A-U9',
-    unitName: '复习',
-    type: 'word',
-    title: '复习·解决问题',
-    scenes: REVIEW_SCENES,
-    skeletons: U9_REVIEW_WORD_SKELETONS,
-    bands: U9_REVIEW_WORD_BANDS,
     matchSceneUnit: false,
   },
   {

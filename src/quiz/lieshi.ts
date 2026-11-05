@@ -237,10 +237,10 @@ const divisorOf = (value: number, rng: Rng): number | null => {
 
 // ---------- 三档句式模板 ----------
 
-const U1 = ['3A-U1', '3A-U9']
-const U2 = ['3A-U2', '3A-U9']
-const U4 = ['3A-U4', '3A-U9']
-const U6 = ['3A-U6', '3A-U9']
+const U1 = ['3A-U1']
+const U2 = ['3A-U2']
+const U4 = ['3A-U4']
+const U6 = ['3A-U6']
 
 const L1: Level[] = ['L1']
 const L2: Level[] = ['L2']
@@ -1316,7 +1316,6 @@ const UNIT_KP: Record<string, string> = {
   '3A-U2': '用一位数乘',
   '3A-U4': '用一位数除',
   '3A-U6': '周长',
-  '3A-U9': '四则运算复习',
 }
 
 const UNIT_NAME: Record<string, string> = {
@@ -1324,7 +1323,6 @@ const UNIT_NAME: Record<string, string> = {
   '3A-U2': '用一位数乘',
   '3A-U4': '用一位数除',
   '3A-U6': '周长',
-  '3A-U9': '复习',
 }
 
 export function lieTemplatesFor(level: Level, unitIds: string[]): LieTemplate[] {

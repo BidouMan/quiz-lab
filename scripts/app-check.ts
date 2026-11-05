@@ -53,14 +53,14 @@ const scenarios: Scenario[] = [
   {
     slug: 'app-final-word',
     label: '纯应用',
-    unitIds: ['3A-U7', '3A-U9'],
+    unitIds: ['3A-U7'],
     level: 'L2',
     types: ['word'],
   },
   {
     slug: 'app-final-mixed',
     label: '三题型混合',
-    unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8', '3A-U9'],
+    unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8'],
     level: 'L2',
     types: ['kousuan', 'tiankong', 'word'],
     count: 30,

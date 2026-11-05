@@ -20,7 +20,7 @@ import {
 } from '../src/quiz/concepts.ts'
 import { compareUnitForms, generateCompare } from '../src/quiz/compare.ts'
 
-const UNITS = ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U9']
+const UNITS = ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6', '3A-U7']
 
 function buildItem(piece: ReturnType<typeof generateFormat>['pieces'][number], index: number) {
   return {
@@ -380,7 +380,7 @@ test('比大小题库：不再有文字型概念比较', () => {
   for (const level of ['L1', 'L2', 'L3'] as const) {
     const result = generateCompare({
       grade: '3A',
-      unitIds: ['3A-U9'],
+      unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U7'],
       level,
       count: 60,
       seed: 300 + level.length,

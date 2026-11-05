@@ -21,7 +21,7 @@ import { buildPaper, typeAvailability } from '../src/app/paperBuilder.ts'
 import { DEFAULT_CONFIG, type AppConfig, type TemplateInfo } from '../src/app/types.ts'
 import { verifyItemStructure } from '../src/app/runtimeCheck.ts'
 
-const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U9']
+const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6']
 const TEMPLATE: TemplateInfo = { path: 'typst/paper.typ', exists: true, word: true, compare: true, geom: true }
 
 const recordOf = (question: {
@@ -196,9 +196,9 @@ test('方案 A 单元归属：U8 不出拓展题，U3 删除数长方形后无 T
   assert.equal(advancedSupports('3A', ['3A-U5'], 'L3'), false)
 })
 
-test('单题型 200 上限：U9 L2/L3 均可出满且同卷不重复', () => {
+test('单题型 200 上限：多单元组合 L2/L3 均可出满且同卷不重复', () => {
   for (const level of ['L2', 'L3'] as const) {
-    const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U9'], level, count: 200, seed: 8100 })
+    const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6'], level, count: 200, seed: 8100 })
     assert.equal(result.questions.length, 200, `${level} 实出 ${result.questions.length}`)
     assert.equal(new Set(result.questions.map((question) => question.key)).size, 200)
     assert.deepEqual(validateAdvancedPaper(result.questions), [])

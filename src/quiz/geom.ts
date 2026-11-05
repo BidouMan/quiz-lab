@@ -63,10 +63,10 @@ export interface GeomOptions {
   memory?: MemoryStore
 }
 
-/** 图形题只在三上「三角形与四边形（U3）」「周长（U6）」「数学广场（U8）」及复习单元 U9 内出图 */
+/** 图形题只在三上「三角形与四边形（U3）」「周长（U6）」「数学广场（U8）」内出图 */
 export function geomSupported(grade: Grade, unitIds: string[]): boolean {
   if (grade === '3B') return true
-  return unitIds.some((id) => id === '3A-U3' || id === '3A-U6' || id === '3A-U8' || id === '3A-U9')
+  return unitIds.some((id) => id === '3A-U3' || id === '3A-U6' || id === '3A-U8')
 }
 
 /** 所选单元是否有任一难度可出图形题 */
@@ -1092,14 +1092,6 @@ export function geomUnitForms(unitId: string, level: Level): GeomForm[] {
   if (unitId === '3A-U3') return U3_FORMS[level]
   if (unitId === '3A-U6') return formsForU6(level)
   if (unitId === '3A-U8') return U8_FORMS[level]
-  // U9 是整册复习：继承 U3 认识图形、U6 周长与 U8 数图形
-  if (unitId === '3A-U9') {
-    const forms: GeomForm[] = []
-    for (const form of [...U3_FORMS[level], ...formsForU6(level), ...U8_FORMS[level]]) {
-      if (!forms.includes(form)) forms.push(form)
-    }
-    return forms
-  }
   return []
 }
 

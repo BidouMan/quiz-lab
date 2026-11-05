@@ -5,7 +5,7 @@ import { DEFAULT_CONFIG, type AppConfig, type TemplateInfo } from '../src/app/ty
 import { MemoryStore } from '../src/quiz/memory.ts'
 
 const TEMPLATE: TemplateInfo = { path: 'typst/paper.typ', exists: true, word: true, compare: true, geom: true }
-const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8', '3A-U9']
+const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8']
 
 function build(config: AppConfig, seed = 1) {
   return buildPaper({ config, template: TEMPLATE, seed, memory: new MemoryStore(), mode: 'practice' })

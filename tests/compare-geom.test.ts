@@ -9,7 +9,7 @@ import { DEFAULT_CONFIG, type AppConfig, type TemplateInfo, type TypstItem } fro
 import { MemoryStore } from '../src/quiz/memory.ts'
 
 const TEMPLATE: TemplateInfo = { path: 'typst/paper.typ', exists: true, word: true, compare: true, geom: true }
-const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8', '3A-U9']
+const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8']
 const UNITS_3B = ['3B-U1', '3B-U2', '3B-U3', '3B-U4', '3B-U5', '3B-U6', '3B-U7']
 
 function compareItem(piece: ReturnType<typeof generateCompare>['items'][number]): TypstItem {
@@ -224,15 +224,15 @@ test('数图形：U8 跨卷去重生效，第二卷不复用第一卷的图', ()
   for (const piece of second.items) assert.deepEqual(verifyItemStructure(geomItem(piece)), [])
 })
 
-test('数图形：U9 复习单元继承 U3 图形、U6 周长与 U8 数图形', () => {
-  const u9 = generateGeom({ grade: '3A', unitIds: ['3A-U9'], level: 'L2', count: 30, seed: 20261106 })
-  assert.equal(u9.items.length, 30, 'U9 应出满 30 题')
-  const forms = new Set(u9.items.map((piece) => piece.form))
-  assert.ok(forms.has('count-triangles'), 'U9 应继承数三角形')
-  assert.ok(forms.has('count-rectangles'), 'U9 应继承数长方形')
-  assert.ok(forms.has('rect-perimeter'), 'U9 应继承周长题')
-  assert.ok(forms.has('count-shapes'), 'U9 应继承 U3 认识图形')
-  for (const piece of u9.items) assert.deepEqual(verifyItemStructure(geomItem(piece)), [], `${piece.form} ${piece.text}`)
+test('数图形：U3+U6 组合按并集出图，认识图形与周长同卷', () => {
+  const combo = generateGeom({ grade: '3A', unitIds: ['3A-U3', '3A-U6'], level: 'L2', count: 30, seed: 20261106 })
+  assert.equal(combo.items.length, 30, 'U3+U6 应出满 30 题')
+  const forms = new Set(combo.items.map((piece) => piece.form))
+  assert.ok(forms.has('count-triangles'), '应含数三角形')
+  assert.ok(forms.has('count-rectangles'), '应含数长方形')
+  assert.ok(forms.has('rect-perimeter'), '应含周长题')
+  assert.ok(forms.has('count-shapes'), '应含 U3 认识图形')
+  for (const piece of combo.items) assert.deepEqual(verifyItemStructure(geomItem(piece)), [], `${piece.form} ${piece.text}`)
 })
 
 test('图形与周长：只在所选单元内出图，不含 U3/U6 时不出', () => {

@@ -101,7 +101,7 @@ test('出卷链路：30 题混合卷每道题都过复核且卷面带答案', ()
   const config: AppConfig = {
     ...DEFAULT_CONFIG,
     grade: '3A',
-    unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8', '3A-U9'],
+    unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U8'],
     level: 'L2',
     types: ['kousuan', 'tiankong', 'word'],
     count: 30,

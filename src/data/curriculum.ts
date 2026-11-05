@@ -384,61 +384,6 @@ const units: Unit[] = [
       ),
     ],
   },
-  {
-    grade: '3A',
-    semester: '上',
-    unitId: '3A-U9',
-    unitName: '复习',
-    note: '综合复习单元，只抽取已有计算规则。',
-    kps: [
-      kp('3A-U9-K1', '四则运算复习', {
-        kousuan: {
-          L1: r('mix2', { pattern: 'a*b+c', mulDigits: 1, maxResult: 100 }),
-          L2: r('mix2', { pattern: 'a*b-c', mulDigits: 1, maxResult: 200 }),
-          L3: r('mix3', { pattern: '(a+b)*c', bracket: true, mulDigits: 1, maxResult: 200 }),
-        },
-        tuoshi: {
-          L1: r('mix3', { pattern: '(a+b)*c', bracket: true, mulDigits: 1, maxResult: 100 }),
-          L2: r('mix3', { pattern: '(a-b)*c', bracket: true, mulDigits: 1, maxResult: 200 }),
-          L3: r('mix3', { pattern: 'a*b+c*d', bracket: false, mulDigits: 1, maxResult: 300 }),
-        },
-      }),
-      kp('3A-U9-K2', '乘除复习', {
-        kousuan: {
-          L1: [
-            r('mul1', { digits: 2, carry: 'none', maxResult: 999 }),
-            r('div1', { dividendDigits: 2, quotientDigits: 1, exact: true }),
-          ],
-          L2: [
-            r('mul1', { digits: 2, carry: 'any', maxResult: 999 }),
-            r('div1', { dividendDigits: 3, quotientDigits: 2, exact: true }),
-          ],
-          L3: [
-            r('mul1', { digits: 3, carry: 'any', maxResult: 9999 }),
-            r('div1', { dividendDigits: 3, quotientDigits: 3, exact: true }),
-          ],
-        },
-        chushi: {
-          L1: r('mul1', { digits: 2, carry: 'none', maxResult: 999 }),
-          L2: r('div1', { dividendDigits: 3, quotientDigits: 2, exact: true }),
-          L3: r('mul1', { digits: 3, carry: 'continuous', maxResult: 9999 }),
-        },
-      }),
-      kp(
-        '3A-U9-K3',
-        '周长与年月日复习',
-        {
-          tiankong: {
-            L1: [tf('leapYear'), tf('rectPerimeter')],
-            L2: [tf('monthDays'), tf('squarePerimeter'), tf('elapsed')],
-            L3: [tf('leapYear'), tf('rectPerimeter'), tf('timeHour')],
-          },
-        },
-        '以填空形式复习年月日与周长，不重复生成应用题。',
-      ),
-    ],
-  },
-
   // ==================== 三年级下册（推定） ====================
   {
     grade: '3B',

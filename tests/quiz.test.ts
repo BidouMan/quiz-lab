@@ -45,12 +45,12 @@ function assertAnswer(q: GeneratedQuestion): void {
   }
 }
 
-test('单元树：三上 9 个单元、三下 7 个单元，三下全部标记 unconfirmed', () => {
+test('单元树：三上 8 个单元、三下 7 个单元，三下全部标记 unconfirmed', () => {
   const grade3A = CURRICULUM.units.filter((u) => u.grade === '3A')
   const grade3B = CURRICULUM.units.filter((u) => u.grade === '3B')
-  assert.equal(grade3A.length, 9)
+  assert.equal(grade3A.length, 8)
   assert.equal(grade3B.length, 7)
-  assert.equal(CURRICULUM.units.length, 16)
+  assert.equal(CURRICULUM.units.length, 15)
   for (const unit of grade3B) {
     assert.equal(unit.unconfirmed, true, `${unit.unitId} 应标记 unconfirmed`)
     assert.ok(unit.note && unit.note.includes('推定'), `${unit.unitId} 应有推定备注`)
@@ -244,7 +244,7 @@ test('简便运算：三上移除，三下只保留 25×4/125×8 凑整', () => 
     /没有 jianbian\/L1 的生成规则/,
   )
   assert.throws(
-    () => generate({ grade: '3A', unitId: '3A-U9', type: 'jianbian', level: 'L1', count: 5, seed: 502 }),
+    () => generate({ grade: '3A', unitId: '3A-U1', type: 'jianbian', level: 'L1', count: 5, seed: 502 }),
     /没有 jianbian\/L1 的生成规则/,
   )
   // 三下保留的简便运算仍只走 25×4/125×8 凑整
