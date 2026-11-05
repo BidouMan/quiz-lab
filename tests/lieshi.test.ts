@@ -116,21 +116,20 @@ test('三档各 20 题：句式 ≥8 种、同句式 ≤2 次、双路径复核�
   }
 })
 
-test('单元映射：U3 不适用，U2 纯乘法与 L2 括号句式都可用', () => {
+test('单元映射：U3 不适用，U2 用骨架包出满', () => {
   const u3 = generateLie({ grade: '3A', unitIds: ['3A-U3'], level: 'L2', count: 20 })
   assert.equal(u3.questions.length, 0)
   assert.ok(u3.notes[0]?.includes('没有可用运算结构'))
 
   const u2l2 = generateLie({ grade: '3A', unitIds: ['3A-U2'], level: 'L2', count: 20 })
-  assert.equal(u2l2.questions.length, 6, 'U2 L2 三种括号句式，各出 2 题')
+  assert.equal(u2l2.questions.length, 20, 'U2 L2 应由骨架包出满 20 题')
   for (const question of u2l2.questions) {
-    assert.ok(question.expression.includes('('), `U2 L2 必须含括号：${question.expression}`)
     assert.equal(question.unitId, '3A-U2')
   }
   assert.deepEqual(validateLiePaper(u2l2.questions), [])
 
   const u2l1 = generateLie({ grade: '3A', unitIds: ['3A-U2'], level: 'L1', count: 20 })
-  assert.equal(u2l1.questions.length, 6)
+  assert.equal(u2l1.questions.length, 20)
 })
 
 test('U6 周长列式：长方形（长+宽）×2 与正方形 边长×4', () => {

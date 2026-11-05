@@ -19,6 +19,7 @@ import { createRng, randInt, type Rng } from './rng.ts'
 import type { Grade, Level } from './types.ts'
 import { renderLieSkeleton } from './skeleton/lie-kit.ts'
 import { U1_LIE_SKELETONS } from './skeleton/u1-lieshi.ts'
+import { U2_LIE_SKELETONS } from './skeleton/u2-lieshi.ts'
 
 export type LieOp = '+' | '-' | '×' | '÷'
 
@@ -1288,9 +1289,11 @@ export const LIE_TEMPLATES: LieTemplate[] = [
   },
 ]
 
-// ---------- 骨架包迁移：U1 列式骨架 → 生成/复核可用的句式 ----------
+// ---------- 骨架包迁移：U1 / U2 列式骨架 → 生成/复核可用的句式 ----------
 
-const SKELETON_TEMPLATES: LieTemplate[] = U1_LIE_SKELETONS.map((skeleton) => ({
+const SKELETON_LIE = [...U1_LIE_SKELETONS, ...U2_LIE_SKELETONS]
+
+const SKELETON_TEMPLATES: LieTemplate[] = SKELETON_LIE.map((skeleton) => ({
   id: skeleton.id,
   label: skeleton.label,
   levels: [skeleton.level],
