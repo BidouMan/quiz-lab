@@ -61,7 +61,7 @@ interface Wrong {
 
 /** 复核用的来源描述：够独立重算正确值与每个错因值 */
 export interface FormatSourceData {
-  pool: 'calc' | 'fill' | 'concept' | 'conceptChoice'
+  pool: 'calc' | 'fill' | 'concept' | 'conceptChoice' | 'u4choice'
   form: string
   correct: string
   latex?: string
@@ -110,7 +110,7 @@ export interface FormatResult {
 }
 
 interface Source {
-  pool: 'calc' | 'fill' | 'concept'
+  pool: 'calc' | 'fill' | 'concept' | 'u4choice'
   form: string
   correct: string
   numeric: number | null
@@ -665,6 +665,79 @@ function collectConceptSources(grade: Grade, unitIds: string[], level: Level): S
   return sources
 }
 
+function u4ChoiceWrongs(
+  kind: string,
+  params: Record<string, number | string>,
+  correct: string,
+): Wrong[] {
+  const out: Wrong[] = []
+  const push = (value: number, rule: ErrorRuleId, detail: string): void => {
+    const text = String(value)
+    if (!Number.isInteger(value) || value <= 0) return
+    if (text === correct) return
+    if (out.some((item) => item.value === text)) return
+    out.push({ value: text, rule, detail })
+  }
+  const divisor = Number(params['divisor'])
+  const remainder = Number(params['remainder'])
+  if (kind === 'remainderRead') {
+    push(remainder + 1, 'remainder-swap', '把余数多算了 1')
+    push(remainder + 2, 'remainder-swap', '把余数多算了 2')
+    push(divisor, 'remainder-swap', '把除数当成余数')
+  } else {
+    push(divisor, 'remainder-swap', '余数不能等于除数')
+    push(divisor - 2, 'forget-remainder', '最大余数少算了 1')
+    push(divisor + 1, 'remainder-swap', '余数超过除数')
+  }
+  return out
+}
+
+function u4ChoiceSource(seed: number, index: number): Source {
+  const rng = createRng(seed + 5003 + index * 97)
+  const divisor = randInt(rng, 6, 9)
+  const quotient = randInt(rng, 2, 8)
+  if (index === 0) {
+    const remainder = randInt(rng, 1, 3)
+    const dividend = divisor * quotient + remainder
+    const correct = String(remainder)
+    return {
+      pool: 'u4choice',
+      form: 'remainderRead',
+      correct,
+      numeric: remainder,
+      kpName: '3A-DIV-REMAINDER',
+      key: `u4:remainderRead:${dividend}:${divisor}`,
+      judgeStem: (stated) => `${dividend}÷${divisor}=${quotient}……${stated}`,
+      choiceStem: `${dividend}÷${divisor}=${quotient}……（　）`,
+      wrongs: u4ChoiceWrongs('remainderRead', { divisor, remainder }, correct),
+      data: {
+        pool: 'u4choice',
+        form: 'remainderRead',
+        correct,
+        params: { kind: 'remainderRead', divisor, quotient, dividend, remainder },
+      },
+    }
+  }
+  const correct = String(divisor - 1)
+  return {
+    pool: 'u4choice',
+    form: 'maxRemainder',
+    correct,
+    numeric: divisor - 1,
+    kpName: '3A-DIV-REMAINDER',
+    key: `u4:maxRemainder:${divisor}`,
+    judgeStem: (stated) => `除数是${divisor}，余数最大是${stated}。`,
+    choiceStem: `除数是${divisor}，余数最大是（　）。`,
+    wrongs: u4ChoiceWrongs('maxRemainder', { divisor, remainder: divisor - 1 }, correct),
+    data: {
+      pool: 'u4choice',
+      form: 'maxRemainder',
+      correct,
+      params: { kind: 'maxRemainder', divisor },
+    },
+  }
+}
+
 function collectSources(input: { grade: Grade; unitIds: string[]; level: Level; seed: number }): Source[] {
   const { grade, unitIds, level, seed } = input
   const sources: Source[] = []
@@ -673,7 +746,7 @@ function collectSources(input: { grade: Grade; unitIds: string[]; level: Level; 
       try {
         const result = generate({ grade, unitId, type, level, count: 3, seed })
         for (const question of result.questions) {
-          // 年月日口算的题面是文字填空题，不能改写成判断/选择陈述句，跳过
+          // 年月日口算的题面是填空题，统一改由 dateSource 生成判断/选择陈述句
           if (question.features.form === 'dateKousuan') continue
           sources.push(calcSource(question))
         }
@@ -692,6 +765,9 @@ function collectSources(input: { grade: Grade; unitIds: string[]; level: Level; 
       }
     } catch {
       // 该单元/难度没有填空规则
+    }
+    if (unitId.endsWith('U4') && level !== 'L1') {
+      sources.push(u4ChoiceSource(seed, 0), u4ChoiceSource(seed, 1))
     }
   }
   return sources
@@ -1241,6 +1317,33 @@ export function verifyFormatSource(data: FormatSourceData): FormatVerifyResult {
     }
   }
 
+  if (data.pool === 'u4choice') {
+    const params = data.params ?? {}
+    const kind = String(params['kind'] ?? '')
+    const divisor = Number(params['divisor'])
+    const dividend = Number(params['dividend'])
+    const quotient = Number(params['quotient'])
+    if (!Number.isInteger(divisor) || divisor <= 0) return { ok: false, error: '有余数除法除数无效' }
+    let value: number | null = null
+    if (kind === 'remainderRead') {
+      if (dividend % divisor !== Number(data.correct)) {
+        return { ok: false, error: `独立重算余数 ${dividend % divisor} ≠ 答案 ${data.correct}` }
+      }
+      if (Math.floor(dividend / divisor) !== quotient) {
+        return { ok: false, error: '商与独立重算不符' }
+      }
+      value = dividend % divisor
+    } else if (kind === 'maxRemainder') {
+      value = divisor - 1
+      if (String(value) !== data.correct) {
+        return { ok: false, error: `独立重算最大余数 ${value} ≠ 答案 ${data.correct}` }
+      }
+    }
+    if (value === null) return { ok: false, error: '未知的有余数除法题型' }
+    if (!(value >= 0 && value < divisor)) return { ok: false, error: '余数不小于除数' }
+    return { ok: true, correct: String(value) }
+  }
+
   const form = data.form as FillFormName
   const params: ParamMap = { ...(data.params ?? {}), form }
   try {
@@ -1263,6 +1366,11 @@ export function deriveWrongValues(data: FormatSourceData): Wrong[] {
     const record = findConcept(data.conceptId)
     if (!record || record.truth) return []
     return [{ value: '×', rule: 'concept-error', detail: record.rationale }]
+  }
+  if (data.pool === 'u4choice') {
+    const params = data.params ?? {}
+    const kind = String(params['kind'] ?? data.form)
+    return u4ChoiceWrongs(kind, params, data.correct)
   }
   if (data.pool === 'fill') {
     const form = data.form as FillFormName
