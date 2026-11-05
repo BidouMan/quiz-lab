@@ -247,12 +247,17 @@ const units: Unit[] = [
     semester: '上',
     unitId: '3A-U5',
     unitName: '年、月、日的秘密',
-    note: '时间与日期内容，由填空与应用题生成器承接。',
+    note: '时间与日期内容，由填空、应用题与口算生成器承接。',
     kps: [
       kp(
         '3A-U5-K1',
         '制订作息时间表',
         {
+          kousuan: {
+            L1: r('dateKousuan', { dateKind: 'elapsedHour' }),
+            L2: r('dateKousuan', { dateKind: 'elapsedHour' }),
+            L3: r('dateKousuan', { dateKind: 'elapsedHour' }),
+          },
           tiankong: {
             L1: tf('timeHour'),
             L2: tf('timeHour'),
@@ -264,19 +269,36 @@ const units: Unit[] = [
             L3: wf('timePlan'),
           },
         },
-        '12/24 时计时法互化与经过时间；L3 反向求出发时刻（“最迟”）。',
+        '12/24 时计时法互化与经过时间；口算出整时经过时间；L3 反向求出发时刻（“最迟”）。',
       ),
       kp(
         '3A-U5-K2',
         '制作月历牌',
         {
+          kousuan: {
+            L1: [
+              r('dateKousuan', { dateKind: 'monthDays' }),
+              r('dateKousuan', { dateKind: 'bigMonths' }),
+              r('dateKousuan', { dateKind: 'dateOffset' }),
+            ],
+            L2: [
+              r('dateKousuan', { dateKind: 'monthDays' }),
+              r('dateKousuan', { dateKind: 'bigMonths' }),
+              r('dateKousuan', { dateKind: 'dateOffset' }),
+            ],
+            L3: [
+              r('dateKousuan', { dateKind: 'monthDays' }),
+              r('dateKousuan', { dateKind: 'bigMonths' }),
+              r('dateKousuan', { dateKind: 'dateOffset' }),
+            ],
+          },
           tiankong: {
             L1: tf('leapYear'),
             L2: [tf('leapYear'), tf('monthDays')],
             L3: [tf('monthDays'), tf('leapYear')],
           },
         },
-        '平年闰年、大月小月与每月天数。',
+        '平年闰年、大月小月与每月天数；口算出月份天数、大月个数与日期推算。',
       ),
     ],
   },

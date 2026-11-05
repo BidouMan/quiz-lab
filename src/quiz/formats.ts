@@ -666,7 +666,11 @@ function collectSources(input: { grade: Grade; unitIds: string[]; level: Level; 
     for (const type of CALC_TYPES) {
       try {
         const result = generate({ grade, unitId, type, level, count: 3, seed })
-        for (const question of result.questions) sources.push(calcSource(question))
+        for (const question of result.questions) {
+          // 年月日口算的题面是文字填空题，不能改写成判断/选择陈述句，跳过
+          if (question.features.form === 'dateKousuan') continue
+          sources.push(calcSource(question))
+        }
       } catch {
         // 该单元/难度没有这种计算题型
       }

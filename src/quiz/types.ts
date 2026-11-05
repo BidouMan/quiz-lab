@@ -6,7 +6,19 @@ export type Grade = '3A' | '3B'
 export type Semester = '上' | '下'
 export type CalcType = 'kousuan' | 'chushi' | 'tuoshi' | 'jianbian'
 export type Level = 'L1' | 'L2' | 'L3'
-export type FormName = 'mul1' | 'div1' | 'mul2' | 'div2' | 'mix2' | 'mix3' | 'assoc' | 'dist'
+export type FormName =
+  | 'mul1'
+  | 'div1'
+  | 'mul2'
+  | 'div2'
+  | 'mix2'
+  | 'mix3'
+  | 'assoc'
+  | 'dist'
+  | 'dateKousuan'
+
+/** 第五单元口算素材：月份天数、大月个数、整时经过、日期推算 */
+export type DateKousuanKind = 'monthDays' | 'bigMonths' | 'elapsedHour' | 'dateOffset'
 export type CarryMode = 'none' | 'once' | 'normal' | 'continuous' | 'any'
 export type RemainderMode = 'zero' | 'nonzero' | 'any'
 export type QuotientZeroMode = 'none' | 'middle' | 'end'
@@ -54,6 +66,8 @@ export interface Constraints {
   minFactor?: number
   /** 混合算式必须包含的运算符，例如 3A-U4 的脱式必须含 ÷ */
   requireOp?: '÷' | '×' | '+' | '-'
+  /** dateKousuan 的具体素材 */
+  dateKind?: DateKousuanKind
 }
 
 export interface RuleSpec {

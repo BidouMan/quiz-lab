@@ -15,6 +15,7 @@ import { createRng, pick } from './rng.ts'
 import { buildOne, kousuanRangeProblem, type BuiltQuestion } from './forms.ts'
 import { evalLatex, evalNode } from './expr.ts'
 import { unitGuardProblem } from './unitGuards.ts'
+import { verifyDateKousuan } from './dateKousuan.ts'
 import { normalizeExpr } from './normalize.ts'
 
 interface Target {
@@ -182,6 +183,8 @@ function selfCheck(
       return '竖式出现整十数乘法，应放进口算'
     }
   }
+  // 年月日口算没有可解析的四则算式，改用参数独立重算复核
+  if (spec.form === 'dateKousuan') return verifyDateKousuan(built.features, built.latex)
   if (built.answer.includes('……')) {
     const [q, r] = built.answer.split('……').map(Number)
     const [dividend, divisor] = built.values

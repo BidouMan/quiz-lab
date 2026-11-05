@@ -1690,3 +1690,12 @@ npx tsx scripts/pilot-drill.ts \
 - 数值：L1 长 3–10、宽 2–长−1、边长 2–10；L2 3–20；L3 8–40，周长一律 ≤ 160，落在三上心算范围。
 - 复核沿用现有路径：`verifyItemStructure` → `evalCompareSide` 按题面独立求值再与标注答案比对，未新增复核器。
 - 实测 L2/30：实出 30，同卷重复 0，答案分布 `<`18 / `>`11 / `=`1（L1 抽样），L2/L3 各 30 条全部复核通过。
+
+### 34.2 U5 × 口算（月份天数、整时经过、日期推算）
+
+- 新增 `src/quiz/dateKousuan.ts`：4 条口算素材 `monthDays`（12 个月，2 月题面必写「平年/闰年」）、`bigMonths`（一年 7 个大月）、`elapsedHour`（整时经过，L1 ≤2 时 / L2 ≤4 时 / L3 ≤6 时）、`dateOffset`（L1 ≤3 天 / L2 ≤5 天 / L3 ≤7 天，只在不跨月范围取，保证答案是唯一的「几号」）。
+- 题面用「（　　）」留空，答案一律单值整数；卡片样式与现有口算两栏一致，未改排版参数。
+- 复核分支：生成侧 `selfCheck` 与运行时 `verifyCalcQuestion` 都调用 `verifyDateKousuan`，只凭 features 里的月份 / 起止时刻 / 起始日期重新算，并校验题面与参数一致；参数不合法（如往后 0 天、跨月、结束不晚于开始）直接判失败。
+- 规则接线：U5-K1 三档 `elapsedHour`；U5-K2 三档 `monthDays + bigMonths + dateOffset`。
+- 实测：L1/L2/L3 各 30 题均出满、同卷重复 0、运行时剔除 0；四类素材在 30 题里都出现（约 15 / 6 / 8 / 1）。样张 `.quizlab/bench/u5-kousuan-l1.pdf`，`check-layout --compact` PASS。
+- 测试：`tests/date-kousuan.test.ts` 8 条（含 300 次抽样、改答案 / 零天 / 跨月 / 题面不符拦截、三档 30 题独立性）。

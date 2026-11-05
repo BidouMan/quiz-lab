@@ -11,6 +11,7 @@ import type {
 import type { ExprNode } from './expr.ts'
 import { bin, evalNode, num, stepLines, toLatex } from './expr.ts'
 import { createRng, pick, randInt, type Rng } from './rng.ts'
+import { buildDateKousuan } from './dateKousuan.ts'
 
 export interface BuildContext {
   rng: Rng
@@ -783,6 +784,8 @@ export const BUILDERS: Record<FormName, Builder> = {
   mix3: buildMix3,
   assoc: buildAssoc,
   dist: buildDist,
+  // 年月日口算：由 dateKousuan 模块生成，复核走同一模块的独立重算
+  dateKousuan: (ctx) => buildDateKousuan(ctx.constraints.dateKind ?? 'monthDays', ctx.rng, ctx.level),
 }
 
 // ---------- 口算范围硬限制 ----------

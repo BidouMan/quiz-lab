@@ -5,6 +5,7 @@
  * 规则库计算题只拿最终 latex / answer 字符串用 evalLatex 重算，
  * 静态兜底题至少校验结构与答案非空。复核失败先有限次重生成，仍失败则剔除。
  */
+import { verifyDateKousuan } from '../quiz/dateKousuan.ts'
 import { evalLatex } from '../quiz/expr.ts'
 import { verifyConceptItem } from '../quiz/concepts.ts'
 import { verifyLieItem } from '../quiz/lieshi.ts'
@@ -92,6 +93,12 @@ export function verifyCalcQuestion(question: GeneratedQuestion): string[] {
   if (/undefined|NaN/.test(latex)) return [`算式含未替换值：${latex}`]
   if (!answer) return ['答案为空']
   if (/undefined|NaN/.test(answer)) return [`答案含未替换值：${answer}`]
+
+  // 年月日口算：只凭参数独立重算，不复用生成器的中间结果
+  if (question.features['form'] === 'dateKousuan') {
+    const issue = verifyDateKousuan(question.features, latex)
+    return issue ? [issue] : []
+  }
 
   if (answer.includes('……')) {
     const match = /^(\d+)\s*\\div\s*(\d+)\s*=$/.exec(latex)

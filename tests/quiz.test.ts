@@ -4,6 +4,7 @@ import { CURRICULUM } from '../src/data/curriculum.ts'
 import { generate } from '../src/quiz/generate.ts'
 import { MemoryStore } from '../src/quiz/memory.ts'
 import { evalLatex } from '../src/quiz/expr.ts'
+import { recomputeDateKousuan } from '../src/quiz/dateKousuan.ts'
 import { toTypstPaper, latexToTypst } from '../src/quiz/typst.ts'
 import type { CalcType, GeneratedQuestion, Level, RuleSpec } from '../src/quiz/types.ts'
 
@@ -37,6 +38,11 @@ function assertAnswer(q: GeneratedQuestion): void {
     assert.ok(Number.isInteger(quotient) && Number.isInteger(rem))
     const [dividend, divisor] = q.values
     assert.equal(dividend, quotient * divisor + rem)
+    return
+  }
+  // 年月日口算：按参数独立重算，题面没有可解析的四则算式
+  if (q.features.form === 'dateKousuan') {
+    assert.equal(recomputeDateKousuan(q.features), Number(q.answer), `${q.latex} 答案应为 ${q.answer}`)
     return
   }
   assert.equal(evalLatex(q.latex), Number(q.answer), `${q.latex} 答案应为 ${q.answer}`)
