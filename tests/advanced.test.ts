@@ -463,14 +463,19 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
   const category = advancedCategory('adv-arrange-rect')
   assert.ok(category)
   const cases = [
-    { perimeter: 12, count: 3, pairs: '长5厘米、宽1厘米、长4厘米、宽2厘米、长3厘米、宽3厘米（正方形）' },
-    { perimeter: 14, count: 3, pairs: '长6厘米、宽1厘米、长5厘米、宽2厘米、长4厘米、宽3厘米' },
-    { perimeter: 16, count: 4, pairs: '长7厘米、宽1厘米、长6厘米、宽2厘米、长5厘米、宽3厘米、长4厘米、宽4厘米（正方形）' },
+    { perimeter: 12, count: 3, pairs: '长5宽1、长4宽2、长3宽3（正方形）' },
+    { perimeter: 14, count: 3, pairs: '长6宽1、长5宽2、长4宽3' },
+    { perimeter: 16, count: 4, pairs: '长7宽1、长6宽2、长5宽3、长4宽4（正方形）' },
     {
       perimeter: 24,
       count: 6,
+      pairs: '长11宽1、长10宽2、长9宽3、长8宽4、长7宽5、长6宽6（正方形）',
+    },
+    {
+      perimeter: 40,
+      count: 10,
       pairs:
-        '长11厘米、宽1厘米、长10厘米、宽2厘米、长9厘米、宽3厘米、长8厘米、宽4厘米、长7厘米、宽5厘米、长6厘米、宽6厘米（正方形）',
+        '长19宽1、长18宽2、长17宽3、长16宽4、长15宽5、长14宽6、长13宽7、长12宽8、长11宽9、长10宽10（正方形）',
     },
   ]
   for (const item of cases) {
@@ -479,9 +484,10 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
     assert.equal(category.recompute({ perimeter: item.perimeter }), built.answer)
     assert.equal(category.invariant({ perimeter: item.perimeter }), null)
   }
-  // 周长 10：半周长 5，只能摆成长3宽2（长≥宽），仍可出；9 为奇数必须拒
-  assert.equal(category.invariant({ perimeter: 10 }), '周长限定 12–24')
+  // 周长 10 低于下限；23 为奇数；42 超出 40，都必须拒
+  assert.equal(category.invariant({ perimeter: 10 }), '周长限定 12–40')
   assert.equal(category.invariant({ perimeter: 23 }), '周长必须是偶数，长和宽才是整数')
+  assert.equal(category.invariant({ perimeter: 42 }), '周长限定 12–40')
   const rng = createRng(303)
   let min = 99
   let max = 0
@@ -491,7 +497,7 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
     min = Math.min(min, Number(params.perimeter))
     max = Math.max(max, Number(params.perimeter))
   }
-  assert.ok(min >= 12 && max <= 24, `周长实测 ${min}–${max} 超出 12–24`)
+  assert.ok(min >= 12 && max <= 40, `周长实测 ${min}–${max} 超出 12–40`)
 })
 
 test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、周长范围与奇偶为 0', () => {
@@ -505,7 +511,7 @@ test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、
     if (params == null) continue
     scanned++
     const perimeter = Number(params.perimeter)
-    if (perimeter % 2 !== 0 || perimeter < 12 || perimeter > 24) {
+    if (perimeter % 2 !== 0 || perimeter < 12 || perimeter > 40) {
       violations.push(`周长越界：${perimeter}`)
       continue
     }
@@ -520,12 +526,14 @@ test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、
     const built = category.build(params)
     if (built.answer !== category.recompute(params)) violations.push(`两条路径答案不一致：${built.answer}`)
     const half = perimeter / 2
-    const parsed = [...built.answer.matchAll(/长(\d+)厘米、宽(\d+)厘米/g)].map((match) => [
+    const parsed = [...built.answer.matchAll(/长(\d+)宽(\d+)/g)].map((match) => [
       Number(match[1]),
       Number(match[2]),
     ])
     const expected = Math.floor(half / 2)
     if (parsed.length !== expected) violations.push(`枚举数量不对：${built.answer}`)
+    if (expected > 10) violations.push(`组合超过 10 组：${expected}`)
+    if (built.answer.length > 70) violations.push(`答案超过两行（${built.answer.length} 字）：${built.answer}`)
     const seen = new Set<string>()
     for (const [long, short] of parsed) {
       if (long < short) violations.push(`长小于宽：${long}<${short}`)
@@ -537,6 +545,29 @@ test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、
   }
   assert.ok(scanned >= 2900, `摆长方形扫描量只有 ${scanned}`)
   assert.deepEqual(violations.slice(0, 5), [], `摆长方形问题 ${violations.length} 条`)
+})
+
+test('摆长方形参数域：12–40 共 15 种；连续两卷周长重复 0', () => {
+  const category = advancedCategory('adv-arrange-rect')
+  assert.ok(category)
+  const rng = createRng(20261110)
+  const pool = new Set<number>()
+  for (let index = 0; index < 3000; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    pool.add(Number(params.perimeter))
+  }
+  assert.deepEqual([...pool].sort((a, b) => a - b), [12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40])
+
+  const memory = new MemoryStore()
+  memory.beginPaper()
+  const first = generateAdvanced({ grade: '3A', unitIds: ['3A-U6'], level: 'L3', count: 7, seed: 11, memory })
+  memory.beginPaper()
+  const second = generateAdvanced({ grade: '3A', unitIds: ['3A-U6'], level: 'L3', count: 7, seed: 22, memory })
+  const perimeters = [...first.questions, ...second.questions]
+    .filter((question) => question.categoryId === 'adv-arrange-rect')
+    .map((question) => Number(question.params.perimeter))
+  assert.equal(perimeters.length, new Set(perimeters).size, `连续两卷周长重复：${perimeters.join('、')}`)
 })
 
 test('P1 周期：3000 题周期串无重复符号、答案最高占比 <35%、题干要求写算式', () => {

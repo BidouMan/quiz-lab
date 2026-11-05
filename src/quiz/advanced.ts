@@ -1171,13 +1171,15 @@ const rentPlan: AdvancedCategory = {
 
 const dArrangeRect = (rng: Rng): AdvParams | null =>
   retry(() => {
-    const perimeter = 2 * randInt(rng, 6, 12)
-    // 周长 12–24 的偶数，保证长、宽都是整数；正方形也算长方形，题干里写死
+    const perimeter = 2 * randInt(rng, 6, 20)
+    // 周长 12–40 的偶数，保证长、宽都是整数；正方形也算长方形，题干里写死
+    // 半周长拆出的组合最多 10 组（P=40 时正好 10 组），答案不超两行
+    if (Math.floor(perimeter / 4) > 10) return null
     return { perimeter }
   })
 
 const arrangePairText = (long: number, short: number): string =>
-  long === short ? `长${long}厘米、宽${short}厘米（正方形）` : `长${long}厘米、宽${short}厘米`
+  long === short ? `长${long}宽${short}（正方形）` : `长${long}宽${short}`
 
 const arrangeAnswer = (pairs: Array<[number, number]>): string =>
   `共${pairs.length}种：${pairs.map(([long, short]) => arrangePairText(long, short)).join('、')}`
@@ -1330,9 +1332,10 @@ const arrangeRect: AdvancedCategory = {
   invariant: (p) => {
     const perimeter = num(p, 'perimeter')
     if (perimeter % 2 !== 0) return '周长必须是偶数，长和宽才是整数'
-    if (perimeter < 12 || perimeter > 24) return '周长限定 12–24'
+    if (perimeter < 12 || perimeter > 40) return '周长限定 12–40'
     const half = perimeter / 2
     if (half < 6) return '半周长过小，凑不出至少一种长方形'
+    if (Math.floor(half / 2) > 10) return '拆出的长宽组合超过 10 组，答案写不下'
     return null
   },
 }
