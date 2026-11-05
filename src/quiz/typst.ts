@@ -30,7 +30,7 @@ export interface TypstPaper {
 const TITLES: Record<CalcType, string> = {
   kousuan: '口算',
   chushi: '竖式计算',
-  tuoshi: '脱式计算',
+  tuoshi: '递等式计算',
   jianbian: '简便运算',
 }
 

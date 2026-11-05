@@ -41,7 +41,7 @@ const memoryPath = resolve(root, arg('memory', '.quizlab/gen-memory.json')!)
 const typeLabels: Record<CalcType, string> = {
   kousuan: '口算',
   chushi: '竖式计算',
-  tuoshi: '脱式计算',
+  tuoshi: '递等式计算',
   jianbian: '简便运算',
 }
 const unitName = unitId ? findUnit(unitId)?.unitName ?? unitId : grade

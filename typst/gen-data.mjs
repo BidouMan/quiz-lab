@@ -7,7 +7,7 @@
  * 输出：
  * - questions.json：全卷（含比大小 / 图形与周长示例节），paper.typ 的默认输入
  * - questions-bank.json：去掉比大小 / 图形示例的生成器卷
- * - questions-html20.json：口算 8 / 竖式 6 / 脱式 6 的字号对比卷
+ * - questions-html20.json：口算 8 / 竖式 6 / 递等式 6 的字号对比卷
  * - questions-long.json：按题型拉长到跨页，用于续标题实测
  * - questions-30.json：全卷前 30 题
  *
