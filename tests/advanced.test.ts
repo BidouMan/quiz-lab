@@ -400,6 +400,19 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
   assert.ok(min >= 12 && max <= 24, `周长实测 ${min}–${max} 超出 12–24`)
 })
 
+test('蒙对收紧：星期几与图形代表数题干都要求写算式和答句', () => {
+  for (const id of ['adv-weekday', 'adv-symbol']) {
+    const category = advancedCategory(id)
+    assert.ok(category)
+    const rng = createRng(404)
+    for (let index = 0; index < 300; index++) {
+      const params = category.draw(rng)
+      if (params == null) continue
+      assert.ok(category.stem(params).includes('（写出算式和答句）'), `${id} 题干缺少作答要求`)
+    }
+  }
+})
+
 test('反例：星期几写成“3÷7=0……3”或剪拼缺“从一端”必须被拒', () => {
   const weekday = generateAdvanced({ grade: '3A', unitIds: ['3A-U5'], level: 'L2', count: 1, seed: 31 }).questions[0]
   assert.ok(weekday)

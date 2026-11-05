@@ -997,7 +997,7 @@ const symbol: AdvancedCategory = {
   workLines: 4,
   draw: dSymbol,
   stem: (p) =>
-    `${Array.from({ length: num(p, 'k') }, () => str(p, 'shape')).join('+')}=${num(p, 'sum')}，${str(p, 'shape')}×${str(p, 'other')}=${num(p, 'prod')}。${str(p, 'other')}代表多少？`,
+    `${Array.from({ length: num(p, 'k') }, () => str(p, 'shape')).join('+')}=${num(p, 'sum')}，${str(p, 'shape')}×${str(p, 'other')}=${num(p, 'prod')}。${str(p, 'other')}代表多少？（写出算式和答句）`,
   build: (p) => {
     const shape = str(p, 'shape')
     const other = str(p, 'other')
@@ -1084,7 +1084,7 @@ const weekday: AdvancedCategory = {
   workLines: 4,
   draw: dWeekday,
   stem: (p) =>
-    `${num(p, 'month')}月1日是${WEEKDAYS[num(p, 'start')]!}，从1日算起，${num(p, 'month')}月${num(p, 'day')}日是星期几？`,
+    `${num(p, 'month')}月1日是${WEEKDAYS[num(p, 'start')]!}，从1日算起，${num(p, 'month')}月${num(p, 'day')}日是星期几？（写出算式和答句）`,
   build: (p) => {
     const month = num(p, 'month')
     const day = num(p, 'day')
