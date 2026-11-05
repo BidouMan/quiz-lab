@@ -30,8 +30,8 @@ function pickBands(all: BandMap, ids: string[]): BandMap {
   return out
 }
 
-/** 篱笆：只取靠墙/留门/改围/逆推/比较，丢弃「四周围一圈」等 U6 现有句式 */
-const U6_FENCE_FILL_IDS = ['u8f-d1', 'u8f-d2', 'u8f-d3', 'u8f-i1', 'u8f-i6', 'u8f-p5', 'u8f-p6', 'u8f-c4']
+/** 篱笆：只取靠墙/留门/两面靠墙/改围/并排，丢弃与 U6 现有周长题最同式的「宽边靠墙」「同式逆推」 */
+const U6_FENCE_FILL_IDS = ['u8f-d1', 'u8f-d3', 'u8f-i1', 'u8f-p5', 'u8f-p6', 'u8f-c4']
 const U6_FENCE_WORD_IDS = ['u8w-d3', 'u8w-d4', 'u8w-d5', 'u8w-i1', 'u8w-i2', 'u8w-i4', 'u8w-c2', 'u8w-p1']
 
 /** 七巧板：乘法/块数版进 U3；平均分与有余数版进 U4 */
