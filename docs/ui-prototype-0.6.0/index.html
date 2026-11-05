@@ -101,8 +101,55 @@
       }
       .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
       .type .zero { font-size: 12px; color: #aaa; width: 106px; text-align: right; }
-      .more-types { margin-top: 10px; }
-      .more-types[hidden] { display: none; }
+      .type-wrap { border-bottom: 1px dashed #eee; }
+      .type-wrap .type { border-bottom: 0; }
+      .type-wrap:last-of-type { border-bottom: 0; }
+      .row-hint { margin: -2px 0 6px; font-size: 11px; color: var(--warn); }
+      .add-main {
+        width: 100%; height: 34px; margin-top: 10px; border: 1px dashed #bbb; border-radius: 6px;
+        background: #fff; font-size: 13px; color: var(--ink-2);
+      }
+      .add-main:hover { border-color: var(--ink); color: var(--ink); }
+      .type-empty { padding: 8px 0 4px; font-size: 12px; color: var(--ink-3); }
+      .remove { width: 24px; height: 24px; border: 0; border-radius: 4px; background: none; color: #999; font-size: 15px; line-height: 1; }
+      .remove:hover { background: #f2f2f2; color: var(--err); }
+      .type-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+      .type-chip {
+        display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+        border: 1px solid #ccc; border-radius: 16px; background: #fff; font-size: 13px;
+      }
+      .type-chip b { font-weight: 600; }
+      .type-chip[aria-pressed='true'] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+      .chip-adjust {
+        display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 10px;
+        border: 1px solid var(--line); border-radius: 6px; background: #fafafa; font-size: 12px;
+      }
+      .chip-adjust .spacer { flex: 1; }
+      .mode-switch { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+      .mode-switch button { height: 26px; padding: 0 10px; border: 0; border-right: 1px solid var(--line); background: #fff; font-size: 11px; color: var(--ink-3); }
+      .mode-switch button:last-child { border-right: 0; }
+      .mode-switch button[aria-pressed='true'] { background: #f1f1f1; color: var(--ink); }
+      .modal.add-modal { width: 520px; max-height: calc(100vh - 56px); }
+      .add-body { padding: 4px 24px 20px; overflow-y: auto; }
+      .add-search { width: 100%; height: 34px; margin-top: 8px; padding: 0 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+      .add-search::placeholder { color: #aaa; }
+      .group-title { margin: 16px 0 4px; font-size: 12px; color: var(--ink-3); }
+      .add-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px dashed #eee; }
+      .add-item:last-child { border-bottom: 0; }
+      .add-item.disabled { opacity: .5; }
+      .add-item .check {
+        flex: none; width: 16px; height: 16px; margin-top: 2px; border: 1px solid #bbb; border-radius: 3px;
+        display: grid; place-items: center; font-size: 11px; color: #fff; background: #fff;
+      }
+      .add-item .check.on { background: var(--ink); border-color: var(--ink); }
+      .add-item .txt b { font-size: 13px; font-weight: 500; }
+      .add-item .txt small { display: block; margin-top: 2px; font-size: 12px; color: var(--ink-3); }
+      .add-item .txt .reason { color: var(--warn); }
+      .add-item .def { margin-left: auto; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+      .add-foot { display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-top: 1px solid var(--line); }
+      .add-foot .count { font-size: 12px; color: var(--ink-2); }
+      .add-foot .spacer { flex: 1; }
+      .add-foot .primary { width: auto; height: 34px; padding: 0 22px; font-size: 14px; }
       .warnline {
         margin: 0 0 10px; padding: 8px 10px; font-size: 12px; line-height: 1.5;
         color: var(--warn); background: #fdf6e9; border-left: 3px solid var(--warn); border-radius: 4px;
@@ -257,6 +304,11 @@
         <div class="brand"><b>数学每日一练</b><span>QuizLab 0.6.0 原型</span></div>
         <div class="grade">三年级上册 · 沪教版</div>
         <span class="spacer"></span>
+        <span class="readonly" style="font-size: 11px">题型交互对比</span>
+        <div class="mode-switch" id="modeSwitch">
+          <button data-mode="A">方案 A</button>
+          <button data-mode="B">方案 B</button>
+        </div>
         <button class="ghost" id="historyBtn">历史卷</button>
         <button class="ghost" id="settingsBtn">设置</button>
       </header>
@@ -281,8 +333,6 @@
             <div class="presets" id="presets"></div>
 
             <div id="types" style="margin-top: 14px"></div>
-            <button class="add" id="moreBtn" style="margin-top: 10px">＋ 更多题型</button>
-            <div class="more-types" id="moreTypes" hidden></div>
           </section>
         </div>
 
@@ -338,6 +388,12 @@
     </div>
 
     <div class="scrim" id="scrim"></div>
+
+    <div class="modal add-modal" id="addPanel" role="dialog" aria-modal="true">
+      <div class="modal-head"><h2 id="addPanelTitle">添加题型</h2><button class="x" data-close-add>关闭</button></div>
+      <div class="add-body" id="addPanelBody"></div>
+      <div class="add-foot" id="addPanelFoot"></div>
+    </div>
 
     <div class="modal" id="settingsModal" role="dialog" aria-modal="true">
       <div class="modal-head"><h2>设置</h2><button class="x" data-close>关闭</button></div>
@@ -407,19 +463,34 @@
       ]
 
       const TYPES = [
-        { id: 'kousuan', label: '口算', desc: '每天都要练', def: 20, available: 120, cost: 0.02, common: true },
-        { id: 'tiankong', label: '填空', desc: '', def: 5, available: 90, cost: 0.06, common: true },
-        { id: 'word', label: '应用题', desc: '读题与列式', def: 3, available: 60, cost: 0.08, common: true },
-        { id: 'chushi', label: '竖式计算', desc: '', def: 6, available: 150, cost: 0.06 },
-        { id: 'tuoshi', label: '递等式计算', desc: '', def: 6, available: 120, cost: 0.06 },
-        { id: 'jianbian', label: '简便运算', desc: '', def: 4, available: 80, cost: 0.06 },
-        { id: 'compare', label: '比大小', desc: '', def: 4, available: 40, cost: 0.06 },
-        { id: 'geom', label: '图形与周长', desc: '每题占半页', def: 4, available: 30, cost: 0.2 },
-        { id: 'judge', label: '判断题', desc: '', def: 4, available: 50, cost: 0.06 },
-        { id: 'choice', label: '选择题', desc: '', def: 4, available: 50, cost: 0.08 },
-        { id: 'lieshi', label: '列式计算', desc: '', def: 4, available: 40, cost: 0.12 },
-        { id: 'advanced', label: '拓展题', desc: '每题留 3–4 行', def: 3, available: 20, cost: 0.2 },
+        { id: 'kousuan', group: '计算类', label: '口算', desc: '看算式直接写得数', def: 20, available: 120, cost: 0.02 },
+        { id: 'chushi', group: '计算类', label: '竖式计算', desc: '列竖式算乘除法', def: 6, available: 150, cost: 0.06, needs: ['用一位数乘', '用一位数除'], topic: '竖式计算的内容' },
+        { id: 'tuoshi', group: '计算类', label: '递等式计算', desc: '按顺序一步步算', def: 6, available: 120, cost: 0.06, needs: ['两步四则运算与应用题'], topic: '两步计算的内容' },
+        { id: 'jianbian', group: '计算类', label: '简便运算', desc: '找规律，把算式算得更快', def: 4, available: 80, cost: 0.06, needs: ['两步四则运算与应用题'], topic: '简便运算的内容' },
+        { id: 'tiankong', group: '概念类', label: '填空', desc: '补上缺的数字或单位', def: 5, available: 90, cost: 0.06 },
+        { id: 'judge', group: '概念类', label: '判断题', desc: '判断对错，并说明理由', def: 4, available: 50, cost: 0.06 },
+        { id: 'choice', group: '概念类', label: '选择题', desc: '从几个答案里选一个', def: 4, available: 50, cost: 0.08 },
+        { id: 'compare', group: '概念类', label: '比大小', desc: '在方框里填 >、< 或 =', def: 4, available: 40, cost: 0.06, needs: ['用一位数乘', '用一位数除'], topic: '比大小的内容' },
+        { id: 'geom', group: '图形与综合', label: '图形与周长', desc: '数图形，算周长', def: 4, available: 30, cost: 0.2, needs: ['三角形与四边形', '周长'], topic: '图形或周长的内容' },
+        { id: 'lieshi', group: '图形与综合', label: '列式计算', desc: '根据文字列算式', def: 4, available: 40, cost: 0.12, needs: ['两步四则运算与应用题', '用一位数乘', '用一位数除'], topic: '列式计算的内容' },
+        { id: 'advanced', group: '图形与综合', label: '拓展题', desc: '多一步的思考题，每题留 3–4 行', def: 3, available: 20, cost: 0.2, needs: ['年、月、日的秘密', '马拉松的路线设计'], topic: '拓展题的内容' },
+        { id: 'word', group: '应用', label: '应用题', desc: '读题、列式、写答句', def: 3, available: 60, cost: 0.08 },
       ]
+      const GROUPS = ['计算类', '概念类', '图形与综合', '应用']
+      const SHORT_UNIT = {
+        '两步四则运算与应用题': '两步四则',
+        '用一位数乘': '乘法',
+        '用一位数除': '除法',
+        '三角形与四边形': '图形',
+        '周长': '周长',
+        '年、月、日的秘密': '年月日',
+        '马拉松的路线设计': '路线设计',
+      }
+      const MIN_PER_Q = {
+        kousuan: 0.2, chushi: 1.5, tuoshi: 1.5, jianbian: 1.2, tiankong: 1, judge: 1,
+        choice: 1, compare: 0.8, geom: 3, lieshi: 2, advanced: 4, word: 2,
+      }
+      TYPES.forEach((t) => (t.min = MIN_PER_Q[t.id] || 1))
 
       const PRESETS = [
         { id: 'daily', name: '每日一练', hint: '约 2 页', values: { kousuan: 20, tiankong: 5, word: 3 } },
@@ -436,7 +507,11 @@
         preset: 'daily',
         counts: {},
         added: new Set(),
-        moreOpen: false,
+        mode: 'A',
+        panelOpen: false,
+        draft: new Set(),
+        search: '',
+        adjustId: null,
         built: false,
         loading: false,
         result: null,
@@ -466,14 +541,15 @@
         return Math.max(1, Math.round(p))
       }
       function minutes() {
-        const n = total()
-        return n === 0 ? 0 : Math.max(3, Math.round(n * 0.65 + 3))
+        if (total() === 0) return 0
+        const sum = TYPES.filter((t) => countOn(t.id)).reduce((s, t) => s + state.counts[t.id] * t.min, 0)
+        return Math.round(5 + sum)
       }
 
       const stage = document.getElementById('stage')
       const unitsEl = document.getElementById('units')
       const typesEl = document.getElementById('types')
-      const moreEl = document.getElementById('moreTypes')
+      const addPanel = document.getElementById('addPanel')
       const capacityHint = document.getElementById('capacityHint')
       const buildBtn = document.getElementById('buildBtn')
       const statusEl = document.getElementById('status')
@@ -536,46 +612,116 @@
         render()
       }
 
-      function typeRow(t, showAdd) {
+      function availability(t) {
+        if (!t.needs) return { ok: true, note: '' }
+        const supported = t.needs.filter((u) => state.units.has(u))
+        if (supported.length === 0) {
+          return { ok: false, reason: state.units.size === 0 ? '先选单元才能出题' : `所选的单元里没有${t.topic}` }
+        }
+        if (supported.length < t.needs.length) {
+          return { ok: true, note: `只在「${supported.map((u) => SHORT_UNIT[u] || u).join('、')}」单元有` }
+        }
+        return { ok: true, note: '' }
+      }
+
+      function removeType(id) {
+        state.counts[id] = 0
+        state.added.delete(id)
+        if (state.adjustId === id) state.adjustId = null
+        state.preset = null
+        state.built = false
+        state.result = null
+        render()
+      }
+
+      function selectedRow(t) {
+        const wrap = document.createElement('div')
+        wrap.className = 'type-wrap'
         const row = document.createElement('div')
-        row.className = 'type' + (countOn(t.id) ? '' : ' off')
+        row.className = 'type'
         const name = document.createElement('span')
         name.className = 'name'
         name.textContent = t.label
-        const desc = document.createElement('span')
-        desc.className = 'desc'
-        desc.textContent = countOn(t.id) && t.desc ? t.desc : ''
         const spacer = document.createElement('span')
         spacer.className = 'spacer'
-        row.append(name, desc, spacer)
-        if (countOn(t.id) && state.counts[t.id] > 0) {
-          row.appendChild(stepper(t.id))
-        } else if (showAdd) {
-          const add = document.createElement('button')
-          add.className = 'add'
-          add.textContent = '＋ ' + t.label
-          add.onclick = () => {
-            state.counts[t.id] = t.def
-            state.added.add(t.id)
-            state.preset = null
-            state.built = false
-            render()
-          }
-          row.appendChild(add)
-        } else {
-          row.appendChild(stepper(t.id))
+        const rm = document.createElement('button')
+        rm.className = 'remove'
+        rm.textContent = '×'
+        rm.title = `移除${t.label}`
+        rm.onclick = () => removeType(t.id)
+        row.append(name, spacer, stepper(t.id), rm)
+        wrap.appendChild(row)
+        if (state.counts[t.id] > t.available) {
+          const hint = document.createElement('div')
+          hint.className = 'row-hint'
+          hint.textContent = `约能出 ${t.available} 道不重复，超出的部分可能和旧卷重复`
+          wrap.appendChild(hint)
         }
-        return row
+        return wrap
+      }
+
+      function addButton() {
+        const b = document.createElement('button')
+        b.className = 'add-main'
+        b.textContent = '＋ 添加题型'
+        b.onclick = openAddPanel
+        return b
       }
 
       function renderTypes() {
         typesEl.innerHTML = ''
-        TYPES.filter((t) => t.common).forEach((t) => typesEl.appendChild(typeRow(t, false)))
-        moreEl.innerHTML = ''
-        TYPES.filter((t) => !t.common).forEach((t) => moreEl.appendChild(typeRow(t, true)))
-        moreEl.hidden = !state.moreOpen
-        document.getElementById('moreBtn').textContent = state.moreOpen ? '收起更多题型' : '＋ 更多题型'
-        document.getElementById('moreBtn').onclick = () => { state.moreOpen = !state.moreOpen; render() }
+        const selected = TYPES.filter((t) => countOn(t.id))
+        if (state.mode === 'A') {
+          if (!selected.length) {
+            const tip = document.createElement('div')
+            tip.className = 'type-empty'
+            tip.textContent = '还没有选题型。点下面“添加题型”，勾选后点完成。'
+            typesEl.appendChild(tip)
+          }
+          selected.forEach((t) => typesEl.appendChild(selectedRow(t)))
+          typesEl.appendChild(addButton())
+          return
+        }
+
+        const chips = document.createElement('div')
+        chips.className = 'type-chips'
+        if (!selected.length) {
+          const tip = document.createElement('div')
+          tip.className = 'type-empty'
+          tip.textContent = '还没有选题型。点下面“添加题型”，点一项就加入。'
+          typesEl.appendChild(tip)
+        }
+        selected.forEach((t) => {
+          const chip = document.createElement('button')
+          chip.className = 'type-chip'
+          chip.setAttribute('aria-pressed', state.adjustId === t.id ? 'true' : 'false')
+          chip.innerHTML = `${t.label} <b>${state.counts[t.id]}</b>`
+          chip.onclick = () => { state.adjustId = state.adjustId === t.id ? null : t.id; render() }
+          chips.appendChild(chip)
+        })
+        typesEl.appendChild(chips)
+
+        if (state.adjustId) {
+          const t = TYPES.find((x) => x.id === state.adjustId)
+          if (!t || !countOn(t.id)) {
+            state.adjustId = null
+          } else {
+            const box = document.createElement('div')
+            box.className = 'chip-adjust'
+            const label = document.createElement('span')
+            label.textContent = `「${t.label}」每份`
+            const spacer = document.createElement('span')
+            spacer.className = 'spacer'
+            const rm = document.createElement('button')
+            rm.className = 'remove'
+            rm.textContent = '×'
+            rm.title = `移除${t.label}`
+            rm.onclick = () => removeType(t.id)
+            box.append(label, stepper(t.id), spacer, rm)
+            typesEl.appendChild(box)
+          }
+        }
+        typesEl.appendChild(addButton())
       }
 
       function renderPresets() {
@@ -603,6 +749,161 @@
         })
       }
 
+      function openAddPanel() {
+        state.panelOpen = true
+        state.draft = new Set(state.added)
+        state.search = ''
+        addPanel.classList.add('open')
+        scrim.classList.add('open')
+        renderAddPanel()
+        const input = addPanel.querySelector('.add-search')
+        if (input) input.focus()
+      }
+
+      function closeAddPanel(commit) {
+        if (commit && state.mode === 'A') {
+          TYPES.forEach((t) => {
+            const wasOn = state.added.has(t.id)
+            const nowOn = state.draft.has(t.id)
+            if (!wasOn && nowOn) state.counts[t.id] = t.def
+            if (wasOn && !nowOn) state.counts[t.id] = 0
+          })
+          state.added = new Set(state.draft)
+          state.preset = null
+          state.built = false
+          state.result = null
+        }
+        state.panelOpen = false
+        addPanel.classList.remove('open')
+        scrim.classList.remove('open')
+        render()
+      }
+
+      function currentSel() {
+        return state.mode === 'A' ? state.draft : state.added
+      }
+
+      function toggleDraft(t) {
+        if (state.mode === 'A') {
+          if (state.draft.has(t.id)) state.draft.delete(t.id)
+          else state.draft.add(t.id)
+        } else {
+          if (!availability(t).ok) return
+          if (countOn(t.id)) {
+            state.counts[t.id] = 0
+            state.added.delete(t.id)
+            if (state.adjustId === t.id) state.adjustId = null
+          } else {
+            state.counts[t.id] = t.def
+            state.added.add(t.id)
+          }
+          state.preset = null
+          state.built = false
+          state.result = null
+        }
+        render()
+      }
+
+      function renderAddPanel() {
+        const body = document.getElementById('addPanelBody')
+        const foot = document.getElementById('addPanelFoot')
+        document.getElementById('addPanelTitle').textContent = '添加题型'
+        body.innerHTML = ''
+        if (state.mode === 'B') {
+          const input = document.createElement('input')
+          input.className = 'add-search'
+          input.placeholder = '搜索题型，比如“竖式”'
+          input.value = state.search
+          input.oninput = () => {
+            state.search = input.value
+            renderAddPanel()
+            const again = addPanel.querySelector('.add-search')
+            if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length) }
+          }
+          body.appendChild(input)
+        }
+        const q = state.search.trim()
+        GROUPS.forEach((group) => {
+          const items = TYPES.filter((t) => t.group === group && (!q || t.label.includes(q) || t.desc.includes(q)))
+          if (!items.length) return
+          const title = document.createElement('div')
+          title.className = 'group-title'
+          title.textContent = group
+          body.appendChild(title)
+          items.forEach((t) => {
+            const av = availability(t)
+            const on = currentSel().has(t.id)
+            const row = document.createElement('div')
+            row.className = 'add-item' + (av.ok ? '' : ' disabled')
+            const check = document.createElement('span')
+            check.className = 'check' + (on ? ' on' : '')
+            check.textContent = on ? '✓' : ''
+            const txt = document.createElement('div')
+            txt.className = 'txt'
+            const name = document.createElement('b')
+            name.textContent = t.label
+            const line = document.createElement('small')
+            if (!av.ok) {
+              line.className = 'reason'
+              line.textContent = av.reason
+            } else {
+              line.textContent = t.desc
+            }
+            txt.append(name, line)
+            if (av.ok && av.note) {
+              const note = document.createElement('small')
+              note.style.color = '#8a6a00'
+              note.textContent = av.note
+              txt.appendChild(note)
+            }
+            const def = document.createElement('span')
+            def.className = 'def'
+            def.textContent = av.ok ? `默认 ${t.def} 题` : ''
+            row.append(check, txt, def)
+            if (av.ok) row.onclick = () => toggleDraft(t)
+            body.appendChild(row)
+          })
+        })
+        if (!body.querySelector('.add-item')) {
+          const empty = document.createElement('div')
+          empty.className = 'type-empty'
+          empty.textContent = '没有找到这个题型，换个词试试。'
+          body.appendChild(empty)
+        }
+
+        foot.innerHTML = ''
+        const count = document.createElement('span')
+        count.className = 'count'
+        count.textContent = `已选 ${currentSel().size} 项`
+        foot.appendChild(count)
+        const spacer = document.createElement('span')
+        spacer.className = 'spacer'
+        foot.appendChild(spacer)
+        if (state.mode === 'A') {
+          const cancel = document.createElement('button')
+          cancel.className = 'secondary'
+          cancel.textContent = '取消'
+          cancel.onclick = () => closeAddPanel(false)
+          const done = document.createElement('button')
+          done.className = 'primary'
+          done.textContent = '完成'
+          done.onclick = () => closeAddPanel(true)
+          foot.append(cancel, done)
+        } else {
+          const note = document.createElement('span')
+          note.className = 'readonly'
+          note.textContent = '点一项立即加入，点空白处关闭'
+          foot.appendChild(note)
+          const close = document.createElement('button')
+          close.className = 'secondary'
+          close.textContent = '关闭'
+          close.onclick = () => closeAddPanel(false)
+          foot.appendChild(close)
+        }
+        const input = addPanel.querySelector('.add-search')
+        if (input && document.activeElement !== input) input.focus()
+      }
+
       function renderSummary() {
         document.getElementById('total').textContent = total()
         document.getElementById('pages').textContent = state.built && state.result ? state.result.pages : roughPages()
@@ -614,9 +915,9 @@
         buildBtn.textContent = state.loading ? '正在排版…' : state.built ? '重新出卷' : '出卷'
         buildBtn.className = 'primary' + (state.loading ? ' loading' : '')
 
-        // 超量提示：只对常用、且超过可用量的题型出现
+        // 超量提示：A 已在已选行下方就近提示，这里只服务 B 的标签态
         const over = TYPES.filter((t) => countOn(t.id) && state.counts[t.id] > t.available)
-        if (over.length) {
+        if (over.length && state.mode !== 'A') {
           const t = over[0]
           const expected = Math.max(1, Math.round((state.counts[t.id] / t.available - 1) * state.counts[t.id] * 0.5))
           capacityHint.textContent = `${t.label}：目前大约能出不重复的 ${t.available} 道，设到 ${state.counts[t.id]} 道时，后一卷约有 ${expected} 道会和以前的卷子重复`
@@ -700,8 +1001,16 @@
         document.getElementById('pageLabel').textContent = `第 1 / ${state.result.pages} 页`
       }
 
+      function renderMode() {
+        document.querySelectorAll('#modeSwitch button').forEach((b) => {
+          b.setAttribute('aria-pressed', b.dataset.mode === state.mode ? 'true' : 'false')
+        })
+      }
+
       function render() {
+        renderMode()
         renderUnits(); renderLevels(); renderPresets(); renderTypes(); renderSummary(); renderStage(); renderStatus(); renderResult()
+        if (state.panelOpen) renderAddPanel()
       }
 
       // ---------------- 出卷模拟 ----------------
@@ -743,6 +1052,10 @@
       const historyDrawer = document.getElementById('historyDrawer')
 
       function closeAll() {
+        if (state.panelOpen) {
+          closeAddPanel(false)
+          return
+        }
         settingsModal.classList.remove('open')
         historyDrawer.classList.remove('open')
         scrim.classList.remove('open')
@@ -756,6 +1069,27 @@
       scrim.onclick = closeAll
       document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeAll))
       document.querySelectorAll('[data-close-drawer]').forEach((b) => (b.onclick = closeAll))
+      document.querySelectorAll('[data-close-add]').forEach((b) => (b.onclick = () => closeAddPanel(false)))
+
+      document.querySelectorAll('#modeSwitch button').forEach((b) => {
+        b.onclick = () => {
+          if (state.mode === b.dataset.mode) return
+          state.mode = b.dataset.mode
+          state.adjustId = null
+          if (state.panelOpen) closeAddPanel(false)
+          state.preset = null
+          state.built = false
+          state.result = null
+          render()
+        }
+      })
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (state.panelOpen) closeAddPanel(false)
+          else closeAll()
+        }
+      })
 
       const toast = document.getElementById('toast')
       let toastTimer = 0
@@ -807,10 +1141,26 @@
           ]
           renderHistory(); historyDrawer.classList.add('open'); scrim.classList.add('open')
         } else if (initialView === 'counts') {
-          state.moreOpen = true
           state.counts.kousuan = 130
           state.added.add('kousuan')
           state.preset = null
+        } else if (initialView === 'addA-open') {
+          state.mode = 'A'
+          state.units = new Set(['两步四则运算与应用题', '用一位数乘'])
+          state.draft = new Set(state.added)
+          state.panelOpen = true
+        } else if (initialView === 'addA-collapsed') {
+          state.mode = 'A'
+          state.counts.kousuan = 130
+          state.added.add('kousuan')
+          state.preset = null
+        } else if (initialView === 'addB-chips') {
+          state.mode = 'B'
+          state.adjustId = null
+        } else if (initialView === 'addB-panel') {
+          state.mode = 'B'
+          state.units = new Set(['两步四则运算与应用题', '用一位数乘'])
+          state.panelOpen = true
         } else if (initialView === 'shortage') {
           state.counts.kousuan = 50
           state.counts.tiankong = 5
@@ -818,7 +1168,7 @@
           state.added = new Set(['kousuan', 'tiankong', 'word'])
           state.preset = null
           state.built = true
-          state.result = { count: 42, pages: roughPages(), minutes: Math.round(42 * 0.65 + 3), path: '文稿/数学练习/三上-每日一练-20261105.pdf', title: '全部单元 · 自选题量' }
+          state.result = { count: 42, pages: roughPages(), minutes: Math.round(5 + 42 * 0.5), path: '文稿/数学练习/三上-每日一练-20261105.pdf', title: '全部单元 · 自选题量' }
           state.status = { kind: 'warn', text: '你设了 58 题，可用的不重复题目已经出完，本卷实际 42 题。', action: '知道了' }
         } else if (initialView === 'loading') {
           state.loading = true
@@ -829,6 +1179,11 @@
 
       applyInitialView()
       render()
+      if (state.panelOpen) {
+        addPanel.classList.add('open')
+        scrim.classList.add('open')
+        renderAddPanel()
+      }
       if (initialView === 'loading') {
         setTimeout(() => { state.loading = false; state.built = true; state.result = { count: 28, pages: 2, minutes: 20, path: '文稿/数学练习/三上-每日一练-20261105.pdf', title: '全部单元 · 每日一练' }; render() }, 3000)
       }
