@@ -240,6 +240,7 @@ const divisorOf = (value: number, rng: Rng): number | null => {
 const U1 = ['3A-U1', '3A-U9']
 const U2 = ['3A-U2', '3A-U9']
 const U4 = ['3A-U4', '3A-U9']
+const U6 = ['3A-U6', '3A-U9']
 
 const L1: Level[] = ['L1']
 const L2: Level[] = ['L2']
@@ -370,6 +371,20 @@ const dBbeiPlus = (rng: Rng): LieParams | null =>
     return a * b <= 200 ? { a, b, c: randInt(rng, 2, Math.min(200, 999 - a * b)) } : null
   })
 
+// 周长（U6）：长、宽均为整厘米，周长 =（长+宽）×2；正方形 = 边长×4
+const dRectPerimeter = (rng: Rng): LieParams | null =>
+  retry(() => {
+    const a = randInt(rng, 8, 40)
+    const b = randInt(rng, 2, a - 1)
+    return (a + b) * 2 <= 999 ? { a, b } : null
+  })
+
+const dSquarePerimeter = (rng: Rng): LieParams | null =>
+  retry(() => {
+    const a = randInt(rng, 3, 40)
+    return a * 4 <= 999 ? { a } : null
+  })
+
 // L2：两步含括号
 const dSumTimes = (rng: Rng): LieParams | null =>
   retry(() => {
@@ -385,6 +400,31 @@ const dDiffTimes = (rng: Rng): LieParams | null =>
     const b = randInt(rng, 2, a - 2)
     const c = randInt(rng, 2, 9)
     return (a - b) * c <= 999 ? { a, b, c } : null
+  })
+
+// U2 用一位数乘：先合并份数（b±c 为一位数），再用单价/每份数乘
+const dRowsSumTimes = (rng: Rng): LieParams | null =>
+  retry(() => {
+    const a = randInt(rng, 6, 20)
+    const b = randInt(rng, 1, 4)
+    const c = randInt(rng, 1, 4)
+    return b + c <= 9 && a * (b + c) <= 999 ? { a, b, c } : null
+  })
+
+const dPriceMoreTimes = (rng: Rng): LieParams | null =>
+  retry(() => {
+    const a = randInt(rng, 12, 99)
+    const b = randInt(rng, 2, 4)
+    const c = randInt(rng, 1, 4)
+    return b + c <= 9 && a * (b + c) <= 999 ? { a, b, c } : null
+  })
+
+const dBoxesLeftTimes = (rng: Rng): LieParams | null =>
+  retry(() => {
+    const a = randInt(rng, 12, 60)
+    const b = randInt(rng, 3, 9)
+    const c = randInt(rng, 1, b - 2)
+    return b - c >= 2 && a * (b - c) <= 999 ? { a, b, c } : null
   })
 
 const dSumDiv = (rng: Rng): LieParams | null =>
@@ -828,6 +868,16 @@ export const LIE_TEMPLATES: LieTemplate[] = [
     stem: (p) => `${p.a}的${p.b}倍与${p.c}的和是多少？`,
     draw: dBbeiPlus,
   },
+  {
+    id: 'l1-square-perimeter',
+    label: '正方形周长（边长乘4）',
+    levels: L1,
+    shape: 'a*4',
+    params: ['a'],
+    units: U6,
+    stem: (p) => `边长${p.a}厘米的正方形，周长是多少厘米？`,
+    draw: dSquarePerimeter,
+  },
 
   // ---- L2：两步含括号 ----
   {
@@ -937,6 +987,56 @@ export const LIE_TEMPLATES: LieTemplate[] = [
     params: ['a', 'b', 'c'],
     stem: (p) => `${p.a}与${p.b}的差里面有几个${p.c}？`,
     draw: dDiffDiv,
+  },
+  {
+    id: 'l2-rows-sum-times',
+    label: '每排人数乘（男生排数+女生排数）',
+    levels: L2,
+    shape: 'a*(b+c)',
+    params: ['a', 'b', 'c'],
+    units: U2,
+    stem: (p) => `每排${p.a}人，男生站${p.b}排，女生站${p.c}排，一共有多少人？`,
+    draw: dRowsSumTimes,
+  },
+  {
+    id: 'l2-price-more-times',
+    label: '单价乘（先买个数+再买个数）',
+    levels: L2,
+    shape: 'a*(b+c)',
+    params: ['a', 'b', 'c'],
+    units: U2,
+    stem: (p) => `每个${p.a}元，买${p.b}个，再买${p.c}个，一共要多少元？`,
+    draw: dPriceMoreTimes,
+  },
+  {
+    id: 'l2-boxes-left-times',
+    label: '每盒个数乘（买了盒数-送出盒数）',
+    levels: L2,
+    shape: 'a*(b-c)',
+    params: ['a', 'b', 'c'],
+    units: U2,
+    stem: (p) => `每盒有${p.a}个鸡蛋，买了${p.b}盒，送给邻居${p.c}盒，还剩多少个鸡蛋？`,
+    draw: dBoxesLeftTimes,
+  },
+  {
+    id: 'l2-rect-perimeter',
+    label: '长方形周长（长、宽的和乘2）',
+    levels: L2,
+    shape: '(a+b)*2',
+    params: ['a', 'b'],
+    units: U6,
+    stem: (p) => `长${p.a}厘米、宽${p.b}厘米的长方形，周长是多少厘米？`,
+    draw: dRectPerimeter,
+  },
+  {
+    id: 'l2-rect-perimeter-alt',
+    label: '长方形周长（另一种问法）',
+    levels: L2,
+    shape: '(a+b)*2',
+    params: ['a', 'b'],
+    units: U6,
+    stem: (p) => `一个长方形的长是${p.a}厘米，宽是${p.b}厘米，它的周长是多少厘米？`,
+    draw: dRectPerimeter,
   },
 
   // ---- L3：三步，或“相差/多/少”语义复合 ----
@@ -1215,6 +1315,7 @@ const UNIT_KP: Record<string, string> = {
   '3A-U1': '两步四则运算',
   '3A-U2': '用一位数乘',
   '3A-U4': '用一位数除',
+  '3A-U6': '周长',
   '3A-U9': '四则运算复习',
 }
 
@@ -1222,6 +1323,7 @@ const UNIT_NAME: Record<string, string> = {
   '3A-U1': '两步四则运算与应用题',
   '3A-U2': '用一位数乘',
   '3A-U4': '用一位数除',
+  '3A-U6': '周长',
   '3A-U9': '复习',
 }
 

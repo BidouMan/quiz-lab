@@ -116,16 +116,47 @@ test('三档各 20 题：句式 ≥8 种、同句式 ≤2 次、双路径复核�
   }
 })
 
-test('单元映射：U3 不适用，U2 仅纯乘法结构', () => {
+test('单元映射：U3 不适用，U2 纯乘法与 L2 括号句式都可用', () => {
   const u3 = generateLie({ grade: '3A', unitIds: ['3A-U3'], level: 'L2', count: 20 })
   assert.equal(u3.questions.length, 0)
   assert.ok(u3.notes[0]?.includes('没有可用运算结构'))
 
   const u2l2 = generateLie({ grade: '3A', unitIds: ['3A-U2'], level: 'L2', count: 20 })
-  assert.equal(u2l2.questions.length, 0)
+  assert.equal(u2l2.questions.length, 6, 'U2 L2 三种括号句式，各出 2 题')
+  for (const question of u2l2.questions) {
+    assert.ok(question.expression.includes('('), `U2 L2 必须含括号：${question.expression}`)
+    assert.equal(question.unitId, '3A-U2')
+  }
+  assert.deepEqual(validateLiePaper(u2l2.questions), [])
 
   const u2l1 = generateLie({ grade: '3A', unitIds: ['3A-U2'], level: 'L1', count: 20 })
   assert.equal(u2l1.questions.length, 6)
+})
+
+test('U6 周长列式：长方形（长+宽）×2 与正方形 边长×4', () => {
+  const l2 = generateLie({ grade: '3A', unitIds: ['3A-U6'], level: 'L2', count: 20 })
+  assert.equal(l2.questions.length, 4, 'U6 L2 两种问法，各出 2 题')
+  for (const question of l2.questions) {
+    assert.equal(question.unitId, '3A-U6')
+    assert.equal(question.kpName, '周长')
+    assert.ok(question.expression.endsWith(')×2'), `长方形周长应为（长+宽）×2：${question.expression}`)
+  }
+  assert.deepEqual(validateLiePaper(l2.questions), [])
+
+  const sample = l2.questions.find((question) => question.params.a === 12 && question.params.b === 5)
+  // 12、5 不保证被抽到；直接按目标算式复核同结构记录
+  const target = recordOf('l2-rect-perimeter', { a: 12, b: 5 })
+  assert.equal(target.expression, '(12+5)×2')
+  assert.equal(target.answer, '34')
+  assert.deepEqual(verifyLieRecord(target), [])
+  assert.ok(sample === undefined || sample.expression === '(12+5)×2')
+
+  const l1 = generateLie({ grade: '3A', unitIds: ['3A-U6'], level: 'L1', count: 20 })
+  assert.equal(l1.questions.length, 2)
+  for (const question of l1.questions) {
+    assert.ok(question.expression.endsWith('×4'), `正方形周长应为 边长×4：${question.expression}`)
+  }
+  assert.deepEqual(validateLiePaper(l1.questions), [])
 })
 
 test('跨卷同句式同结构不再重复（记忆池有记录时换题）', () => {
