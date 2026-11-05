@@ -26,6 +26,8 @@
 #let sec-above = 4mm
 #let sec-below = 2mm // 默认与 compact 统一为 pad 方案、统一上下间距
 #let kpad = if compact { 1.95mm } else { 0.8mm } // 口算逐题块内边距，保证行间墨迹空隙 ≥4mm
+// 比大小行内上下留白：紧凑版行距目标 10–11mm（原 5.8mm 过挤），非紧凑版同步保持 ~10mm
+#let cmp-pad = if compact { 2.4mm } else { 1.4mm }
 #let t-head = if compact { body-pt * 0.55 * 1mm } else { 8mm }
 #let t-gap1 = if compact { 2.5mm } else { 3.5mm }
 #let t-gap2 = if compact { 5mm } else { 6.5mm }
@@ -113,9 +115,12 @@
     }
   }
   #for l in spec.at("labels", default: ()) {
+    let anchor = l.at("anchor", default: "left")
+    let pos = if anchor == "center" { top + center } else if anchor == "right" { top + right } else { top + left }
+    let shift = if anchor == "center" { spec.w / 2 } else if anchor == "right" { spec.w } else { 0 }
     place(
-      top + left,
-      dx: l.x * 1mm,
+      pos,
+      dx: (l.x - shift) * 1mm,
       dy: l.y * 1mm,
       text(
         size: l.at("size", default: 9) * 1pt,
@@ -223,14 +228,16 @@
       body
     }
   } else if it.kind == "compare" {
-    grid(
-      columns: (auto, auto, auto),
-      column-gutter: 2.4mm,
-      align: horizon,
-      [#eq(it.pre, display: disp)],
-      box(width: 4.2mm, height: 4.2mm, radius: 50%, stroke: 0.5pt),
-      eq(it.post, display: disp),
-    )
+    pad(y: cmp-pad)[
+      #grid(
+        columns: (auto, auto, auto),
+        column-gutter: 2.4mm,
+        align: horizon,
+        [#eq(it.pre, display: disp)],
+        box(width: 4.2mm, height: 4.2mm, radius: 50%, stroke: 0.5pt),
+        eq(it.post, display: disp),
+      )
+    ]
   } else if it.kind == "geom" {
     [
       #grid(
@@ -238,7 +245,7 @@
         column-gutter: 4mm,
         align: horizon,
         [#lead #it.text],
-        [#geom-fig(it.fig)],
+        [#if type(it.fig) == str { geom-fig(it.fig) } else { draw-fig(it.fig) }],
       )
       #v(1mm)
       #block(height: it.blank * 1mm)

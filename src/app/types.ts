@@ -9,6 +9,7 @@ export type AppType =
   | 'tiankong'
   | 'compare'
   | 'geom'
+  | 'angle'
   | 'word'
 
 export type Grade = '3A' | '3B'
@@ -19,8 +20,18 @@ export interface AppConfig {
   unitIds: string[]
   level: Level
   types: AppType[]
+  /**
+   * 练习模式逐题型题量：0 或留空 = 不出该题型。
+   * 旧配置没有 counts 时由 buildPaper 按 count 做兼容分配。
+   */
+  counts?: Partial<Record<AppType, number>>
   count: number
   pages: number
+  /**
+   * 跨卷去重语义位：默认 true（全部题型统一去重）。
+   * 暂不暴露 UI；将来做“某类题强化练习”时可按题型覆盖，关掉后不读也不写记忆。
+   */
+  dedup?: boolean
   /** 留空则自动探测：/opt/homebrew/bin/typst → /usr/local/bin/typst → PATH */
   typstPath: string
 }
@@ -32,8 +43,34 @@ export const DEFAULT_CONFIG: AppConfig = {
   types: ['kousuan', 'chushi', 'tuoshi'],
   count: 20,
   pages: 1,
+  dedup: true,
   typstPath: '',
 }
+
+/** 单题型题量硬上限：界面、引擎与配置迁移共用同一口径 */
+export const MAX_TYPE_COUNT = 200
+
+/** 把任意来源的题量夹到 0–200（0 表示不出该题型） */
+export function clampTypeCount(raw: unknown): number {
+  const value = Math.round(Number(raw) || 0)
+  return Math.min(MAX_TYPE_COUNT, Math.max(0, value))
+}
+
+/** 练习模式首启默认题量（逐题型，未列出的题型为 0） */
+export const PRACTICE_DEFAULT_COUNTS: Record<AppType, number> = {
+  kousuan: 20,
+  chushi: 6,
+  tuoshi: 6,
+  jianbian: 0,
+  tiankong: 8,
+  compare: 4,
+  geom: 4,
+  angle: 4,
+  word: 6,
+}
+
+/** 练习模式首启默认勾选题型 */
+export const PRACTICE_DEFAULT_TYPES: AppType[] = ['kousuan', 'tiankong', 'word']
 
 export interface TypstInfo {
   path: string
@@ -75,6 +112,13 @@ export type FillPart = { t: string } | { m: string } | { b: number }
 /** 题目渲染类型：填空在模板内部叫 fill，但分区仍叫 tiankong */
 export type TypstItemKind = AppType | 'fill'
 
+/** 规则生成题（比大小 / 图形与周长）的复核信息：答案与独立重算参数 */
+export interface ItemAudit {
+  form: string
+  answer: string
+  params: Record<string, number | string>
+}
+
 export interface TypstItem {
   id: string
   kind: TypstItemKind
@@ -92,6 +136,8 @@ export interface TypstItem {
   answers?: string[]
   /** 应用题的完整解答步骤（逐行） */
   solution?: string[]
+  /** 比大小 / 图形题的复核字段（模板不渲染） */
+  audit?: ItemAudit
 }
 
 export interface TypstSection {
@@ -134,12 +180,26 @@ export interface BuildStats {
   legacy: number
   /** 同卷去重命中（候选被丢弃）的题量 */
   duplicates: number
+  /** 记忆池轮转后跨卷复用的题量（最近 RECENT_WINDOW 卷都出过后按 LRU 复用） */
+  crossReused: number
   /** 本次用到的知识点名称（去重） */
   kpNames: string[]
+  /** 各题型的设定题量 / 实出题量 / 复用题量 */
+  typeStats: TypeQuotaStats[]
   /** 实际覆盖的单元名称 */
   unitNames: string[]
   /** 本次出卷的独立复核结果 */
   runtimeCheck: RuntimeCheckStats
+}
+
+export interface TypeQuotaStats {
+  type: AppType
+  /** 练习模式下为该题型设定值；兼容模式为分配值 */
+  requested: number
+  /** 实际写入卷面的题量 */
+  actual: number
+  /** 其中骨架/跨卷复用题量 */
+  reused: number
 }
 
 export interface BuildResult {
@@ -153,4 +213,6 @@ export interface BuildResult {
   /** 兜底 / 跳过 / 生成失败等需要向用户解释的说明 */
   notes: string[]
   stats: BuildStats
+  /** 排版回填的页数（未排版时为粗估） */
+  pageEstimate?: number
 }

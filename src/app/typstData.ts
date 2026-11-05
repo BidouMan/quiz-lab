@@ -9,17 +9,19 @@ export const TYPE_ORDER: AppType[] = [
   'tiankong',
   'compare',
   'geom',
+  'angle',
   'word',
 ]
 
 const TYPE_LABELS: Record<AppType, string> = {
   kousuan: '口算',
   chushi: '竖式计算',
-  tuoshi: '脱式计算',
+  tuoshi: '递等式计算',
   jianbian: '简便运算',
   tiankong: '填空',
   compare: '比大小',
   geom: '图形与周长',
+  angle: '角与图形计数',
   word: '应用题',
 }
 
