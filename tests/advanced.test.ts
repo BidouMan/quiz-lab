@@ -539,6 +539,32 @@ test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、
   assert.deepEqual(violations.slice(0, 5), [], `摆长方形问题 ${violations.length} 条`)
 })
 
+test('P1 周期：3000 题周期串无重复符号、答案最高占比 <35%、题干要求写算式', () => {
+  const category = advancedCategory('adv-cycle')
+  assert.ok(category)
+  // 反例：旧串“○△○□”里 ○ 出现两次，必须被 invariant 拒掉
+  assert.ok(category.invariant({ pattern: '○△○□', kind: '图形', n: 41 }))
+  const rng = createRng(20261109)
+  let scanned = 0
+  const answerCounts = new Map<string, number>()
+  const duplicatePatterns: string[] = []
+  for (let index = 0; index < 3000; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    scanned++
+    const pattern = String(params.pattern)
+    if (new Set(pattern).size !== pattern.length) duplicatePatterns.push(pattern)
+    assert.ok(category.stem(params).includes('（写出算式和答句）'), `周期题干缺少作答要求`)
+    const answer = category.build(params).answer
+    answerCounts.set(answer, (answerCounts.get(answer) ?? 0) + 1)
+    assert.equal(answer, category.recompute(params))
+  }
+  const maxShare = Math.max(...[...answerCounts.values()]) / scanned
+  assert.ok(scanned >= 2900, `周期扫描量只有 ${scanned}`)
+  assert.deepEqual(duplicatePatterns, [], `仍有重复符号周期串：${duplicatePatterns.slice(0, 3).join('、')}`)
+  assert.ok(maxShare < 0.35, `最高答案占比 ${(maxShare * 100).toFixed(1)}%，未降到 35% 以下`)
+})
+
 test('蒙对收紧：星期几题干要求写算式和答句', () => {
   const category = advancedCategory('adv-weekday')
   assert.ok(category)

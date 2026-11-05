@@ -203,12 +203,13 @@ export function evalArithmetic(source: string): number {
 
 const dCycle = (rng: Rng): AdvParams | null =>
   retry(() => {
+    // 每个周期串里的符号互不重复，避免“直接猜出现两次的那个符号”就有一半概率
     const patterns = [
       { pattern: '△○□', kind: '图形' },
-      { pattern: '○△○□', kind: '图形' },
+      { pattern: '○△□☆', kind: '图形' },
       { pattern: '红黄蓝', kind: '颜色' },
       { pattern: '红黄蓝绿', kind: '颜色' },
-      { pattern: 'ABCD', kind: '字母' },
+      { pattern: '☆○△□', kind: '图形' },
     ]
     const item = pick(rng, patterns)
     return { pattern: item.pattern, kind: item.kind, n: randInt(rng, 10, 60) }
@@ -221,11 +222,12 @@ const cycle: AdvancedCategory = {
   units: ['3A-U4'],
   primaryKp: '3A-DIV-REMAINDER',
   kpKeys: ['3A-DIV-REMAINDER', '3A-PATTERN'],
-  sample: '按“△○□……”重复排列，第17个图形是什么？',
-  pool: '5 种周期串 × 第 10–60 个 ≈ 255',
+  sample: '按“△○□……”重复排列，第17个图形是什么？（写出算式和答句）',
+  pool: '5 种周期串（符号互不重复）× 第 10–60 个 ≈ 255',
   workLines: 3,
   draw: dCycle,
-  stem: (p) => `按“${str(p, 'pattern')}……”这样的顺序重复排列，第${num(p, 'n')}个${str(p, 'kind')}是什么？`,
+  stem: (p) =>
+    `按“${str(p, 'pattern')}……”这样的顺序重复排列，第${num(p, 'n')}个${str(p, 'kind')}是什么？（写出算式和答句）`,
   build: (p) => {
     const pattern = str(p, 'pattern')
     const n = num(p, 'n')
@@ -265,6 +267,7 @@ const cycle: AdvancedCategory = {
     const pattern = str(p, 'pattern')
     const n = num(p, 'n')
     if (pattern.length < 3) return '周期串少于 3 个'
+    if (new Set(pattern).size !== pattern.length) return '周期串里有重复符号，答案可以靠猜'
     if (n < 1 || n > 60) return `第 n 个超出范围：${n}`
     return null
   },
