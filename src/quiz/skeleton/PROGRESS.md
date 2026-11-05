@@ -1718,3 +1718,4 @@ npx tsx scripts/pilot-drill.ts \
 - 判断题口径同步：U3 单独选判断题三档均 30 题、真 15 / 假 15。
 - 测试 `tests/u3-choice.test.ts` 与 `tests/formats.test.ts` 中 L1 容量 27 的断言更新为 30；全套 161/161 通过，`npx vue-tsc -b` 0 错误。
 - 矩阵：U3 × 选择题由「满（L1 27）」改为「满」；84 格汇总不变（满 47 / 上限 7 / 不适用 30）。
+- 版本 `0.5.0-beta.1` → `0.5.0-beta.2`（package.json / Cargo.toml / Cargo.lock 的 quizlab 条目 / tauri.conf.json 四处一致）。
