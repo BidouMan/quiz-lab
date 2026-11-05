@@ -54,8 +54,13 @@ const recordOf = (question: {
   key: question.key,
 })
 
-test('拓展题：12 类可做，每类每一步都只挂三上知识点', () => {
-  assert.equal(ADV_CATEGORIES.length, 12, `可做类别应为 12，实际 ${ADV_CATEGORIES.length}`)
+test('拓展题：13 类可做，每类每一步都只挂三上知识点', () => {
+  assert.equal(ADV_CATEGORIES.length, 13, `可做类别应为 13，实际 ${ADV_CATEGORIES.length}`)
+  const tierCounts = ADV_CATEGORIES.reduce<Record<string, number>>((acc, category) => {
+    acc[category.tier] = (acc[category.tier] ?? 0) + 1
+    return acc
+  }, {})
+  assert.deepEqual(tierCounts, { T1: 7, T2: 3, T3: 3 }, `分档计数 ${JSON.stringify(tierCounts)}`)
   for (const category of ADV_CATEGORIES) {
     for (const kp of category.kpKeys) {
       assert.ok(ADV_3A_KP[kp], `${category.id} 的 ${kp} 不在三上允许集合`)
@@ -65,7 +70,7 @@ test('拓展题：12 类可做，每类每一步都只挂三上知识点', () =>
   }
 })
 
-test('拓展题：三档平均步骤数实测严格递增（T1 2–2.5 / T2 3 / T3 4.5）', () => {
+test('拓展题：三档平均步骤数实测严格递增（T1 <3 / T2 =3 / T3 ≥4）', () => {
   const averages: number[] = []
   for (const level of ['L1', 'L2', 'L3'] as const) {
     const result = generateAdvanced({ grade: '3A', unitIds: UNITS_3A, level, count: 10, seed: 20261105 })
@@ -79,7 +84,7 @@ test('拓展题：三档平均步骤数实测严格递增（T1 2–2.5 / T2 3 / 
   assert.ok(averages[1]! < averages[2]!, `T2 ${averages[1]} 不小于 T3 ${averages[2]}`)
   assert.ok(averages[0]! >= 2 && averages[0]! < 3, `T1 平均 ${averages[0]} 不在 [2,3)`)
   assert.equal(averages[1], 3)
-  assert.equal(averages[2], 4.5)
+  assert.ok(averages[2]! >= 4 && averages[2]! < 5, `T3 平均 ${averages[2]} 不在 [4,5)`)
 })
 
 test('拓展题：同卷按“结构 + 知识点”去重，不按题干字符串', () => {
@@ -400,8 +405,46 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
     'adv-cut-perimeter': 4,
     'adv-weekday': 4,
     'adv-rent-plan': 8,
+    'adv-combine-perimeter': 6,
     'adv-arrange-rect': 8,
   })
+})
+
+test('P0 拼成大长方形：4 步、答案唯一、并列最优拒生成、3000 题两路径一致', () => {
+  const category = advancedCategory('adv-combine-perimeter')
+  assert.ok(category)
+  assert.equal(category.tier, 'T3')
+  assert.equal(category.workLines, 6)
+  assert.ok(category.kpKeys.includes('3A-PERIMETER') && category.kpKeys.includes('3A-STRATEGY'))
+  // 并列最优（长=宽）与长=2宽必须被 invariant 拒掉
+  assert.ok(category.invariant({ l: 9, w: 9 }))
+  assert.ok(category.invariant({ l: 10, w: 5 }))
+  const rng = createRng(20261108)
+  let scanned = 0
+  const violations: string[] = []
+  for (let index = 0; index < 3000; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    scanned++
+    const l = Number(params.l)
+    const w = Number(params.w)
+    if (l < 8 || l > 12) violations.push(`长越界：${l}`)
+    if (w < 3 || w > 5) violations.push(`宽越界：${w}`)
+    if (l <= w) violations.push(`长不大于宽：${l}×${w}`)
+    if (l === 2 * w) violations.push(`长=2宽：${l}×${w}`)
+    const built = category.build(params)
+    if (built.steps.length !== 4) violations.push(`步骤不是 4 步：${built.steps.length}`)
+    for (const step of built.steps) {
+      if (!category.kpKeys.includes(step.kp)) violations.push(`知识点越界：${step.kp}`)
+    }
+    const longPerimeter = 2 * (2 * l + w)
+    const shortPerimeter = 2 * (l + 2 * w)
+    if (longPerimeter === shortPerimeter) violations.push(`并列最优：${l}×${w}`)
+    if (!built.answer.includes(`最短${shortPerimeter}厘米`)) violations.push(`最短答案不对：${built.answer}`)
+    if (built.answer !== category.recompute(params)) violations.push(`两路径不一致：${built.answer}`)
+  }
+  assert.ok(scanned >= 2900, `拼成大长方形扫描量只有 ${scanned}`)
+  assert.deepEqual(violations.slice(0, 5), [], `拼成大长方形问题 ${violations.length} 条`)
 })
 
 test('固定周长摆长方形：枚举计数正确、唯一答案、退化情形排除', () => {

@@ -1174,6 +1174,95 @@ const arrangePairText = (long: number, short: number): string =>
 const arrangeAnswer = (pairs: Array<[number, number]>): string =>
   `共${pairs.length}种：${pairs.map(([long, short]) => arrangePairText(long, short)).join('、')}`
 
+const dCombinePerimeter = (rng: Rng): AdvParams | null =>
+  retry(() => {
+    const l = randInt(rng, 8, 12)
+    const w = randInt(rng, 3, 5)
+    // 长=宽时两种拼法周长并列；长=2宽时拼出正方形，称呼有争议，均排除
+    if (l <= w || l === 2 * w) return null
+    return { l, w }
+  })
+
+const combineAnswer = (l: number, w: number): string => {
+  const alongLong = 2 * (2 * l + w)
+  const alongShort = 2 * (l + 2 * w)
+  const best = Math.min(alongLong, alongShort)
+  return (
+    `2种；长边相接：长${2 * l}厘米、宽${w}厘米，周长${alongLong}厘米；` +
+    `宽边相接：长${l}厘米、宽${2 * w}厘米，周长${alongShort}厘米；最短${best}厘米`
+  )
+}
+
+const combinePerimeter: AdvancedCategory = {
+  id: 'adv-combine-perimeter',
+  label: '拼成大长方形，周长最短',
+  tier: 'T3',
+  units: ['3A-U6'],
+  primaryKp: '3A-PERIMETER',
+  kpKeys: ['3A-PERIMETER', '3A-STRATEGY'],
+  sample:
+    '有两个长8厘米、宽3厘米的长方形纸片。把它们不重叠地拼成一个大长方形（正方形也算长方形），有几种拼法？哪种拼法的周长最短？',
+  pool: '长 8–12 × 宽 3–5（排除长=2宽）共 13 种',
+  workLines: 6,
+  draw: dCombinePerimeter,
+  stem: (p) =>
+    `有两个长${num(p, 'l')}厘米、宽${num(p, 'w')}厘米的长方形纸片。` +
+    `把它们不重叠地拼成一个大长方形（正方形也算长方形），有几种拼法？哪种拼法的周长最短？`,
+  build: (p) => {
+    const l = num(p, 'l')
+    const w = num(p, 'w')
+    const alongLong = 2 * (2 * l + w)
+    const alongShort = 2 * (l + 2 * w)
+    return {
+      known: [`两个长${l}厘米、宽${w}厘米的长方形`, '不重叠地拼成一个大长方形'],
+      unknown: '有几种拼法，哪种拼法周长最短',
+      steps: [
+        {
+          text: `长边相接：长${l}+${l}=${2 * l}（厘米），宽${w}厘米，周长(${2 * l}+${w})×2=${alongLong}（厘米）`,
+          kp: '3A-PERIMETER',
+          expr: `(${2 * l}+${w})*2`,
+          result: alongLong,
+        },
+        {
+          text: `宽边相接：长${l}厘米，宽${w}+${w}=${2 * w}（厘米），周长(${l}+${2 * w})×2=${alongShort}（厘米）`,
+          kp: '3A-PERIMETER',
+          expr: `(${l}+${2 * w})*2`,
+          result: alongShort,
+        },
+        {
+          text: `比较：${alongLong}>${alongShort}，宽边相接的周长短`,
+          kp: '3A-STRATEGY',
+        },
+        {
+          text: `答：共有2种拼法，宽边相接的周长最短，是${alongShort}厘米`,
+          kp: '3A-STRATEGY',
+        },
+      ],
+      answer: combineAnswer(l, w),
+    }
+  },
+  recompute: (p) => {
+    const l = num(p, 'l')
+    const w = num(p, 'w')
+    // 独立路径：按四条边逐条相加，不复用生成侧的中间量
+    const alongLong = (2 * l + w) + (2 * l + w)
+    const alongShort = (l + 2 * w) + (l + 2 * w)
+    if (alongLong === alongShort) throw new Error('两种拼法周长并列，答案不唯一')
+    return (
+      `2种；长边相接：长${2 * l}厘米、宽${w}厘米，周长${alongLong}厘米；` +
+      `宽边相接：长${l}厘米、宽${2 * w}厘米，周长${alongShort}厘米；最短${Math.min(alongLong, alongShort)}厘米`
+    )
+  },
+  invariant: (p) => {
+    const l = num(p, 'l')
+    const w = num(p, 'w')
+    if (l <= w) return '长必须大于宽'
+    if (l === 2 * w) return '长正好是宽的2倍，拼出来是正方形，称呼有争议'
+    if (2 * (2 * l + w) === 2 * (l + 2 * w)) return '两种拼法周长并列，答案不唯一'
+    return null
+  },
+}
+
 const arrangeRect: AdvancedCategory = {
   id: 'adv-arrange-rect',
   label: '固定周长摆长方形',
@@ -1252,6 +1341,7 @@ export const ADV_CATEGORIES: AdvancedCategory[] = [
   cutPerimeter,
   weekday,
   rentPlan,
+  combinePerimeter,
   arrangeRect,
 ]
 
@@ -1607,7 +1697,7 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     return {
       questions,
       notes: [
-        `拓展题：所选单元在 ${level}（${tier}）没有可用类别（T1 周期/归一/等量代换/时间/年龄差/拼周长/归总；T2 逆向/剪拼/星期几；T3 租船/固定周长摆长方形）`,
+        `拓展题：所选单元在 ${level}（${tier}）没有可用类别（T1 周期/归一/等量代换/时间/年龄差/拼周长/归总；T2 逆向/剪拼/星期几；T3 租船/拼成大长方形/固定周长摆长方形）`,
       ],
       crossReused: 0,
     }
