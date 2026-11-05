@@ -1136,6 +1136,12 @@ const dArrangeRect = (rng: Rng): AdvParams | null =>
     return { perimeter }
   })
 
+const arrangePairText = (long: number, short: number): string =>
+  long === short ? `长${long}厘米、宽${short}厘米（正方形）` : `长${long}厘米、宽${short}厘米`
+
+const arrangeAnswer = (pairs: Array<[number, number]>): string =>
+  `共${pairs.length}种：${pairs.map(([long, short]) => arrangePairText(long, short)).join('、')}`
+
 const arrangeRect: AdvancedCategory = {
   id: 'adv-arrange-rect',
   label: '固定周长摆长方形',
@@ -1143,55 +1149,54 @@ const arrangeRect: AdvancedCategory = {
   units: ['3A-U6'],
   primaryKp: '3A-PERIMETER',
   kpKeys: ['3A-PERIMETER', '3A-STRATEGY'],
-  sample: '用12根同样长的小棒摆长方形（每根算一条边，正方形也算长方形），一共有几种摆法？',
+  sample: '用12根同样长的小棒沿边围一圈，围成一个长方形（每根算1厘米，正方形也算长方形），长不短于宽。一共有几种围法？',
   pool: '周长 12–24 的偶数 7 种（每种 2–6 个组合，低频）',
-  workLines: 6,
+  workLines: 8,
   draw: dArrangeRect,
   stem: (p) =>
-    `用${num(p, 'perimeter')}根同样长的小棒摆长方形（每根算一条边，正方形也算长方形）。一共有几种摆法？列出每种摆法的长和宽。`,
+    `用${num(p, 'perimeter')}根同样长的小棒首尾相接，沿边围一圈，围成一个长方形（每根算1厘米，正方形也算长方形），长不短于宽。一共有几种围法？写出每种的长和宽。`,
   build: (p) => {
     const perimeter = num(p, 'perimeter')
     const half = perimeter / 2
-    const pairs: string[] = []
+    const pairs: Array<[number, number]> = []
     for (let long = half - 1; long * 2 >= half; long--) {
-      pairs.push(`长${long}宽${half - long}`)
+      pairs.push([long, half - long])
     }
-    const count = pairs.length
     return {
-      known: [`${perimeter}根小棒`, `每根算一条边`, `正方形也算长方形`],
-      unknown: '一共有几种摆法（列出长和宽）',
+      known: [`${perimeter}根小棒`, `每根算1厘米`, `沿边围一圈`, `正方形也算长方形，长不短于宽`],
+      unknown: '一共有几种围法（写出每种的长和宽）',
       steps: [
         {
-          text: `长+宽=周长÷2：${perimeter}÷2=${half}（根）`,
+          text: `长+宽=周长÷2：${perimeter}÷2=${half}（厘米）`,
           kp: '3A-PERIMETER',
           expr: `${perimeter}/2`,
           result: half,
         },
         {
-          text: `有序枚举长和宽：${pairs.join('、')}`,
+          text: `有序枚举长和宽：${pairs.map(([long, short]) => arrangePairText(long, short)).join('；')}`,
           kp: '3A-STRATEGY',
         },
         {
-          text: `从长最大开始，长每次少1、宽每次多1，正好不重复、不遗漏`,
+          text: `从长最大开始，长每次少1、宽每次多1，长不短于宽，正好不重复、不遗漏`,
           kp: '3A-STRATEGY',
         },
         {
-          text: `数一数：长和宽的组数共${count}种`,
+          text: `数一数：长和宽的组数共${pairs.length}种`,
           kp: '3A-STRATEGY',
         },
       ],
-      answer: `共${count}种：${pairs.join('、')}`,
+      answer: arrangeAnswer(pairs),
     }
   },
   recompute: (p) => {
     const perimeter = num(p, 'perimeter')
     const half = perimeter / 2
     // 独立路径：宽从 1 往上枚举，长 = 半周长 - 宽，只保留长 ≥ 宽（含正方形）
-    const pairs: string[] = []
+    const pairs: Array<[number, number]> = []
     for (let width = 1; width * 2 <= half; width++) {
-      pairs.push(`长${half - width}宽${width}`)
+      pairs.push([half - width, width])
     }
-    return `共${pairs.length}种：${pairs.join('、')}`
+    return arrangeAnswer(pairs)
   },
   invariant: (p) => {
     const perimeter = num(p, 'perimeter')

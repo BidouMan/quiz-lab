@@ -364,7 +364,7 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
     'adv-cut-perimeter': 4,
     'adv-weekday': 4,
     'adv-rent-plan': 8,
-    'adv-arrange-rect': 6,
+    'adv-arrange-rect': 8,
   })
 })
 
@@ -372,10 +372,15 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
   const category = advancedCategory('adv-arrange-rect')
   assert.ok(category)
   const cases = [
-    { perimeter: 12, count: 3, pairs: '长5宽1、长4宽2、长3宽3' },
-    { perimeter: 14, count: 3, pairs: '长6宽1、长5宽2、长4宽3' },
-    { perimeter: 16, count: 4, pairs: '长7宽1、长6宽2、长5宽3、长4宽4' },
-    { perimeter: 24, count: 6, pairs: '长11宽1、长10宽2、长9宽3、长8宽4、长7宽5、长6宽6' },
+    { perimeter: 12, count: 3, pairs: '长5厘米、宽1厘米、长4厘米、宽2厘米、长3厘米、宽3厘米（正方形）' },
+    { perimeter: 14, count: 3, pairs: '长6厘米、宽1厘米、长5厘米、宽2厘米、长4厘米、宽3厘米' },
+    { perimeter: 16, count: 4, pairs: '长7厘米、宽1厘米、长6厘米、宽2厘米、长5厘米、宽3厘米、长4厘米、宽4厘米（正方形）' },
+    {
+      perimeter: 24,
+      count: 6,
+      pairs:
+        '长11厘米、宽1厘米、长10厘米、宽2厘米、长9厘米、宽3厘米、长8厘米、宽4厘米、长7厘米、宽5厘米、长6厘米、宽6厘米（正方形）',
+    },
   ]
   for (const item of cases) {
     const built = category.build({ perimeter: item.perimeter })
@@ -396,6 +401,51 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
     max = Math.max(max, Number(params.perimeter))
   }
   assert.ok(min >= 12 && max <= 24, `周长实测 ${min}–${max} 超出 12–24`)
+})
+
+test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、周长范围与奇偶为 0', () => {
+  const category = advancedCategory('adv-arrange-rect')
+  assert.ok(category)
+  const rng = createRng(20261106)
+  let scanned = 0
+  const violations: string[] = []
+  for (let index = 0; index < 3000; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    scanned++
+    const perimeter = Number(params.perimeter)
+    if (perimeter % 2 !== 0 || perimeter < 12 || perimeter > 24) {
+      violations.push(`周长越界：${perimeter}`)
+      continue
+    }
+    const stem = category.stem(params)
+    const texts = [stem, ...category.build(params).steps.map((step) => step.text)]
+    for (const text of texts) {
+      if (/铺|填|占满|每根算一条边/.test(text)) violations.push(`题面有铺满歧义：${text}`)
+    }
+    if (!stem.includes('沿边围一圈') || !stem.includes('长不短于宽') || !stem.includes('每根算1厘米')) {
+      violations.push(`题干未锁定围边模型：${stem}`)
+    }
+    const built = category.build(params)
+    if (built.answer !== category.recompute(params)) violations.push(`两条路径答案不一致：${built.answer}`)
+    const half = perimeter / 2
+    const parsed = [...built.answer.matchAll(/长(\d+)厘米、宽(\d+)厘米/g)].map((match) => [
+      Number(match[1]),
+      Number(match[2]),
+    ])
+    const expected = Math.floor(half / 2)
+    if (parsed.length !== expected) violations.push(`枚举数量不对：${built.answer}`)
+    const seen = new Set<string>()
+    for (const [long, short] of parsed) {
+      if (long < short) violations.push(`长小于宽：${long}<${short}`)
+      if (long + short !== half) violations.push(`长+宽≠${half}：${long}+${short}`)
+      const key = `${long}:${short}`
+      if (seen.has(key)) violations.push(`同组重复：${key}`)
+      seen.add(key)
+    }
+  }
+  assert.ok(scanned >= 2900, `摆长方形扫描量只有 ${scanned}`)
+  assert.deepEqual(violations.slice(0, 5), [], `摆长方形问题 ${violations.length} 条`)
 })
 
 test('蒙对收紧：星期几题干要求写算式和答句', () => {
