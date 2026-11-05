@@ -14,6 +14,8 @@ import type { Grade, Level } from './types.ts'
  */
 export interface ConceptProposition {
   id: string
+  /** 知识点键：同卷内同一知识点最多出 1 题，跨卷去重也按它优先 */
+  knowledgePoint: string
   unitId: string
   levels: Level[]
   statement: string
@@ -36,6 +38,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   // ---- U3 三角形与四边形 ----
   {
     id: 'u3-tri-sides',
+    knowledgePoint: 'u3.triangle.sideCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '三角形有3条边。',
@@ -45,6 +48,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-tri-four-sides',
+    knowledgePoint: 'u3.triangle.sideCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '三角形有4条边。',
@@ -54,6 +58,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-quad-sides',
+    knowledgePoint: 'u3.quadrilateral.sideCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '四边形有4条边。',
@@ -63,6 +68,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-quad-three-angles',
+    knowledgePoint: 'u3.quadrilateral.angleCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '四边形有3个角。',
@@ -72,6 +78,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-rect-angles',
+    knowledgePoint: 'u3.rect.rightAngles',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '长方形的4个角都是直角。',
@@ -82,6 +89,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-rect-adjacent-sides-equal',
+    knowledgePoint: 'u3.rect.adjacentSideEquality',
     unitId: '3A-U3',
     levels: ['L2', 'L3'],
     statement: '长方形相邻的两条边长度一定相等。',
@@ -92,6 +100,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-rect-opposite-sides',
+    knowledgePoint: 'u3.rect.oppositeSides',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '长方形的对边相等。',
@@ -101,6 +110,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-square-sides-equal',
+    knowledgePoint: 'u3.square.sideEquality',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '正方形的4条边都相等。',
@@ -111,6 +121,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-square-not-right-angles',
+    knowledgePoint: 'u3.square.rightAngles',
     unitId: '3A-U3',
     levels: ['L1', 'L2'],
     statement: '正方形的4个角都不是直角。',
@@ -121,6 +132,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-para-adjacent-sides-equal',
+    knowledgePoint: 'u3.para.adjacentSideEquality',
     unitId: '3A-U3',
     levels: ['L2', 'L3'],
     statement: '平行四边形相邻的两条边长度一定相等。',
@@ -131,6 +143,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-para-opposite',
+    knowledgePoint: 'u3.para.oppositeSides',
     unitId: '3A-U3',
     levels: ['L2', 'L3'],
     statement: '平行四边形的对边平行且相等。',
@@ -140,6 +153,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-trapezoid-one-pair',
+    knowledgePoint: 'u3.trapezoid.parallelSides',
     unitId: '3A-U3',
     levels: ['L2', 'L3'],
     statement: '梯形只有一组对边平行。',
@@ -150,6 +164,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-trapezoid-two-pairs',
+    knowledgePoint: 'u3.trapezoid.parallelSides',
     unitId: '3A-U3',
     levels: ['L2', 'L3'],
     statement: '梯形有两组对边平行。',
@@ -160,6 +175,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   // ---- U3 三角形与四边形：基础计数与角的分类（补齐纯概念单元的出题量） ----
   {
     id: 'u3-tri-angles',
+    knowledgePoint: 'u3.triangle.angleCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '三角形有3个角。',
@@ -169,6 +185,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-tri-four-angles',
+    knowledgePoint: 'u3.triangle.angleCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '三角形有4个角。',
@@ -178,6 +195,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-quad-angles',
+    knowledgePoint: 'u3.quadrilateral.angleCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '四边形有4个角。',
@@ -187,6 +205,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-rect-four-sides',
+    knowledgePoint: 'u3.rect.sideCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '长方形有4条边。',
@@ -196,6 +215,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-square-four-sides',
+    knowledgePoint: 'u3.square.sideCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '正方形有4条边。',
@@ -205,6 +225,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-square-opposite-sides',
+    knowledgePoint: 'u3.square.sideEquality',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '正方形的对边相等。',
@@ -214,6 +235,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-rect-is-quad',
+    knowledgePoint: 'u3.rect.membership',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '长方形是四边形。',
@@ -223,6 +245,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-square-is-quad',
+    knowledgePoint: 'u3.square.membership',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '正方形是四边形。',
@@ -232,6 +255,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-para-is-quad',
+    knowledgePoint: 'u3.para.membership',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '平行四边形是四边形。',
@@ -241,6 +265,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-trapezoid-is-quad',
+    knowledgePoint: 'u3.trapezoid.membership',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '梯形是四边形。',
@@ -250,6 +275,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-right-angle-gt-acute',
+    knowledgePoint: 'u3.angle.acuteRightOrder',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '直角比锐角大。',
@@ -259,6 +285,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-obtuse-angle-gt-right',
+    knowledgePoint: 'u3.angle.obtuseRightOrder',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '钝角比直角大。',
@@ -268,6 +295,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-acute-angle-lt-right',
+    knowledgePoint: 'u3.angle.acuteRightOrder',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '锐角比直角小。',
@@ -277,6 +305,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-right-angles-same-size',
+    knowledgePoint: 'u3.angle.rightEqual',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '所有的直角都一样大。',
@@ -287,6 +316,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-quad-all-right-angles',
+    knowledgePoint: 'u3.quadrilateral.rightAngles',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '四边形的4个角都是直角。',
@@ -297,6 +327,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-para-opposite-angles',
+    knowledgePoint: 'u3.para.oppositeAngles',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '平行四边形的对角相等。',
@@ -306,6 +337,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-rect-three-angles',
+    knowledgePoint: 'u3.rect.angleCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '长方形有3个角。',
@@ -315,6 +347,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-square-three-sides',
+    knowledgePoint: 'u3.square.sideCount',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '正方形有3条边。',
@@ -324,6 +357,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-square-sides-unequal',
+    knowledgePoint: 'u3.square.sideEquality',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '正方形的4条边不相等。',
@@ -334,6 +368,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-para-opposite-unequal',
+    knowledgePoint: 'u3.para.oppositeSides',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '平行四边形的对边不相等。',
@@ -343,6 +378,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u3-acute-angle-gt-right',
+    knowledgePoint: 'u3.angle.acuteRightOrder',
     unitId: '3A-U3',
     levels: ['L1', 'L2', 'L3'],
     statement: '锐角比直角大。',
@@ -353,6 +389,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   // ---- U6 周长 ----
   {
     id: 'u6-perimeter-definition',
+    knowledgePoint: 'u6.perimeter.definition',
     unitId: '3A-U6',
     levels: ['L1', 'L2'],
     statement: '封闭图形一周的长度，就是它的周长。',
@@ -362,6 +399,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u6-rect-formula',
+    knowledgePoint: 'u6.rect.perimeterFormula',
     unitId: '3A-U6',
     levels: ['L1', 'L2'],
     statement: '长方形的周长等于长与宽的和乘2。',
@@ -371,6 +409,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u6-rect-half',
+    knowledgePoint: 'u6.rect.perimeterFormula',
     unitId: '3A-U6',
     levels: ['L2', 'L3'],
     statement: '长方形的周长等于长与宽的和。',
@@ -380,6 +419,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u6-square-formula',
+    knowledgePoint: 'u6.square.perimeterFormula',
     unitId: '3A-U6',
     levels: ['L1', 'L2'],
     statement: '正方形的周长等于边长乘4。',
@@ -389,6 +429,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u6-same-perimeter-same-shape',
+    knowledgePoint: 'u6.rect.perimeterEquality',
     unitId: '3A-U6',
     levels: ['L2', 'L3'],
     statement: '周长相等的两个长方形，形状一定相同。',
@@ -399,6 +440,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u6-square-same-perimeter',
+    knowledgePoint: 'u6.square.perimeterEquality',
     unitId: '3A-U6',
     levels: ['L2', 'L3'],
     statement: '周长相等的两个正方形，边长一定相等。',
@@ -410,6 +452,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   // ---- U1 复习与提高（四则运算相关表述） ----
   {
     id: 'u1-zero-multiply',
+    knowledgePoint: 'u1.zero.multiplication',
     unitId: '3A-U1',
     levels: ['L1', 'L2'],
     statement: '0和任何数相乘都得0。',
@@ -420,6 +463,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u1-zero-add',
+    knowledgePoint: 'u1.zero.addition',
     unitId: '3A-U1',
     levels: ['L1', 'L2'],
     statement: '0和任何数相加都得0。',
@@ -430,6 +474,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u1-multiply-one',
+    knowledgePoint: 'u1.one.multiplication',
     unitId: '3A-U1',
     levels: ['L1', 'L2'],
     statement: '任何数和1相乘，结果还是这个数。',
@@ -440,6 +485,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u1-add-one',
+    knowledgePoint: 'u1.one.addition',
     unitId: '3A-U1',
     levels: ['L1', 'L2'],
     statement: '任何数和1相加，结果还是这个数。',
@@ -451,6 +497,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   // ---- U4 用一位数除（除法与余数；三上 U1 尚未学除法，不能标在 U1） ----
   {
     id: 'u4-remainder-equal-divisor',
+    knowledgePoint: 'u4.remainder.rule',
     unitId: '3A-U4',
     levels: ['L2', 'L3'],
     statement: '有余数的除法中，余数可以等于除数。',
@@ -460,6 +507,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u4-remainder-less-divisor',
+    knowledgePoint: 'u4.remainder.rule',
     unitId: '3A-U4',
     levels: ['L2', 'L3'],
     statement: '有余数的除法中，余数一定小于除数。',
@@ -471,6 +519,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   // ---- U2 用一位数乘 ----
   {
     id: 'u2-tens-trailing-zero',
+    knowledgePoint: 'u2.tens.trailingZero',
     unitId: '3A-U2',
     levels: ['L1', 'L2'],
     statement: '整十数乘一位数，积的末尾一定有0。',
@@ -481,6 +530,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   },
   {
     id: 'u2-hundreds-two-zeros',
+    knowledgePoint: 'u2.hundreds.trailingZero',
     unitId: '3A-U2',
     levels: ['L2', 'L3'],
     statement: '整百数乘一位数，积的末尾只有两个0。',
@@ -495,6 +545,9 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
 export function validateConcept(record: ConceptProposition): string[] {
   const issues: string[] = []
   if (!record.id.trim()) issues.push('命题缺少 ID')
+  const kp = record.knowledgePoint?.trim() ?? ''
+  if (!kp) issues.push('命题缺少知识点键（knowledgePoint）')
+  else if (!/^[a-z0-9]+(\.[a-zA-Z0-9]+)+$/.test(kp)) issues.push(`知识点键格式不合法：${kp}`)
   if (!record.unitId.trim()) issues.push('命题缺少单元归属')
   if (record.levels.length === 0) issues.push('命题缺少适用难度')
   const statement = record.statement.trim()

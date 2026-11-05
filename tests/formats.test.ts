@@ -153,6 +153,7 @@ test('概念命题表：真命题有教材依据、假命题有单一错误点�
   assert.ok(CONCEPT_PROPOSITIONS.length >= 12, `命题表至少 12 条，实际 ${CONCEPT_PROPOSITIONS.length}`)
   for (const record of CONCEPT_PROPOSITIONS) {
     assert.deepEqual(validateConcept(record), [], `命题 ${record.id} 不合规`)
+    assert.ok(record.knowledgePoint.trim().length > 0, `命题 ${record.id} 缺少知识点键`)
   }
   const ids = CONCEPT_PROPOSITIONS.map((record) => record.id)
   assert.equal(new Set(ids).size, ids.length, '命题 ID 不能重复')
@@ -164,6 +165,7 @@ test('概念命题表：真命题有教材依据、假命题有单一错误点�
 test('模棱两可命题与无单一错误点的假命题必须被拒', () => {
   const base: ConceptProposition = {
     id: 'test-ambiguous',
+    knowledgePoint: 'u3.triangle.sideCount',
     unitId: '3A-U3',
     levels: ['L1'],
     statement: '三角形可能有4条边。',
@@ -203,20 +205,96 @@ test('判断题：概念命题占比 ≤1/3，真假各半且连续同答 ≤2',
   }
 })
 
-test('U3 单独选判断题：没有数值来源时概念上限放宽到 100%，三档都能出满 20', () => {
+test('U3 单独选判断题：知识点去重后 L1/L2 出满 20，L3 受知识点池限制实出 19', () => {
   for (const [index, level] of (['L1', 'L2', 'L3'] as const).entries()) {
     const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3'], level, count: 20, seed: 990 + index })
-    assert.equal(result.pieces.length, 20, `${level} 应出满 20 道`)
+    const expected = level === 'L3' ? 19 : 20
+    assert.equal(result.pieces.length, expected, `${level} 实出 ${expected} 道`)
     assert.ok(result.pieces.every((piece) => piece.data.pool === 'concept'), `${level} 应全部是概念命题`)
-    assert.equal(result.pieces.filter((piece) => piece.truth).length, 10, `${level} 真假应各半`)
-    assert.ok(
-      result.notes.some((note) => note.includes('全部为概念命题') && note.includes('无其他判断来源')),
-      `${level} 摘要应说明全概念及原因，实际：${result.notes.join('；')}`,
-    )
+    assert.equal(result.pieces.filter((piece) => piece.truth).length, level === 'L3' ? 9 : 10, `${level} 真假比例`)
+    const knowledgePoints = result.pieces.map((piece) => findConcept(piece.data.conceptId)!.knowledgePoint)
+    assert.equal(new Set(knowledgePoints).size, knowledgePoints.length, `${level} 同卷知识点应唯一`)
+    if (level === 'L3') {
+      assert.ok(
+        result.notes.some((note) => note.includes('全部为概念命题') && note.includes('实出 19')),
+        `${level} 摘要应说明知识点池用尽，实际：${result.notes.join('；')}`,
+      )
+    } else {
+      assert.ok(
+        result.notes.some((note) => note.includes('全部为概念命题') && note.includes('无其他判断来源')),
+        `${level} 摘要应说明全概念及原因，实际：${result.notes.join('；')}`,
+      )
+    }
     for (const [position, piece] of result.pieces.entries()) {
       assert.deepEqual(verifyItemStructure(buildItem(piece, position) as never), [], `${level} 第 ${position + 1} 题复核`)
     }
   }
+})
+
+test('判断题同卷知识点唯一：三配置 × 三档 × 多种子，每个 knowledgePoint 最多 1 次', () => {
+  const configs: Array<{ name: string; units: string[] }> = [
+    { name: '仅 U3', units: ['3A-U3'] },
+    { name: 'U3+U4+U6', units: ['3A-U3', '3A-U4', '3A-U6'] },
+    { name: '全单元', units: [...UNITS, '3A-U3'] },
+  ]
+  for (const config of configs) {
+    for (const [index, level] of (['L1', 'L2', 'L3'] as const).entries()) {
+      for (const seed of [990 + index, 771, 20261105]) {
+        const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: config.units, level, count: 20, seed })
+        const knowledgePoints = result.pieces
+          .filter((piece) => piece.data.pool === 'concept')
+          .map((piece) => findConcept(piece.data.conceptId)!.knowledgePoint)
+        assert.equal(
+          new Set(knowledgePoints).size,
+          knowledgePoints.length,
+          `${config.name} ${level} seed ${seed} 同卷知识点重复：${knowledgePoints.join(', ')}`,
+        )
+      }
+    }
+  }
+})
+
+test('跨卷去重按知识点：连续两卷的判断题概念知识点不重复', () => {
+  const memory = new MemoryStore()
+  const papers: string[][] = []
+  for (let paper = 0; paper < 2; paper++) {
+    memory.beginPaper()
+    const result = generateFormat({
+      kind: 'judge',
+      grade: '3A',
+      unitIds: ['3A-U3'],
+      level: 'L2',
+      count: 5,
+      seed: 1000 + paper,
+      memory,
+    })
+    assert.equal(result.pieces.length, 5)
+    papers.push(result.pieces.map((piece) => findConcept(piece.data.conceptId)!.knowledgePoint))
+  }
+  const overlap = papers[0]!.filter((knowledgePoint) => papers[1]!.includes(knowledgePoint))
+  assert.deepEqual(overlap, [], `跨卷不应重复知识点：${overlap.join(', ')}`)
+})
+
+test('知识点键：命题必须给 knowledgePoint，缺失或格式不合法都要被拒', () => {
+  const base: ConceptProposition = {
+    id: 'test-knowledge-point',
+    knowledgePoint: 'u3.triangle.sideCount',
+    unitId: '3A-U3',
+    levels: ['L1'],
+    statement: '三角形有3条边。',
+    truth: true,
+    rationale: '三角形由3条线段围成。',
+    source: '沪教版三上 U3：三角形的认识',
+  }
+  assert.deepEqual(validateConcept(base), [])
+  assert.ok(
+    validateConcept({ ...base, knowledgePoint: '' }).some((issue) => issue.includes('knowledgePoint')),
+    '缺失知识点键应被拒',
+  )
+  assert.ok(
+    validateConcept({ ...base, knowledgePoint: 'u3triangle' }).some((issue) => issue.includes('格式不合法')),
+    '知识点键格式不合法应被拒',
+  )
 })
 
 test('判断题：有其他数值来源时概念仍受 1/3 上限', () => {
@@ -248,6 +326,7 @@ test('绝对化表述：必须标注特例复核，缺字段或结论不完整�
   }
   const base: ConceptProposition = {
     id: 'test-absolute',
+    knowledgePoint: 'u3.quadrilateral.rightAngles',
     unitId: '3A-U3',
     levels: ['L1'],
     statement: '四边形的4个角都是直角。',

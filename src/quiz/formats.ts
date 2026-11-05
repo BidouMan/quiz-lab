@@ -636,7 +636,7 @@ function conceptSource(record: ConceptProposition): Source {
     correct,
     numeric: null,
     kpName: '概念判断',
-    key: `concept:${record.id}`,
+    key: `concept:${record.knowledgePoint}`,
     judgeStem: () => record.statement,
     choiceStem: '',
     wrongs: record.truth ? [] : [{ value: '×', rule: 'concept-error', detail: record.rationale }],
@@ -788,6 +788,107 @@ function buildChoice(source: Source, allowed: Wrong[], answerIndex: number, rng:
   }
 }
 
+/**
+ * 纯概念卷排卷：知识点是硬约束（同卷每个 knowledgePoint 最多 1 题），真假位是软约束。
+ * 先按知识点在真假上的可用性分组，再按可出的知识点数决定实出量；
+ * 知识点用尽就如实少出，不拿同一知识点的反说法凑数。
+ */
+function planConceptOnly(
+  sources: Source[],
+  count: number,
+  seed: number,
+  sourceUsed: Set<string> | undefined,
+  memory: MemoryStore | undefined,
+): Array<{ source: Source; reused: boolean }> {
+  const rng = createRng(seed + 4519)
+  type Group = { trueSources: Source[]; falseSources: Source[] }
+  const groups = new Map<string, Group>()
+  for (const source of sources) {
+    if (sourceUsed?.has(source.key)) continue
+    const concept = source.concept!
+    const group = groups.get(concept.knowledgePoint) ?? { trueSources: [], falseSources: [] }
+    if (concept.truth) group.trueSources.push(source)
+    else group.falseSources.push(source)
+    groups.set(concept.knowledgePoint, group)
+  }
+  const isRecent = (source: Source): boolean => memory?.recentlyUsed(source.key) ?? false
+  const freshFor = (entry: [string, Group], truth: boolean): boolean =>
+    (truth ? entry[1].trueSources : entry[1].falseSources).some((source) => !isRecent(source))
+  // 跨卷未用过的知识点优先；同组内保持 shuffle 后的随机顺序
+  const entries = shuffle(rng, [...groups.entries()])
+  const trueOnly = entries.filter(([, group]) => group.falseSources.length === 0)
+  const falseOnly = entries.filter(([, group]) => group.trueSources.length === 0)
+  const both = entries.filter(([, group]) => group.trueSources.length > 0 && group.falseSources.length > 0)
+  const maxTrue = trueOnly.length + both.length
+  const maxFalse = falseOnly.length + both.length
+  const total = Math.min(count, entries.length)
+  if (total === 0) return []
+  // 知识点池不够时只出 total 题；真假尽量各半，但不能靠同知识点凑数
+  const lo = Math.max(0, total - maxFalse)
+  const hi = Math.min(total, maxTrue)
+  const trueCount = Math.min(Math.max(Math.floor(total / 2), lo), hi)
+  const falseCount = total - trueCount
+  const needBothTrue = Math.max(0, trueCount - trueOnly.length)
+
+  const orderedFor = (list: Array<[string, Group]>, truth: boolean): Array<[string, Group]> => {
+    const fresh = list.filter((entry) => freshFor(entry, truth))
+    const stale = list.filter((entry) => !freshFor(entry, truth))
+    return [...fresh, ...stale]
+  }
+  const usedKp = new Set<string>()
+  const take = (list: Array<[string, Group]>, need: number, maxBoth: number): Array<[string, Group]> => {
+    const picked: Array<[string, Group]> = []
+    let bothCount = 0
+    for (const entry of list) {
+      if (picked.length >= need) break
+      if (usedKp.has(entry[0])) continue
+      const isBoth = entry[1].trueSources.length > 0 && entry[1].falseSources.length > 0
+      if (isBoth && bothCount >= maxBoth) continue
+      picked.push(entry)
+      usedKp.add(entry[0])
+      if (isBoth) bothCount += 1
+    }
+    return picked
+  }
+  // 先排假，再排真：留够真命题需要的「真假兼备」知识点，假命题优先用真正没出过的
+  const falseGroups = take(orderedFor([...falseOnly, ...both], false), falseCount, both.length - needBothTrue)
+  const trueGroups = take(orderedFor([...trueOnly, ...both], true), trueCount, needBothTrue)
+  const actualTrue = trueGroups.length
+  const actualFalse = falseGroups.length
+
+  // 真假序列：能交错就交错，避免连续 3 个同答
+  const schedule: boolean[] = []
+  let remainingTrue = actualTrue
+  let remainingFalse = actualFalse
+  while (remainingTrue > 0 || remainingFalse > 0) {
+    const options: boolean[] = []
+    if (remainingTrue > 0) options.push(true)
+    if (remainingFalse > 0) options.push(false)
+    const last = schedule[schedule.length - 1]
+    const secondLast = schedule[schedule.length - 2]
+    const fresh = options.filter((value) => !(value === last && value === secondLast))
+    const pool = fresh.length > 0 ? fresh : options
+    const value = pool[randInt(rng, 0, pool.length - 1)]!
+    schedule.push(value)
+    if (value) remainingTrue -= 1
+    else remainingFalse -= 1
+  }
+
+  const pickSource = (list: Source[]): Source => {
+    const fresh = list.filter((source) => !memory?.recentlyUsed(source.key))
+    const pool = fresh.length > 0 ? fresh : list
+    return pool[randInt(rng, 0, pool.length - 1)]!
+  }
+  const truePicks = shuffle(rng, trueGroups.map(([, group]) => pickSource(group.trueSources)))
+  const falsePicks = shuffle(rng, falseGroups.map(([, group]) => pickSource(group.falseSources)))
+  let trueCursor = 0
+  let falseCursor = 0
+  return schedule.map((truth) => {
+    const source = truth ? truePicks[trueCursor++]! : falsePicks[falseCursor++]!
+    return { source, reused: memory?.recentlyUsed(source.key) ?? false }
+  })
+}
+
 export function generateFormat(options: FormatOptions): FormatResult {
   const { kind, grade, level, count, seed } = options
   const memory = options.memory
@@ -871,57 +972,66 @@ export function generateFormat(options: FormatOptions): FormatResult {
     }
   }
 
-  for (let round = 0; round < 10 && pieces.length < count; round++) {
-    fillConceptSlots(round)
-    const collected = collectSources({ grade, unitIds: units, level, seed: seed + round * 7919 })
-    if (collected.length === 0) {
-      // 只有概念命题可用（例如单选 U3）：按答案位顺序补齐，仍受 1/3 上限
-      while (tryConcept(round)) {
-        /* 继续填，直到凑满或概念候选用尽 */
-      }
-      break
-    }
-    // 打散来源顺序，避免总是被排在前面的计算题占满配额，让填空来源也有机会进卷
-    const sources = shuffle(createRng(seed + round * 104729), collected)
-    for (const source of sources) {
-      if (pieces.length >= count) break
-      fillConceptSlots(round)
-      if (pieces.length >= count) break
-      if (seen.has(source.key) || sourceUsed?.has(source.key)) continue
-      const allowed = source.wrongs.filter((item) => ruleAllowed(item.rule, level))
-      const rng = createRng(seed + pieces.length * 31 + round)
-      const position = pieces.length
-      const piece =
-        kind === 'judge'
-          ? buildJudge(source, allowed, judgeTarget![position] === false, rng)
-          : buildChoice(source, allowed, choiceTarget![position] ?? 0, rng)
+  if (conceptOnly) {
+    // 纯概念卷：按知识点池排卷，知识点用尽就如实少出
+    for (const { source, reused } of planConceptOnly(conceptSources, count, seed, sourceUsed, memory)) {
+      const piece = buildJudge(source, [], !source.concept!.truth, createRng(seed + pieces.length * 31))
       if (!piece) continue
-      if (memory?.recentlyUsed(source.key)) {
-        if (!staleKeys.has(source.key)) {
-          staleKeys.add(source.key)
-          stale.push(piece)
-        }
-        continue
-      }
-      accept(piece, source.key, false)
+      accept(piece, source.key, reused)
     }
-  }
+  } else {
+    for (let round = 0; round < 10 && pieces.length < count; round++) {
+      fillConceptSlots(round)
+      const collected = collectSources({ grade, unitIds: units, level, seed: seed + round * 7919 })
+      if (collected.length === 0) {
+        // 只有概念命题可用（例如单选 U3）：按答案位顺序补齐，仍受 1/3 上限
+        while (tryConcept(round)) {
+          /* 继续填，直到凑满或概念候选用尽 */
+        }
+        break
+      }
+      // 打散来源顺序，避免总是被排在前面的计算题占满配额，让填空来源也有机会进卷
+      const sources = shuffle(createRng(seed + round * 104729), collected)
+      for (const source of sources) {
+        if (pieces.length >= count) break
+        fillConceptSlots(round)
+        if (pieces.length >= count) break
+        if (seen.has(source.key) || sourceUsed?.has(source.key)) continue
+        const allowed = source.wrongs.filter((item) => ruleAllowed(item.rule, level))
+        const rng = createRng(seed + pieces.length * 31 + round)
+        const position = pieces.length
+        const piece =
+          kind === 'judge'
+            ? buildJudge(source, allowed, judgeTarget![position] === false, rng)
+            : buildChoice(source, allowed, choiceTarget![position] ?? 0, rng)
+        if (!piece) continue
+        if (memory?.recentlyUsed(source.key)) {
+          if (!staleKeys.has(source.key)) {
+            staleKeys.add(source.key)
+            stale.push(piece)
+          }
+          continue
+        }
+        accept(piece, source.key, false)
+      }
+    }
 
-  for (const piece of stale) {
-    if (pieces.length >= count) break
-    const key = piece.key.replace(/^fmt:(judge|choice):/, '')
-    if (seen.has(key)) continue
-    accept(piece, key, true)
-  }
+    for (const piece of stale) {
+      if (pieces.length >= count) break
+      const key = piece.key.replace(/^fmt:(judge|choice):/, '')
+      if (seen.has(key)) continue
+      accept(piece, key, true)
+    }
 
-  // 概念题跨卷复用：只有真值与当前位置一致、且未超 1/3 时才补入，避免破坏真假均衡
-  for (const piece of conceptStale) {
-    if (pieces.length >= count || conceptUsed >= conceptCap) break
-    const key = piece.key.replace(/^fmt:(judge|choice):/, '')
-    if (seen.has(key)) continue
-    if (piece.truth !== judgeTarget![pieces.length]) continue
-    accept(piece, key, true)
-    conceptUsed++
+    // 概念题跨卷复用：只有真值与当前位置一致、且未超 1/3 时才补入，避免破坏真假均衡
+    for (const piece of conceptStale) {
+      if (pieces.length >= count || conceptUsed >= conceptCap) break
+      const key = piece.key.replace(/^fmt:(judge|choice):/, '')
+      if (seen.has(key)) continue
+      if (piece.truth !== judgeTarget![pieces.length]) continue
+      accept(piece, key, true)
+      conceptUsed++
+    }
   }
 
   const notes: string[] = []
@@ -929,15 +1039,26 @@ export function generateFormat(options: FormatOptions): FormatResult {
     notes.push(`${label}：题池不足，${crossReused} 道按 LRU 跨卷复用（同卷仍不重复）`)
   }
   if (pieces.length < count) {
-    notes.push(`${label}：题池只凑到 ${pieces.length}/${count} 道（受错因规则与单空来源限制）`)
+    notes.push(
+      conceptOnly
+        ? `判断题：题池只凑到 ${pieces.length}/${count} 道（知识点去重后没有其他知识点的补充命题）`
+        : `${label}：题池只凑到 ${pieces.length}/${count} 道（受错因规则与单空来源限制）`,
+    )
   }
   if (kind === 'judge' && conceptSources.length > 0) {
     const conceptCount = pieces.filter((piece) => piece.data.pool === 'concept').length
-    notes.push(
-      conceptOnly
-        ? `判断题：本卷全部为概念命题（${conceptCount}/${pieces.length}，该单元无其他判断来源）`
-        : `判断题：概念命题 ${conceptCount}/${pieces.length} 道（占比上限 ${Math.floor(count / 3)}）`,
-    )
+    const kpCount = new Set(conceptSources.map((source) => source.concept!.knowledgePoint)).size
+    if (conceptOnly && pieces.length < count) {
+      notes.push(
+        `判断题：本卷全部为概念命题（实出 ${pieces.length} 题，该单元知识点 ${kpCount} 个；同知识点不重复，不用反说法凑数）`,
+      )
+    } else {
+      notes.push(
+        conceptOnly
+          ? `判断题：本卷全部为概念命题（${conceptCount}/${pieces.length}，该单元无其他判断来源）`
+          : `判断题：概念命题 ${conceptCount}/${pieces.length} 道（占比上限 ${Math.floor(count / 3)}）`,
+      )
+    }
   }
   return { pieces, notes, crossReused }
 }
