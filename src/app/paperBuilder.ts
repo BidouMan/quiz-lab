@@ -152,7 +152,7 @@ export function typeVisibleInGrade(grade: Grade, type: AppType): boolean {
 
   if (type === 'judge' || type === 'choice') {
     const unitIds = units.map((unit) => unit.unitId)
-    return LEVELS.some((level) => formatSupports(grade, unitIds, level))
+    return LEVELS.some((level) => formatSupports(grade, unitIds, level, type))
   }
 
   return geomUnitsSupported(
@@ -341,11 +341,11 @@ export function typeAvailability(
         continue
       }
       const unitIds = units.map((unit) => unit.unitId)
-      if (formatSupports(config.grade, unitIds, config.level)) {
+      if (formatSupports(config.grade, unitIds, config.level, type)) {
         result[type] = { enabled: true, reason: '', source: 'rule' }
         continue
       }
-      const levels = LEVELS.filter((level) => formatSupports(config.grade, unitIds, level))
+      const levels = LEVELS.filter((level) => formatSupports(config.grade, unitIds, level, type))
       result[type] = {
         enabled: false,
         reason:
@@ -506,7 +506,7 @@ function capacityOf(type: AppType, config: AppConfig): number {
   }
   if (type === 'judge' || type === 'choice') {
     const unitIds = selectedUnits(config).map((unit) => unit.unitId)
-    return formatSupports(config.grade, unitIds, config.level) ? Number.POSITIVE_INFINITY : 0
+    return formatSupports(config.grade, unitIds, config.level, type) ? Number.POSITIVE_INFINITY : 0
   }
   // 其余题型没有静态样例池（STATIC_SAMPLES 仅有 compare/geom 两个键）
   return 0
@@ -607,7 +607,7 @@ function prioritizeUnits(units: Unit[], type: AppType, level: Level): Unit[] {
     if (type === 'compare') return compareUnitForms(unit.unitId, level).length > 0 ? 1 : 0
     if (type === 'geom') return geomUnitForms(unit.unitId, level).length > 0 ? 1 : 0
     if (type === 'judge' || type === 'choice') {
-      return formatSourceUnits(unit.grade, [unit.unitId], level).length > 0 ? 1 : 0
+      return formatSourceUnits(unit.grade, [unit.unitId], level, type).length > 0 ? 1 : 0
     }
     return unitSupports(unit.unitId, type, level) ? 1 : 0
   }

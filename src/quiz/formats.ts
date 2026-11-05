@@ -5,6 +5,12 @@ import { bin, evalLatex, evalNode, num, type BinOp, type ExprNode } from './expr
 import type { MemoryStore } from './memory.ts'
 import { stableStringify } from './normalize.ts'
 import { createRng, randInt, type Rng } from './rng.ts'
+import {
+  conceptForUnit,
+  findConcept,
+  verifyConceptSource,
+  type ConceptProposition,
+} from './concepts.ts'
 import type {
   CalcType,
   FillFormName,
@@ -44,6 +50,7 @@ export type ErrorRuleId =
   | 'miss-side'
   | 'perimeter-area'
   | 'opposite-judgement'
+  | 'concept-error'
 
 interface Wrong {
   value: string
@@ -53,12 +60,14 @@ interface Wrong {
 
 /** 复核用的来源描述：够独立重算正确值与每个错因值 */
 export interface FormatSourceData {
-  pool: 'calc' | 'fill'
+  pool: 'calc' | 'fill' | 'concept'
   form: string
   correct: string
   latex?: string
   operands?: [number, number]
   params?: Record<string, number | string>
+  /** 概念命题 ID：复核按 ID 查命题表，不靠重算 */
+  conceptId?: string
 }
 
 export interface FormatPiece {
@@ -95,7 +104,7 @@ export interface FormatResult {
 }
 
 interface Source {
-  pool: 'calc' | 'fill'
+  pool: 'calc' | 'fill' | 'concept'
   form: string
   correct: string
   numeric: number | null
@@ -105,6 +114,8 @@ interface Source {
   choiceStem: string
   wrongs: Wrong[]
   data: FormatSourceData
+  /** 概念命题：真值固定，不能按位置临时改写真假 */
+  concept?: ConceptProposition
 }
 
 const LEVELS: Level[] = ['L1', 'L2', 'L3']
@@ -123,6 +134,7 @@ const RULE_MIN_LEVEL: Record<ErrorRuleId, Level> = {
   'half-perimeter': 'L1',
   'miss-side': 'L1',
   'opposite-judgement': 'L1',
+  'concept-error': 'L1',
   'carry-drop': 'L2',
   'remainder-swap': 'L2',
   'quotient-off': 'L2',
@@ -156,7 +168,12 @@ const FORM_LEVELS: Partial<Record<FillFormName, Level[]>> = {
 const CALC_TYPES: CalcType[] = ['kousuan', 'chushi', 'tuoshi', 'jianbian']
 
 /** 所选单元中，真正能产出判断题/选择题来源的单元 */
-export function formatSourceUnits(grade: Grade, unitIds: string[], level: Level): string[] {
+export function formatSourceUnits(
+  grade: Grade,
+  unitIds: string[],
+  level: Level,
+  kind: FormatKind = 'judge',
+): string[] {
   const out: string[] = []
   for (const unitId of unitIds) {
     const unit = findUnit(unitId)
@@ -167,13 +184,20 @@ export function formatSourceUnits(grade: Grade, unitIds: string[], level: Level)
     const hasFill = unit.kps.some((kp) =>
       specsOf(kp.rules.tiankong?.[level]).some((spec) => FORM_LEVELS[spec.form]?.includes(level)),
     )
-    if (hasCalc || hasFill) out.push(unitId)
+    // 概念命题只进判断题；选择题仍要求有数值来源
+    const hasConcept = kind === 'judge' && conceptForUnit(grade, unitId, level).length > 0
+    if (hasCalc || hasFill || hasConcept) out.push(unitId)
   }
   return out
 }
 
-export function formatSupports(grade: Grade, unitIds: string[], level: Level): boolean {
-  return formatSourceUnits(grade, unitIds, level).length > 0
+export function formatSupports(
+  grade: Grade,
+  unitIds: string[],
+  level: Level,
+  kind: FormatKind = 'judge',
+): boolean {
+  return formatSourceUnits(grade, unitIds, level, kind).length > 0
 }
 
 // ---------- 计算题的错因推导 ----------
@@ -603,6 +627,38 @@ function fillSource(question: FillQuestion): Source {
   }
 }
 
+/** 概念命题来源：题干是整句陈述，真值固定；错因就是命题表里的判据 */
+function conceptSource(record: ConceptProposition): Source {
+  const correct = record.truth ? '√' : '×'
+  return {
+    pool: 'concept',
+    form: 'concept',
+    correct,
+    numeric: null,
+    kpName: '概念判断',
+    key: `concept:${record.id}`,
+    judgeStem: () => record.statement,
+    choiceStem: '',
+    wrongs: record.truth ? [] : [{ value: '×', rule: 'concept-error', detail: record.rationale }],
+    data: { pool: 'concept', form: 'concept', correct, conceptId: record.id },
+    concept: record,
+  }
+}
+
+/** 所选单元 / 难度可用的概念命题来源（只进判断题，不进选择题） */
+function collectConceptSources(grade: Grade, unitIds: string[], level: Level): Source[] {
+  const sources: Source[] = []
+  const seenIds = new Set<string>()
+  for (const unitId of unitIds) {
+    for (const record of conceptForUnit(grade, unitId, level)) {
+      if (seenIds.has(record.id)) continue
+      seenIds.add(record.id)
+      sources.push(conceptSource(record))
+    }
+  }
+  return sources
+}
+
 function collectSources(input: { grade: Grade; unitIds: string[]; level: Level; seed: number }): Source[] {
   const { grade, unitIds, level, seed } = input
   const sources: Source[] = []
@@ -674,6 +730,21 @@ function judgePlan(total: number, rng: Rng): boolean[] {
 }
 
 function buildJudge(source: Source, allowed: Wrong[], wantFalse: boolean, rng: Rng): FormatPiece | null {
+  if (source.concept) {
+    const record = source.concept
+    // 概念命题真值固定，只能放在与之匹配的答案位置
+    if (record.truth === wantFalse) return null
+    return {
+      kind: 'judge',
+      stem: record.statement,
+      truth: record.truth,
+      answers: [record.truth ? '√' : '×'],
+      kpName: source.kpName,
+      data: source.data,
+      causes: record.truth ? [] : [{ value: '×', rule: 'concept-error', detail: record.rationale }],
+      key: `fmt:judge:${source.key}`,
+    }
+  }
   if (wantFalse && allowed.length === 0) return null
   const cause = wantFalse ? allowed[randInt(rng, 0, allowed.length - 1)]! : null
   const stated = cause ? cause.value : source.correct
@@ -722,7 +793,7 @@ export function generateFormat(options: FormatOptions): FormatResult {
   const memory = options.memory
   const sourceUsed = options.sourceUsed
   if (!Number.isInteger(count) || count <= 0) return { pieces: [], notes: [], crossReused: 0 }
-  const units = formatSourceUnits(grade, options.unitIds, level)
+  const units = formatSourceUnits(grade, options.unitIds, level, kind)
   const label = kind === 'judge' ? '判断题' : '选择题'
   if (units.length === 0) {
     return {
@@ -749,12 +820,68 @@ export function generateFormat(options: FormatOptions): FormatResult {
     memory?.record(key)
   }
 
+  // 概念命题：每份判断题最多 1/3，均匀分布到卷中，真值必须落在对应的答案位
+  const conceptSources = kind === 'judge' ? collectConceptSources(grade, units, level) : []
+  const conceptList = shuffle(createRng(seed + 8123), conceptSources)
+  const conceptCap = Math.min(Math.floor(count / 3), conceptList.length)
+  const conceptSlots = new Set<number>()
+  if (conceptCap > 0) {
+    const step = count / conceptCap
+    for (let index = 0; index < conceptCap; index++) {
+      conceptSlots.add(Math.min(count - 1, Math.floor(index * step) + 1))
+    }
+  }
+  const conceptStale: FormatPiece[] = []
+  let conceptUsed = 0
+  const tryConcept = (round: number): boolean => {
+    if (kind !== 'judge' || pieces.length >= count || conceptUsed >= conceptCap) return false
+    const position = pieces.length
+    const wantFalse = judgeTarget![position] === false
+    const candidates = conceptList
+      .map((source, index) => ({ source, index }))
+      .filter(
+        ({ source }) =>
+          source.concept!.truth === !wantFalse &&
+          !seen.has(source.key) &&
+          !sourceUsed?.has(source.key),
+      )
+    if (candidates.length === 0) return false
+    // 优先没用过的；只有全被跨卷记忆占用时才走 stale
+    const chosen =
+      candidates.find(({ source }) => !memory?.recentlyUsed(source.key)) ?? candidates[0]!
+    const source = conceptList.splice(chosen.index, 1)[0]!
+    const piece = buildJudge(source, [], wantFalse, createRng(seed + position * 31 + round))
+    if (!piece) return false
+    if (memory?.recentlyUsed(source.key)) {
+      conceptStale.push(piece)
+      return false
+    }
+    accept(piece, source.key, false)
+    conceptUsed++
+    return true
+  }
+  const fillConceptSlots = (round: number): void => {
+    while (kind === 'judge' && pieces.length < count && conceptSlots.has(pieces.length)) {
+      conceptSlots.delete(pieces.length)
+      if (!tryConcept(round)) continue
+    }
+  }
+
   for (let round = 0; round < 10 && pieces.length < count; round++) {
+    fillConceptSlots(round)
     const collected = collectSources({ grade, unitIds: units, level, seed: seed + round * 7919 })
-    if (collected.length === 0) break
+    if (collected.length === 0) {
+      // 只有概念命题可用（例如单选 U3）：按答案位顺序补齐，仍受 1/3 上限
+      while (tryConcept(round)) {
+        /* 继续填，直到凑满或概念候选用尽 */
+      }
+      break
+    }
     // 打散来源顺序，避免总是被排在前面的计算题占满配额，让填空来源也有机会进卷
     const sources = shuffle(createRng(seed + round * 104729), collected)
     for (const source of sources) {
+      if (pieces.length >= count) break
+      fillConceptSlots(round)
       if (pieces.length >= count) break
       if (seen.has(source.key) || sourceUsed?.has(source.key)) continue
       const allowed = source.wrongs.filter((item) => ruleAllowed(item.rule, level))
@@ -783,12 +910,26 @@ export function generateFormat(options: FormatOptions): FormatResult {
     accept(piece, key, true)
   }
 
+  // 概念题跨卷复用：只有真值与当前位置一致、且未超 1/3 时才补入，避免破坏真假均衡
+  for (const piece of conceptStale) {
+    if (pieces.length >= count || conceptUsed >= conceptCap) break
+    const key = piece.key.replace(/^fmt:(judge|choice):/, '')
+    if (seen.has(key)) continue
+    if (piece.truth !== judgeTarget![pieces.length]) continue
+    accept(piece, key, true)
+    conceptUsed++
+  }
+
   const notes: string[] = []
   if (crossReused > 0) {
     notes.push(`${label}：题池不足，${crossReused} 道按 LRU 跨卷复用（同卷仍不重复）`)
   }
   if (pieces.length < count) {
     notes.push(`${label}：题池只凑到 ${pieces.length}/${count} 道（受错因规则与单空来源限制）`)
+  }
+  if (kind === 'judge' && conceptSources.length > 0) {
+    const conceptCount = pieces.filter((piece) => piece.data.pool === 'concept').length
+    notes.push(`判断题：概念命题 ${conceptCount}/${pieces.length} 道（占比上限 ${Math.floor(count / 3)}）`)
   }
   return { pieces, notes, crossReused }
 }
@@ -803,6 +944,11 @@ export interface FormatVerifyResult {
 
 /** 从原始参数重算正确值；不看题面里写的答案 */
 export function verifyFormatSource(data: FormatSourceData): FormatVerifyResult {
+  if (data.pool === 'concept') {
+    // 概念命题没有数值可重算：按命题 ID 查判据表，核对真值与标答
+    const result = verifyConceptSource(data.conceptId, data.correct)
+    return result.ok ? { ok: true, correct: data.correct } : { ok: false, error: result.error }
+  }
   if (data.pool === 'calc') {
     const latex = data.latex ?? ''
     if (data.correct.includes('……')) {
@@ -845,6 +991,11 @@ export function verifyFormatSource(data: FormatSourceData): FormatVerifyResult {
 
 /** 按错因规则重新推导错误值，供复核逐项对照 */
 export function deriveWrongValues(data: FormatSourceData): Wrong[] {
+  if (data.pool === 'concept') {
+    const record = findConcept(data.conceptId)
+    if (!record || record.truth) return []
+    return [{ value: '×', rule: 'concept-error', detail: record.rationale }]
+  }
   if (data.pool === 'fill') {
     const form = data.form as FillFormName
     const params: ParamMap = { ...(data.params ?? {}), form }
@@ -887,6 +1038,7 @@ export const formatRuleLabel: Record<ErrorRuleId, string> = {
   'miss-side': '漏算一条边',
   'perimeter-area': '周长面积混用',
   'opposite-judgement': '判断颠倒',
+  'concept-error': '概念判断错',
 }
 
 export const formatSourceKey = (piece: FormatPiece): string => piece.key

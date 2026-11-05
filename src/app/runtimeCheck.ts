@@ -6,6 +6,7 @@
  * 静态兜底题至少校验结构与答案非空。复核失败先有限次重生成，仍失败则剔除。
  */
 import { evalLatex } from '../quiz/expr.ts'
+import { verifyConceptItem } from '../quiz/concepts.ts'
 import { deriveWrongValues, verifyFormatSource } from '../quiz/formats.ts'
 import { verifyQuestion } from '../quiz/skeleton/index.ts'
 import type { Combo, PilotQuestion } from '../quiz/skeleton/types.ts'
@@ -248,6 +249,22 @@ function verifyFormatItem(item: TypstItem): string[] {
     .map((part) => ('t' in part ? part.t : ''))
     .join('')
 
+  if (fmt.data.pool === 'concept') {
+    // 概念命题没有数值可重算：走「命题 ID → 判据表」复核，题干/真值/标答/错因四处对齐
+    const source = verifyFormatSource(fmt.data)
+    if (!source.ok) issues.push(`来源复核失败：${source.error}`)
+    issues.push(
+      ...verifyConceptItem({
+        conceptId: fmt.data.conceptId,
+        stem: stemText,
+        truth: item.truth,
+        answers: item.answers,
+        causes: fmt.causes,
+      }),
+    )
+    return issues
+  }
+
   if (item.kind === 'judge') {
     if (typeof item.truth !== 'boolean') issues.push('判断题缺少真假标注')
     const expectedAnswer = item.truth ? '√' : '×'
@@ -305,8 +322,6 @@ const UNIT_FACTORS: Record<string, number> = {
   分: 60,
   秒: 1,
   天: 86400,
-  条边: 1,
-  个角: 1,
 }
 
 interface CompareSide {

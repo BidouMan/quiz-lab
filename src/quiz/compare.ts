@@ -24,8 +24,6 @@ export type CompareForm =
   | 'mixedUnit'
   | 'addSub'
   | 'divVsNum'
-  | 'shapeSides'
-  | 'shapeAngle'
   | 'days'
 
 export interface ComparePiece {
@@ -82,8 +80,6 @@ const KP: Record<CompareForm, string> = {
   mixedUnit: '米与厘米混合比较',
   addSub: '两步加减式比较',
   divVsNum: '除法算式与数比较',
-  shapeSides: '图形边数比较',
-  shapeAngle: '图形角数比较',
   days: '天与时换算比较',
 }
 
@@ -91,16 +87,16 @@ const KP: Record<CompareForm, string> = {
 const UNIT_FORMS_3A: Record<string, Record<Level, CompareForm[]>> = {
   '3A-U1': { L1: ['addSub'], L2: ['addSub'], L3: ['addSub'] },
   '3A-U2': { L1: ['product'], L2: ['product', 'exprVsNum'], L3: ['paren', 'product', 'exprVsNum'] },
-  '3A-U3': { L1: ['shapeSides'], L2: ['shapeSides', 'shapeAngle'], L3: ['shapeSides', 'shapeAngle'] },
+  '3A-U3': { L1: [], L2: [], L3: [] },
   '3A-U4': { L1: ['quotient'], L2: ['quotient', 'divVsNum'], L3: ['quotient', 'divVsNum'] },
   '3A-U5': { L1: ['time'], L2: ['time', 'days'], L3: ['time', 'days'] },
   '3A-U6': { L1: [], L2: [], L3: [] },
   '3A-U7': { L1: ['length'], L2: ['length', 'mixedUnit'], L3: ['mixedUnit', 'length'] },
   '3A-U8': { L1: [], L2: [], L3: [] },
   '3A-U9': {
-    L1: ['addSub', 'product', 'quotient', 'shapeSides', 'time', 'length'],
-    L2: ['addSub', 'product', 'exprVsNum', 'quotient', 'divVsNum', 'shapeSides', 'shapeAngle', 'time', 'days', 'length', 'mixedUnit'],
-    L3: ['paren', 'product', 'exprVsNum', 'quotient', 'divVsNum', 'shapeSides', 'shapeAngle', 'time', 'days', 'mixedUnit', 'length'],
+    L1: ['addSub', 'product', 'quotient', 'time', 'length'],
+    L2: ['addSub', 'product', 'exprVsNum', 'quotient', 'divVsNum', 'time', 'days', 'length', 'mixedUnit'],
+    L3: ['paren', 'product', 'exprVsNum', 'quotient', 'divVsNum', 'time', 'days', 'mixedUnit', 'length'],
   },
 }
 
@@ -335,38 +331,6 @@ function makeDivVsNum(rng: Rng): ComparePiece {
   }
 }
 
-const SHAPES = [
-  { name: '长方形', sides: 4, angles: 4 },
-  { name: '正方形', sides: 4, angles: 4 },
-  { name: '三角形', sides: 3, angles: 3 },
-  { name: '平行四边形', sides: 4, angles: 4 },
-  { name: '梯形', sides: 4, angles: 4 },
-]
-
-function makeShapeSides(rng: Rng): ComparePiece {
-  const left = pick(rng, SHAPES)
-  const right = pick(rng, SHAPES.filter((shape) => shape.name !== left.name))
-  return {
-    pre: `"${left.name}" ${left.sides} "条边"`,
-    post: `"${right.name}" ${right.sides} "条边"`,
-    answer: sign(left.sides, right.sides),
-    form: 'shapeSides',
-    kpName: KP.shapeSides,
-  }
-}
-
-function makeShapeAngle(rng: Rng): ComparePiece {
-  const left = pick(rng, SHAPES)
-  const right = pick(rng, SHAPES.filter((shape) => shape.name !== left.name))
-  return {
-    pre: `"${left.name}" ${left.angles} "个角"`,
-    post: `"${right.name}" ${right.angles} "个角"`,
-    answer: sign(left.angles, right.angles),
-    form: 'shapeAngle',
-    kpName: KP.shapeAngle,
-  }
-}
-
 function makeDays(rng: Rng): ComparePiece {
   // 1 天 = 24 时
   const days = randInt(rng, 1, 6)
@@ -449,10 +413,6 @@ function makeOne(form: CompareForm, rng: Rng, level: Level): ComparePiece {
       return makeAddSub(rng, level)
     case 'divVsNum':
       return makeDivVsNum(rng)
-    case 'shapeSides':
-      return makeShapeSides(rng)
-    case 'shapeAngle':
-      return makeShapeAngle(rng)
     case 'days':
       return makeDays(rng)
   }

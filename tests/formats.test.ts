@@ -11,6 +11,14 @@ import {
   type FormatSourceData,
 } from '../src/quiz/formats.ts'
 import { MemoryStore } from '../src/quiz/memory.ts'
+import {
+  CONCEPT_PROPOSITIONS,
+  findConcept,
+  validateConcept,
+  verifyConceptItem,
+  type ConceptProposition,
+} from '../src/quiz/concepts.ts'
+import { compareUnitForms, generateCompare } from '../src/quiz/compare.ts'
 
 const UNITS = ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6', '3A-U7', '3A-U9']
 
@@ -40,7 +48,10 @@ test('判断题：三档均可生成，真假各半且逐题复核通过', () =>
       assert.equal(source.ok, true)
       if (!piece.truth) {
         assert.equal(piece.causes.length, 1, '假命题必须带 1 条错因')
-        assert.notEqual(piece.causes[0]!.value, piece.data.correct, '假命题不能与标答同值')
+        // 概念题的真值是判断结论本身，错因值是判据而不是数值错误，跳过同值比较
+        if (piece.data.pool !== 'concept') {
+          assert.notEqual(piece.causes[0]!.value, piece.data.correct, '假命题不能与标答同值')
+        }
       }
     }
   }
@@ -95,11 +106,12 @@ test('错因值可由规则独立重算，正确值由参数独立重算', () =>
   }
 })
 
-test('单元可用性：三上 U1/U6 可用，U3/U8 暂不接入', () => {
-  assert.equal(formatSupports('3A', ['3A-U1'], 'L1'), true)
-  assert.equal(formatSupports('3A', ['3A-U6'], 'L2'), true)
-  assert.deepEqual(formatSourceUnits('3A', ['3A-U3', '3A-U8'], 'L1'), [])
-  assert.equal(formatSupports('3A', ['3A-U8'], 'L1'), false)
+test('单元可用性：U3 判断题靠概念命题接入，选择题仍不适用', () => {
+  assert.equal(formatSupports('3A', ['3A-U1'], 'L1', 'judge'), true)
+  assert.equal(formatSupports('3A', ['3A-U6'], 'L2', 'judge'), true)
+  assert.deepEqual(formatSourceUnits('3A', ['3A-U3'], 'L1', 'judge'), ['3A-U3'])
+  assert.deepEqual(formatSourceUnits('3A', ['3A-U3'], 'L1', 'choice'), [])
+  assert.equal(formatSupports('3A', ['3A-U8'], 'L1', 'judge'), false)
 })
 
 test('跨卷去重：连续 4 卷不重复', () => {
@@ -136,6 +148,110 @@ const longestRun = <T,>(sequence: T[]): number => {
   }
   return best
 }
+
+test('概念命题表：真命题有教材依据、假命题有单一错误点、陈述无模糊词', () => {
+  assert.ok(CONCEPT_PROPOSITIONS.length >= 12, `命题表至少 12 条，实际 ${CONCEPT_PROPOSITIONS.length}`)
+  for (const record of CONCEPT_PROPOSITIONS) {
+    assert.deepEqual(validateConcept(record), [], `命题 ${record.id} 不合规`)
+  }
+  const ids = CONCEPT_PROPOSITIONS.map((record) => record.id)
+  assert.equal(new Set(ids).size, ids.length, '命题 ID 不能重复')
+  for (const unitId of ['3A-U3', '3A-U6', '3A-U1', '3A-U2']) {
+    assert.ok(CONCEPT_PROPOSITIONS.some((record) => record.unitId === unitId), `${unitId} 缺少概念命题`)
+  }
+})
+
+test('模棱两可命题与无单一错误点的假命题必须被拒', () => {
+  const base: ConceptProposition = {
+    id: 'test-ambiguous',
+    unitId: '3A-U3',
+    levels: ['L1'],
+    statement: '三角形可能有4条边。',
+    truth: false,
+    rationale: '三角形只有3条边，说成4条边多算了1条。',
+    singleError: '三角形只有3条边',
+  }
+  assert.ok(validateConcept(base).some((issue) => issue.includes('模糊表述')), '含「可能」应被拒')
+  const noError = { ...base, id: 'test-no-error', statement: '三角形有4条边。', singleError: undefined }
+  assert.ok(validateConcept(noError).some((issue) => issue.includes('单一错误点')), '假命题没有错误点应被拒')
+  const wrongRationale = { ...base, id: 'test-rationale', rationale: '判据写错了。' }
+  assert.ok(validateConcept(wrongRationale).some((issue) => issue.includes('覆盖单一错误点')), '判据没覆盖错误点应被拒')
+})
+
+test('判断题：概念命题占比 ≤1/3，真假各半且连续同答 ≤2', () => {
+  const units = [...UNITS, '3A-U3']
+  for (const [index, level] of (['L1', 'L2', 'L3'] as const).entries()) {
+    const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: units, level, count: 20, seed: 880 + index })
+    assert.equal(result.pieces.length, 20, `${level} 应出 20 道`)
+    const concepts = result.pieces.filter((piece) => piece.data.pool === 'concept')
+    assert.ok(concepts.length >= 1, `${level} 应含概念命题`)
+    assert.ok(concepts.length <= Math.floor(20 / 3), `${level} 概念命题 ${concepts.length} 道超过 1/3`)
+    assert.equal(result.pieces.filter((piece) => piece.truth).length, 10, `${level} 真假应各半`)
+    assert.ok(longestRun(result.pieces.map((piece) => piece.truth)) <= 2, `${level} 连续同答超过 2`)
+    for (const [position, piece] of result.pieces.entries()) {
+      assert.deepEqual(verifyItemStructure(buildItem(piece, position) as never), [], `${level} 第 ${position + 1} 题复核`)
+    }
+    for (const piece of concepts) {
+      const record = findConcept(piece.data.conceptId)!
+      if (record.truth) {
+        assert.deepEqual(piece.causes, [], '概念真命题不应带错因')
+      } else {
+        assert.equal(piece.causes[0]?.detail, record.rationale, '概念题错因必须抄自命题判据')
+      }
+      assert.ok(piece.data.conceptId && record.statement === piece.stem)
+    }
+  }
+})
+
+test('U3 单独选判断题：只靠概念命题也能出卷，且受 1/3 上限约束', () => {
+  const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3'], level: 'L2', count: 20, seed: 990 })
+  assert.ok(result.pieces.length >= 1, 'U3 应可出概念判断题')
+  assert.ok(result.pieces.length <= Math.floor(20 / 3), `概念命题 ${result.pieces.length} 道超过 1/3`)
+  assert.ok(result.pieces.every((piece) => piece.data.pool === 'concept'), 'U3 目前只有概念来源')
+  for (const [position, piece] of result.pieces.entries()) {
+    assert.deepEqual(verifyItemStructure(buildItem(piece, position) as never), [], `第 ${position + 1} 题复核`)
+  }
+})
+
+test('概念题复核：篡改真值或判据都会被拒', () => {
+  const record = CONCEPT_PROPOSITIONS.find((item) => !item.truth)!
+  const tamperedTruth = verifyConceptItem({
+    conceptId: record.id,
+    stem: record.statement,
+    truth: true,
+    answers: ['√'],
+    causes: [{ value: '×', rule: 'concept-error', detail: record.rationale }],
+  })
+  assert.ok(tamperedTruth.some((issue) => issue.includes('真假与命题表不一致')), tamperedTruth.join('；'))
+  const tamperedRationale = verifyConceptItem({
+    conceptId: record.id,
+    stem: record.statement,
+    truth: false,
+    answers: ['×'],
+    causes: [{ value: '×', rule: 'concept-error', detail: '生成时顺手记的答案' }],
+  })
+  assert.ok(tamperedRationale.some((issue) => issue.includes('错因未落到命题判据')), tamperedRationale.join('；'))
+})
+
+test('比大小题库：不再有文字型概念比较', () => {
+  assert.deepEqual(compareUnitForms('3A-U3', 'L1'), [], 'U3 不应再有比大小形态')
+  assert.deepEqual(compareUnitForms('3A-U3', 'L2'), [])
+  const banned = /平行四边形|正方形|梯形|三角形|条边|个角|长方形|四边形/
+  for (const level of ['L1', 'L2', 'L3'] as const) {
+    const result = generateCompare({
+      grade: '3A',
+      unitIds: ['3A-U9'],
+      level,
+      count: 60,
+      seed: 300 + level.length,
+    })
+    assert.ok(result.items.length >= 20, `${level} 数值型比大小仍应可出`)
+    for (const item of result.items) {
+      assert.ok(!banned.test(item.pre), `${level} 左式仍含概念词：${item.pre}`)
+      assert.ok(!banned.test(item.post), `${level} 右式仍含概念词：${item.post}`)
+    }
+  }
+})
 
 test('防猜测：6 份卷的答案序列不是固定轮转，且连续同答案不超阈值', () => {
   const choicePapers: string[][] = []
