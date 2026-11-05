@@ -751,6 +751,15 @@ function u4ChoiceWrongs(
   }
   const divisor = Number(params['divisor'])
   const remainder = Number(params['remainder'])
+  if (kind === 'equalShare') {
+    const quotient = Number(params['quotient'])
+    const dividend = Number(params['dividend'])
+    push(quotient + 1, 'misread-operand', '把总数多看了一份')
+    push(quotient - 1, 'misread-operand', '把总数看少了一份')
+    push(divisor, 'misread-operand', '把除数当成每份数')
+    push(dividend, 'misread-operand', '把总数当成每份数')
+    return out
+  }
   if (kind === 'remainderRead') {
     push(remainder + 1, 'remainder-swap', '把余数多算了 1')
     push(remainder + 2, 'remainder-swap', '把余数多算了 2')
@@ -761,6 +770,77 @@ function u4ChoiceWrongs(
     push(divisor + 1, 'remainder-swap', '余数超过除数')
   }
   return out
+}
+
+/**
+ * U4 一、二级等分除法来源：三上只做一位数除数、整除、商 2~8、被除数不超过 81。
+ * 四条句式各自固定单位与问法，避免只在同一模板里换数字；参数域足够大，
+ * 连续两卷（30 题/卷）不靠跨卷复用也能凑满。
+ */
+const U4_EQUAL_STYLES: Array<{
+  id: string
+  text: (dividend: number, divisor: number) => { before: string; after: string }
+}> = [
+  {
+    id: 'plate',
+    text: (dividend, divisor) => ({
+      before: `把${dividend}个苹果平均放到${divisor}个盘子里，每盘放`,
+      after: '个。',
+    }),
+  },
+  {
+    id: 'bunch',
+    text: (dividend, divisor) => ({
+      before: `${dividend}朵花，每${divisor}朵扎成一束，可以扎`,
+      after: '束。',
+    }),
+  },
+  {
+    id: 'class',
+    text: (dividend, divisor) => ({
+      before: `${dividend}本书平均分给${divisor}个班，每班分到`,
+      after: '本。',
+    }),
+  },
+  {
+    id: 'group',
+    text: (dividend, divisor) => ({
+      before: `${dividend}名同学，每${divisor}人一组，可以分成`,
+      after: '组。',
+    }),
+  },
+]
+
+function u4EqualShareSources(seed: number): Source[] {
+  const sources: Source[] = []
+  const keys = new Set<string>()
+  for (let attempt = 0; sources.length < 20 && attempt < 200; attempt++) {
+    const style = attempt % U4_EQUAL_STYLES.length
+    const layout = U4_EQUAL_STYLES[style]!
+    const rng = createRng(seed + 9001 + attempt * 271)
+    const divisor = randInt(rng, 3, 9)
+    const quotient = randInt(rng, 2, 8)
+    const dividend = divisor * quotient
+    const key = `u4:equalShare:${layout.id}:${dividend}:${divisor}`
+    if (keys.has(key)) continue
+    keys.add(key)
+    const { before, after } = layout.text(dividend, divisor)
+    const correct = String(quotient)
+    const params = { kind: 'equalShare', dividend, divisor, quotient }
+    sources.push({
+      pool: 'u4choice',
+      form: 'equalShare',
+      correct,
+      numeric: quotient,
+      kpName: '3A-DIV-REMAINDER',
+      key,
+      judgeStem: (stated) => `${before}${stated}${after}`,
+      choiceStem: `${before}（　）${after}`,
+      wrongs: u4ChoiceWrongs('equalShare', params, correct),
+      data: { pool: 'u4choice', form: 'equalShare', correct, params },
+    })
+  }
+  return sources
 }
 
 function u4ChoiceSource(seed: number, index: number): Source {
@@ -813,6 +893,7 @@ function collectSources(input: { grade: Grade; unitIds: string[]; level: Level; 
   const { grade, unitIds, level, seed } = input
   const sources: Source[] = []
   for (const unitId of unitIds) {
+    if (unitId.endsWith('U4') && level !== 'L3') sources.push(...u4EqualShareSources(seed))
     for (const type of CALC_TYPES) {
       try {
         const result = generate({ grade, unitId, type, level, count: 3, seed })
@@ -1415,6 +1496,20 @@ export function verifyFormatSource(data: FormatSourceData): FormatVerifyResult {
     const divisor = Number(params['divisor'])
     const dividend = Number(params['dividend'])
     const quotient = Number(params['quotient'])
+    if (kind === 'equalShare') {
+      if (!Number.isInteger(dividend) || !Number.isInteger(divisor)) {
+        return { ok: false, error: '等分除法参数不是整数' }
+      }
+      if (divisor < 2 || divisor > 9) return { ok: false, error: '等分除法除数不是一位数' }
+      if (dividend % divisor !== 0) return { ok: false, error: '等分除法不能整除' }
+      const value = dividend / divisor
+      if (value < 2) return { ok: false, error: '等分除法商小于 2' }
+      if (quotient !== value) return { ok: false, error: `参数商 ${quotient} ≠ 独立重算 ${value}` }
+      if (String(value) !== data.correct) {
+        return { ok: false, error: `独立重算 ${value} ≠ 答案 ${data.correct}` }
+      }
+      return { ok: true, correct: String(value) }
+    }
     if (!Number.isInteger(divisor) || divisor <= 0) return { ok: false, error: '有余数除法除数无效' }
     let value: number | null = null
     if (kind === 'remainderRead') {
