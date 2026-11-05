@@ -184,7 +184,7 @@ test('判断题：概念命题占比 ≤1/3，真假各半且连续同答 ≤2',
     const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: units, level, count: 20, seed: 880 + index })
     assert.equal(result.pieces.length, 20, `${level} 应出 20 道`)
     const concepts = result.pieces.filter((piece) => piece.data.pool === 'concept')
-    // 概念池（27 条）远大于上限，应恰好截断到 6 道，不能多也不能少
+    // 概念池（48 条）远大于上限，应恰好截断到 6 道，不能多也不能少
     assert.equal(concepts.length, Math.floor(20 / 3), `${level} 概念命题应恰好 ${Math.floor(20 / 3)} 道`)
     assert.equal(result.pieces.filter((piece) => piece.truth).length, 10, `${level} 真假应各半`)
     assert.ok(longestRun(result.pieces.map((piece) => piece.truth)) <= 2, `${level} 连续同答超过 2`)
@@ -203,14 +203,61 @@ test('判断题：概念命题占比 ≤1/3，真假各半且连续同答 ≤2',
   }
 })
 
-test('U3 单独选判断题：只靠概念命题也能出卷，且受 1/3 上限约束', () => {
-  const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3'], level: 'L2', count: 20, seed: 990 })
-  assert.ok(result.pieces.length >= 1, 'U3 应可出概念判断题')
-  assert.ok(result.pieces.length <= Math.floor(20 / 3), `概念命题 ${result.pieces.length} 道超过 1/3`)
-  assert.ok(result.pieces.every((piece) => piece.data.pool === 'concept'), 'U3 目前只有概念来源')
-  for (const [position, piece] of result.pieces.entries()) {
-    assert.deepEqual(verifyItemStructure(buildItem(piece, position) as never), [], `第 ${position + 1} 题复核`)
+test('U3 单独选判断题：没有数值来源时概念上限放宽到 100%，三档都能出满 20', () => {
+  for (const [index, level] of (['L1', 'L2', 'L3'] as const).entries()) {
+    const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3'], level, count: 20, seed: 990 + index })
+    assert.equal(result.pieces.length, 20, `${level} 应出满 20 道`)
+    assert.ok(result.pieces.every((piece) => piece.data.pool === 'concept'), `${level} 应全部是概念命题`)
+    assert.equal(result.pieces.filter((piece) => piece.truth).length, 10, `${level} 真假应各半`)
+    assert.ok(
+      result.notes.some((note) => note.includes('全部为概念命题') && note.includes('无其他判断来源')),
+      `${level} 摘要应说明全概念及原因，实际：${result.notes.join('；')}`,
+    )
+    for (const [position, piece] of result.pieces.entries()) {
+      assert.deepEqual(verifyItemStructure(buildItem(piece, position) as never), [], `${level} 第 ${position + 1} 题复核`)
+    }
   }
+})
+
+test('判断题：有其他数值来源时概念仍受 1/3 上限', () => {
+  const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3', '3A-U4', '3A-U6'], level: 'L2', count: 20, seed: 991 })
+  assert.equal(result.pieces.length, 20)
+  assert.equal(result.pieces.filter((piece) => piece.data.pool === 'concept').length, Math.floor(20 / 3))
+  assert.ok(result.notes.some((note) => note.includes('上限')), `应写明 1/3 上限，实际：${result.notes.join('；')}`)
+})
+
+test('超纲：除法与余数命题只能落在 U4，不得出现在未学除法的 U1', () => {
+  const division = /除法|余数|除数/
+  const u1 = CONCEPT_PROPOSITIONS.filter((record) => record.unitId === '3A-U1')
+  assert.ok(u1.length > 0, 'U1 应仍有概念命题')
+  for (const record of u1) {
+    assert.ok(!division.test(record.statement), `U1 命题超纲：${record.statement}`)
+  }
+  const remainders = CONCEPT_PROPOSITIONS.filter((record) => /余数/.test(record.statement))
+  assert.ok(remainders.length >= 2, '余数命题应保留')
+  for (const record of remainders) assert.equal(record.unitId, '3A-U4', `余数命题 ${record.id} 必须归属 U4`)
+  const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U1'], level: 'L2', count: 20, seed: 992 })
+  for (const piece of result.pieces) assert.ok(!/余数|除数/.test(piece.stem), `U1 判断题出现超纲题干：${piece.stem}`)
+})
+
+test('绝对化表述：必须标注特例复核，缺字段或结论不完整都要被拒', () => {
+  const absolute = /都|一定|所有|任何|只有|必须|总|每/
+  for (const record of CONCEPT_PROPOSITIONS) {
+    if (!absolute.test(record.statement)) continue
+    assert.ok(record.absoluteReview?.includes('特例'), `命题 ${record.id} 的绝对化表述缺少特例复核`)
+  }
+  const base: ConceptProposition = {
+    id: 'test-absolute',
+    unitId: '3A-U3',
+    levels: ['L1'],
+    statement: '四边形的4个角都是直角。',
+    truth: false,
+    rationale: '四边形的4个角不都是直角。',
+    singleError: '四边形的4个角不都是直角',
+  }
+  assert.ok(validateConcept(base).some((issue) => issue.includes('特例复核')), '绝对化表述缺 absoluteReview 应被拒')
+  const weak = { ...base, id: 'test-absolute-weak', absoluteReview: '已复核。' }
+  assert.ok(validateConcept(weak).some((issue) => issue.includes('必须写明「特例」')), '复核结论没写特例应被拒')
 })
 
 test('概念题复核：篡改真值或判据都会被拒', () => {

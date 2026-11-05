@@ -229,6 +229,15 @@ test('接线：所选单元不含图形内容时不出图形题，并在界面�
   assert.ok(result.skipped.includes('geom'))
 })
 
+test('接线：只选 U3 出比大小时明确写「本单元无比大小内容」，不静默出 0', () => {
+  const config: AppConfig = { ...DEFAULT_CONFIG, grade: '3A', unitIds: ['3A-U3'], level: 'L2', types: ['compare'], count: 20 }
+  const availability = typeAvailability(config, TEMPLATE)
+  assert.equal(availability.compare.enabled, false)
+  assert.equal(availability.compare.source, 'na')
+  assert.ok(availability.compare.reason.includes('本单元'), `原因应点明单元，实际：${availability.compare.reason}`)
+  assert.ok(availability.compare.reason.includes('无比大小内容'), `原因应写明无比大小内容，实际：${availability.compare.reason}`)
+})
+
 test('比大小卷面：不编号、整组行内渲染、文字组每行最多 2 组', () => {
   const src = readFileSync(new URL('../typst/paper.typ', import.meta.url), 'utf8')
   const numbered = src.match(/#let numbered-kind\(kind\) = kind in \(([^)]*)\)/)

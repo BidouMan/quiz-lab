@@ -820,10 +820,14 @@ export function generateFormat(options: FormatOptions): FormatResult {
     memory?.record(key)
   }
 
-  // 概念命题：每份判断题最多 1/3，均匀分布到卷中，真值必须落在对应的答案位
+  // 概念命题：默认整卷最多 1/3；只有该单元组合没有任何数值判断来源时，才放宽到 100%
   const conceptSources = kind === 'judge' ? collectConceptSources(grade, units, level) : []
+  const numericSources = kind === 'judge' ? collectSources({ grade, unitIds: units, level, seed }) : []
+  const conceptOnly = kind === 'judge' && conceptSources.length > 0 && numericSources.length === 0
   const conceptList = shuffle(createRng(seed + 8123), conceptSources)
-  const conceptCap = Math.min(Math.floor(count / 3), conceptList.length)
+  const conceptCap = conceptOnly
+    ? Math.min(count, conceptList.length)
+    : Math.min(Math.floor(count / 3), conceptList.length)
   const conceptSlots = new Set<number>()
   if (conceptCap > 0) {
     const step = count / conceptCap
@@ -929,7 +933,11 @@ export function generateFormat(options: FormatOptions): FormatResult {
   }
   if (kind === 'judge' && conceptSources.length > 0) {
     const conceptCount = pieces.filter((piece) => piece.data.pool === 'concept').length
-    notes.push(`判断题：概念命题 ${conceptCount}/${pieces.length} 道（占比上限 ${Math.floor(count / 3)}）`)
+    notes.push(
+      conceptOnly
+        ? `判断题：本卷全部为概念命题（${conceptCount}/${pieces.length}，该单元无其他判断来源）`
+        : `判断题：概念命题 ${conceptCount}/${pieces.length} 道（占比上限 ${Math.floor(count / 3)}）`,
+    )
   }
   return { pieces, notes, crossReused }
 }

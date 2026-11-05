@@ -8,7 +8,9 @@ import type { Grade, Level } from './types.ts'
  * 因此这里要求：
  * - 真命题必须写明教材依据（source）；
  * - 假命题必须写明唯一点的错误点（singleError），且判据（rationale）里要覆盖它；
- * - 陈述句不得含「可能 / 有时 / 也许 / 大约 / 大概 / 通常」这类模糊表述。
+ * - 陈述句不得含「可能 / 有时 / 也许 / 大约 / 大概 / 通常」这类模糊表述；
+ * - 陈述句含「都 / 一定 / 所有 / 任何 / 只有 / 必须 / 总 / 每」等绝对化表述时，
+ *   必须写 absoluteReview 说明已核对过特例（正方形、菱形、特殊长方形、0 与 1 的运算等）。
  */
 export interface ConceptProposition {
   id: string
@@ -22,9 +24,13 @@ export interface ConceptProposition {
   singleError?: string
   /** 真命题的教材 / 教辅依据；假命题不填 */
   source?: string
+  /** 绝对化表述的特例复核结论；陈述句含绝对化词时必填 */
+  absoluteReview?: string
 }
 
 const AMBIGUOUS = ['可能', '有时', '也许', '大约', '大概', '通常']
+/** 绝对化表述：出现即要求 absoluteReview，避免依赖「孩子没想到特例」才成立 */
+const ABSOLUTE = /都|一定|所有|任何|只有|必须|总|每/
 
 export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
   // ---- U3 三角形与四边形 ----
@@ -72,15 +78,17 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: true,
     rationale: '长方形是四个角都是直角的四边形。',
     source: '沪教版三上 U3《三角形与四边形》：长方形的认识（4个角都是直角）',
+    absoluteReview: '特例：正方形也属于长方形，四个角仍都是直角，命题仍真',
   },
   {
-    id: 'u3-rect-sides-equal',
+    id: 'u3-rect-adjacent-sides-equal',
     unitId: '3A-U3',
     levels: ['L2', 'L3'],
-    statement: '长方形的4条边都相等。',
+    statement: '长方形相邻的两条边长度一定相等。',
     truth: false,
-    rationale: '长方形只有对边相等，相邻的边长度不同，所以不是4条边都相等。',
-    singleError: '长方形只有对边相等',
+    rationale: '长方形相邻的两条边长度不一定相等：一般长方形一条是长、一条是宽，只有正方形才四条边都相等。',
+    singleError: '长方形相邻的两条边长度不一定相等',
+    absoluteReview: '特例：正方形四边相等，但一般长方形邻边不相等，全称判断仍假',
   },
   {
     id: 'u3-rect-opposite-sides',
@@ -99,6 +107,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: true,
     rationale: '正方形的四条边长度都相等，这是正方形的特征。',
     source: '沪教版三上 U3《三角形与四边形》：正方形的认识（4条边都相等）',
+    absoluteReview: '特例：无；正方形按定义四条边都相等',
   },
   {
     id: 'u3-square-not-right-angles',
@@ -108,15 +117,17 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: false,
     rationale: '正方形的4个角都是直角，所以说「都不是直角」错。',
     singleError: '正方形的4个角都是直角',
+    absoluteReview: '特例：无；正方形四个角都是直角，不存在反例',
   },
   {
-    id: 'u3-para-sides-equal',
+    id: 'u3-para-adjacent-sides-equal',
     unitId: '3A-U3',
     levels: ['L2', 'L3'],
-    statement: '平行四边形的4条边都相等。',
+    statement: '平行四边形相邻的两条边长度一定相等。',
     truth: false,
-    rationale: '平行四边形只有对边相等，邻边不一定相等，所以不是4条边都相等。',
-    singleError: '平行四边形只有对边相等',
+    rationale: '平行四边形相邻的两条边长度不一定相等，只有菱形才四条边都相等。',
+    singleError: '平行四边形相邻的两条边长度不一定相等',
+    absoluteReview: '特例：菱形是四边相等的平行四边形，但一般平行四边形邻边不相等，全称判断仍假',
   },
   {
     id: 'u3-para-opposite',
@@ -135,6 +146,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: true,
     rationale: '只有一组对边平行的四边形叫梯形。',
     source: '沪教版三上 U3《三角形与四边形》：梯形的认识（只有一组对边平行）',
+    absoluteReview: '特例：平行四边形有两组对边平行，按定义不算梯形；三上采用「只有一组」定义',
   },
   {
     id: 'u3-trapezoid-two-pairs',
@@ -144,6 +156,199 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: false,
     rationale: '梯形只有一组对边平行，说成两组就变成平行四边形了。',
     singleError: '梯形只有一组对边平行',
+  },
+  // ---- U3 三角形与四边形：基础计数与角的分类（补齐纯概念单元的出题量） ----
+  {
+    id: 'u3-tri-angles',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '三角形有3个角。',
+    truth: true,
+    rationale: '三角形由3条线段围成，3条边对应3个角。',
+    source: '沪教版三上 U3《三角形与四边形》：三角形的认识（3条边、3个角）',
+  },
+  {
+    id: 'u3-tri-four-angles',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '三角形有4个角。',
+    truth: false,
+    rationale: '三角形只有3个角，说成4个角多算了1个。',
+    singleError: '三角形只有3个角',
+  },
+  {
+    id: 'u3-quad-angles',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '四边形有4个角。',
+    truth: true,
+    rationale: '四边形由4条线段围成，4条边对应4个角。',
+    source: '沪教版三上 U3《三角形与四边形》：四边形的认识（4条边、4个角）',
+  },
+  {
+    id: 'u3-rect-four-sides',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '长方形有4条边。',
+    truth: true,
+    rationale: '长方形是四边形，四边形有4条边，所以长方形有4条边。',
+    source: '沪教版三上 U3《三角形与四边形》：长方形的认识（4条边、4个角）',
+  },
+  {
+    id: 'u3-square-four-sides',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '正方形有4条边。',
+    truth: true,
+    rationale: '正方形是四边形，四边形有4条边，所以正方形有4条边。',
+    source: '沪教版三上 U3《三角形与四边形》：正方形的认识（4条边、4个角）',
+  },
+  {
+    id: 'u3-square-opposite-sides',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '正方形的对边相等。',
+    truth: true,
+    rationale: '正方形四条边都相等，对边自然也相等。',
+    source: '沪教版三上 U3《三角形与四边形》：正方形的认识（4条边都相等）',
+  },
+  {
+    id: 'u3-rect-is-quad',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '长方形是四边形。',
+    truth: true,
+    rationale: '长方形有4条边、4个角，符合四边形的定义。',
+    source: '沪教版三上 U3《三角形与四边形》：四边形与长方形的包含关系',
+  },
+  {
+    id: 'u3-square-is-quad',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '正方形是四边形。',
+    truth: true,
+    rationale: '正方形有4条边、4个角，符合四边形的定义。',
+    source: '沪教版三上 U3《三角形与四边形》：四边形与正方形的包含关系',
+  },
+  {
+    id: 'u3-para-is-quad',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '平行四边形是四边形。',
+    truth: true,
+    rationale: '平行四边形有4条边、4个角，符合四边形的定义。',
+    source: '沪教版三上 U3《三角形与四边形》：四边形与平行四边形的包含关系',
+  },
+  {
+    id: 'u3-trapezoid-is-quad',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '梯形是四边形。',
+    truth: true,
+    rationale: '梯形有4条边、4个角，符合四边形的定义。',
+    source: '沪教版三上 U3《三角形与四边形》：四边形与梯形的包含关系',
+  },
+  {
+    id: 'u3-right-angle-gt-acute',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '直角比锐角大。',
+    truth: true,
+    rationale: '锐角小于直角，直角大于锐角。',
+    source: '沪教版三上 U3《三角形与四边形》：锐角、直角、钝角的比较',
+  },
+  {
+    id: 'u3-obtuse-angle-gt-right',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '钝角比直角大。',
+    truth: true,
+    rationale: '钝角大于直角，所以钝角比直角大。',
+    source: '沪教版三上 U3《三角形与四边形》：锐角、直角、钝角的比较',
+  },
+  {
+    id: 'u3-acute-angle-lt-right',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '锐角比直角小。',
+    truth: true,
+    rationale: '锐角小于直角，和「直角比锐角大」是同一个大小关系。',
+    source: '沪教版三上 U3《三角形与四边形》：锐角、直角、钝角的比较',
+  },
+  {
+    id: 'u3-right-angles-same-size',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '所有的直角都一样大。',
+    truth: true,
+    rationale: '直角的大小是固定的，与画的位置、边的长短都无关。',
+    source: '沪教版三上 U3《三角形与四边形》：直角的认识',
+    absoluteReview: '特例：无；角的大小与边长无关，所有直角都相等',
+  },
+  {
+    id: 'u3-quad-all-right-angles',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '四边形的4个角都是直角。',
+    truth: false,
+    rationale: '四边形的4个角不都是直角：长方形、正方形的4个角才是直角，梯形等一般四边形不是。',
+    singleError: '四边形的4个角不都是直角',
+    absoluteReview: '特例：长方形、正方形的4个角是直角，但一般四边形不是，全称判断为假',
+  },
+  {
+    id: 'u3-para-opposite-angles',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '平行四边形的对角相等。',
+    truth: true,
+    rationale: '平行四边形两组对角分别相等，这是平行四边形的特征。',
+    source: '沪教版三上 U3《三角形与四边形》：平行四边形的认识（对角相等）',
+  },
+  {
+    id: 'u3-rect-three-angles',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '长方形有3个角。',
+    truth: false,
+    rationale: '长方形有4个角，说成3个角少算了1个。',
+    singleError: '长方形有4个角',
+  },
+  {
+    id: 'u3-square-three-sides',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '正方形有3条边。',
+    truth: false,
+    rationale: '正方形有4条边，说成3条边少算了1条。',
+    singleError: '正方形有4条边',
+  },
+  {
+    id: 'u3-square-sides-unequal',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '正方形的4条边不相等。',
+    truth: false,
+    rationale: '正方形的4条边都相等，说成「不相等」正好说反了。',
+    singleError: '正方形的4条边都相等',
+    absoluteReview: '特例：无；正方形按定义四条边都相等',
+  },
+  {
+    id: 'u3-para-opposite-unequal',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '平行四边形的对边不相等。',
+    truth: false,
+    rationale: '平行四边形的对边相等，说成「不相等」正好说反了。',
+    singleError: '平行四边形的对边相等',
+  },
+  {
+    id: 'u3-acute-angle-gt-right',
+    unitId: '3A-U3',
+    levels: ['L1', 'L2', 'L3'],
+    statement: '锐角比直角大。',
+    truth: false,
+    rationale: '锐角比直角小，说成比直角大正好说反了。',
+    singleError: '锐角比直角小',
   },
   // ---- U6 周长 ----
   {
@@ -190,6 +395,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: false,
     rationale: '周长相等只说明长与宽的和相等，长和宽可以不同，如5厘米×3厘米和6厘米×2厘米。',
     singleError: '周长相等只说明长与宽的和相等',
+    absoluteReview: '特例：5厘米×3厘米与6厘米×2厘米周长同为16厘米，形状不同，是反例',
   },
   {
     id: 'u6-square-same-perimeter',
@@ -199,6 +405,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: true,
     rationale: '正方形周长 = 边长 × 4，周长相等时边长也相等。',
     source: '沪教版三上 U6《周长》：正方形周长与边长的关系',
+    absoluteReview: '特例：无；边长 = 周长 ÷ 4 唯一确定',
   },
   // ---- U1 复习与提高（四则运算相关表述） ----
   {
@@ -209,6 +416,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: true,
     rationale: '0与任何数相乘，积都是0。',
     source: '沪教版三上 U1《复习与提高》：0的乘法',
+    absoluteReview: '特例：0×0=0，无例外',
   },
   {
     id: 'u1-zero-add',
@@ -218,6 +426,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: false,
     rationale: '0加任何数等于原数，不是0；0乘任何数才得0。',
     singleError: '0加任何数等于原数',
+    absoluteReview: '特例：0+0=0 成立，但其余数不成立，全称判断为假',
   },
   {
     id: 'u1-multiply-one',
@@ -227,6 +436,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: true,
     rationale: '任何数与1相乘，积都等于原数。',
     source: '沪教版三上 U1《复习与提高》：1的乘法',
+    absoluteReview: '特例：0×1=0、1×1=1，结果仍是原数，无例外',
   },
   {
     id: 'u1-add-one',
@@ -236,10 +446,12 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: false,
     rationale: '任何数和1相加等于这个数加1；只有乘1结果才不变。',
     singleError: '任何数和1相加等于这个数加1',
+    absoluteReview: '特例：0+1=1 不等于0，全称判断为假',
   },
+  // ---- U4 用一位数除（除法与余数；三上 U1 尚未学除法，不能标在 U1） ----
   {
-    id: 'u1-remainder-equal-divisor',
-    unitId: '3A-U1',
+    id: 'u4-remainder-equal-divisor',
+    unitId: '3A-U4',
     levels: ['L2', 'L3'],
     statement: '有余数的除法中，余数可以等于除数。',
     truth: false,
@@ -247,13 +459,14 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     singleError: '余数必须小于除数',
   },
   {
-    id: 'u1-remainder-less-divisor',
-    unitId: '3A-U1',
+    id: 'u4-remainder-less-divisor',
+    unitId: '3A-U4',
     levels: ['L2', 'L3'],
     statement: '有余数的除法中，余数一定小于除数。',
     truth: true,
     rationale: '余数必须小于除数，这是有余数除法的规则。',
-    source: '沪教版三上 U1《复习与提高》：有余数的除法（余数必须小于除数）',
+    source: '沪教版三上 U4《用一位数除》：有余数的除法（余数必须小于除数）',
+    absoluteReview: '特例：整除时余数为0，仍小于除数，无例外',
   },
   // ---- U2 用一位数乘 ----
   {
@@ -264,6 +477,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: true,
     rationale: '整十数是一个数乘10，再乘一位数，积一定能被10整除，末尾有0。',
     source: '沪教版三上 U2《用一位数乘》：整十数乘一位数的口算',
+    absoluteReview: '特例：10×0=0 也以 0 结尾，无例外',
   },
   {
     id: 'u2-hundreds-two-zeros',
@@ -273,6 +487,7 @@ export const CONCEPT_PROPOSITIONS: readonly ConceptProposition[] = [
     truth: false,
     rationale: '整百数乘一位数，积的末尾可能有两个或三个0，如200×5=1000。',
     singleError: '积的末尾可能有两个或三个0',
+    absoluteReview: '特例：200×5=1000 末尾有三个0，是「只有两个0」的反例',
   },
 ]
 
@@ -287,6 +502,13 @@ export function validateConcept(record: ConceptProposition): string[] {
   if (statement.endsWith('？') || statement.endsWith('?')) issues.push('陈述句不能是问句')
   for (const word of AMBIGUOUS) {
     if (statement.includes(word)) issues.push(`陈述句含模糊表述「${word}」`)
+  }
+  // 绝对化表述必须带特例复核结论，防止靠「孩子没想到特例」才成立
+  const absoluteMatch = statement.match(ABSOLUTE)
+  if (absoluteMatch) {
+    const review = record.absoluteReview?.trim() ?? ''
+    if (!review) issues.push(`绝对化表述「${absoluteMatch[0]}」缺少特例复核（absoluteReview）`)
+    else if (!review.includes('特例')) issues.push('特例复核（absoluteReview）必须写明「特例」结论')
   }
   if (!record.rationale.trim()) issues.push('命题缺少判据')
   if (record.truth) {

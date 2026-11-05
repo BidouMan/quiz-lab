@@ -388,7 +388,7 @@ export function typeAvailability(
           reason:
             levels.length > 0
               ? `所选单元在 ${config.level} 没有可比较的知识点，可切到 ${levels.join('/')}`
-              : `所选单元（${units.map((unit) => unit.unitName).join('、')}）与比大小无对应内容，不出比大小题`,
+              : `不适用：本单元（${units.map((unit) => unit.unitName).join('、')}）无比大小内容（图形概念比较已改为判断题概念命题），不出比大小题`,
           source: 'na',
         }
         continue
