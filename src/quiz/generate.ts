@@ -15,6 +15,7 @@ import { createRng, pick } from './rng.ts'
 import { buildOne, kousuanRangeProblem, type BuiltQuestion } from './forms.ts'
 import { evalLatex, evalNode } from './expr.ts'
 import { unitGuardProblem } from './unitGuards.ts'
+import { normalizeExpr } from './normalize.ts'
 
 interface Target {
   unit: Unit
@@ -214,7 +215,9 @@ function selfCheck(
 }
 
 function fingerprint(built: BuiltQuestion, form: string): string {
-  return `${form}|${built.values.join('|')}`
+  // 计算类统一键：算式规范化串（去空格、统一运算符），与 form 无关，跨形态同题只记一次
+  void form
+  return `calc:${normalizeExpr(built.latex)}`
 }
 
 function makeQuestion(
@@ -270,10 +273,13 @@ export function generate(options: GenerateOptions): GenerateResult {
   const usedFp = new Set<string>()
   const questions: GeneratedQuestion[] = []
   const failures: string[] = []
+  let crossReused = 0
 
   for (let index = 0; index < count; index++) {
     const target = targets[index % targets.length]
     const candidates: Candidate[] = []
+    /** 记忆池轮转候选：最近窗口内的题，取 lastPaper 最小（最久未用）的那道 */
+    let stale: { candidate: Candidate; fp: string } | null = null
 
     for (let attempt = 0; attempt < 700 && candidates.length < 10; attempt++) {
       const spec = pick(rng, target.specs)
@@ -293,8 +299,16 @@ export function generate(options: GenerateOptions): GenerateResult {
         if (failures.length < 8) failures.push(problem)
         continue
       }
+      if (memory.recentlyUsed(fp)) {
+        if (stale == null || memory.lastPaper(fp) < memory.lastPaper(stale.fp)) {
+          stale = { candidate: { built, spec }, fp }
+        }
+        continue
+      }
       candidates.push({ built, spec })
     }
+
+    if (candidates.length === 0 && stale != null) candidates.push(stale.candidate)
 
     if (candidates.length === 0) {
       throw new Error(
@@ -317,6 +331,7 @@ export function generate(options: GenerateOptions): GenerateResult {
     }
     const chosen = pick(rng, best)
     const fp = fingerprint(chosen.built, chosen.spec.form)
+    if (memory.crossPaperUsed(fp)) crossReused++
     memory.record(fp)
     usedFp.add(fp)
     usedExpr.add(chosen.built.latex.replace(/\s+/g, ''))
@@ -331,6 +346,7 @@ export function generate(options: GenerateOptions): GenerateResult {
       kpId: t.kp.kpId,
       kpName: t.kp.kpName,
     })),
+    crossReused,
   }
 }
 

@@ -7,6 +7,7 @@ export {
   rebuildQuestion,
   releaseQuestion,
   renderText,
+  skeletonMemoryKey,
   toPilotItem,
 } from './assemble.ts'
 export type { UsedSets } from './assemble.ts'

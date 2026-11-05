@@ -5,9 +5,11 @@
 import { evalComparison, evalFormula, renderFormula, splitTopDivision, type Params } from './expr.ts'
 import { resolveSkeleton } from './bands.ts'
 import { createRng, randInt } from '../rng.ts'
+import type { MemoryStore } from '../memory.ts'
 import { PRACTICE_LABELS, type Combo, type PilotItem, type PilotPaper, type PilotQuestion, type PilotSection, type Scene, type Skeleton } from './types.ts'
 
 const MAX_ATTEMPTS = 400
+const MAX_ATTEMPTS_WITH_STALE = 60
 const MAX_STEM_CHARS = 45
 
 export interface PaperOptions {
@@ -16,6 +18,8 @@ export interface PaperOptions {
   title?: string
   /** 跨组合混排时传入已用集合，保证跨组合也不撞 */
   used?: UsedSets
+  /** 跨卷记忆：键 = 骨架 id + 参数签名 */
+  memory?: MemoryStore
 }
 
 export interface UsedSets {
@@ -312,6 +316,11 @@ function paramsKey(params: Params): string {
     .join(',')
 }
 
+/** 骨架跨卷记忆键：骨架 id + 参数签名 */
+export function skeletonMemoryKey(combo: Combo, skeletonId: string, params: Params): string {
+  return `skel:${combo.id}|${skeletonId}|${paramsKey(params)}`
+}
+
 interface PickInput {
   combo: Combo
   skeleton: Skeleton
@@ -323,6 +332,7 @@ interface PickInput {
   exactStems: Set<string>
   /** 复用轮次：允许场景重复，只要求题干（含数字）与卷内已有题不同 */
   allowReuse: boolean
+  memory?: MemoryStore
 }
 
 /**
@@ -330,15 +340,18 @@ interface PickInput {
  * 首轮（allowReuse=false）保持既有强约束：卷内场景、数值、句式都不重复；
  * 复用轮（allowReuse=true）允许场景/句式重复，但数值必须不同、题干必须与卷内已有题逐字不同。
  */
-function pickQuestion(input: PickInput): { question: PilotQuestion; scene: Scene } | null {
-  const { combo, skeleton, scenePool, rng, index, used, takenScenes, exactStems, allowReuse } = input
+function pickQuestion(input: PickInput): { question: PilotQuestion; scene: Scene; crossReused: boolean } | null {
+  const { combo, skeleton, scenePool, rng, index, used, takenScenes, exactStems, allowReuse, memory } = input
   const all = compatibleScenes(combo, skeleton, scenePool)
   const fresh = all.filter((scene) => !takenScenes.has(scene.id) && !used.scenes.has(sceneKey(scene)))
   const candidates = allowReuse
     ? [...shuffle(rng, fresh), ...shuffle(rng, all.filter((scene) => !fresh.includes(scene)))]
     : fresh
+  /** 记忆池轮转候选：最近窗口内的题，取 lastPaper 最小（最久未用）的那道 */
+  let stale: { question: PilotQuestion; scene: Scene; key: string } | null = null
   for (const scene of candidates) {
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    // 一旦已有轮转候选，只再抽样少量次数寻找新题，避免长时间扫描
+    for (let attempt = 0; attempt < (stale ? MAX_ATTEMPTS_WITH_STALE : MAX_ATTEMPTS); attempt++) {
       const params = generateParams(skeleton, rng)
       if (!params) continue
       if (used.values.has(paramsKey(params))) continue
@@ -351,10 +364,22 @@ function pickQuestion(input: PickInput): { question: PilotQuestion; scene: Scene
       if (stemChars(question.stem) > MAX_STEM_CHARS) continue
       if (exactStems.has(question.stem)) continue
       if (!allowReuse && used.texts.has(question.stem.replace(/\d+/g, '#'))) continue
-      return { question, scene }
+      if (memory) {
+        const key = skeletonMemoryKey(combo, skeleton.id, params)
+        if (memory.recentlyUsed(key)) {
+          if (stale == null || memory.lastPaper(key) < memory.lastPaper(stale.key)) {
+            stale = { question, scene, key }
+          }
+          continue
+        }
+      }
+      return { question, scene, crossReused: false }
     }
   }
-  return null
+  // 只有来自更早卷的才计跨卷复用；本卷内换批次复用不算
+  return stale
+    ? { question: stale.question, scene: stale.scene, crossReused: memory?.crossPaperUsed(stale.key) ?? false }
+    : null
 }
 
 function commitQuestion(input: {
@@ -365,8 +390,9 @@ function commitQuestion(input: {
   takenScenes: Set<string>
   exactStems: Set<string>
   reuse: boolean
+  memory?: MemoryStore
 }): void {
-  const { question, scene, combo, used, takenScenes, exactStems, reuse } = input
+  const { question, scene, combo, used, takenScenes, exactStems, reuse, memory } = input
   used.values.add(paramsKey(question.params))
   used.scenes.add(sceneKey(scene))
   takenScenes.add(scene.id)
@@ -374,6 +400,8 @@ function commitQuestion(input: {
   exactStems.add(question.stem)
   // 复用题本身就是「重复句式」，不再登记句式键，否则同骨架第二次复用会被自己挡住
   if (!reuse) used.texts.add(question.stem.replace(/\d+/g, '#'))
+  // 跨卷记忆：不论新题还是轮转复用都登记，保证下一卷能避开本轮刚用过的题
+  memory?.record(skeletonMemoryKey(combo, question.skeletonId, question.params))
 }
 
 function compatibleScenes(combo: Combo, skeleton: Skeleton, pool: Scene[]): Scene[] {
@@ -422,8 +450,10 @@ export function rebuildQuestion(input: {
   /** 题号，用于生成唯一 id */
   index: number
   used?: UsedSets
+  /** 跨卷记忆：重生成同样避开最近窗口用过的题 */
+  memory?: MemoryStore
 }): PilotQuestion | null {
-  const { combo, skeletonId, seed, index } = input
+  const { combo, skeletonId, seed, index, memory } = input
   const used = input.used ?? createUsedSets()
   const skeleton = combo.skeletons
     .map((item) => resolveSkeleton(item, combo.level))
@@ -434,8 +464,9 @@ export function rebuildQuestion(input: {
     rng,
     compatibleScenes(combo, skeleton, combo.scenes).filter((scene) => !used.scenes.has(sceneKey(scene))),
   )
+  let stale: { question: PilotQuestion; scene: Scene } | null = null
   for (const scene of scenes) {
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    for (let attempt = 0; attempt < (stale ? MAX_ATTEMPTS_WITH_STALE : MAX_ATTEMPTS); attempt++) {
       const params = generateParams(skeleton, rng)
       if (!params) continue
       const valuesKey = Object.keys(params)
@@ -452,11 +483,27 @@ export function rebuildQuestion(input: {
       if (stemChars(question.stem) > MAX_STEM_CHARS) continue
       const textKey = question.stem.replace(/\d+/g, '#')
       if (used.texts.has(textKey)) continue
+      if (memory?.recentlyUsed(skeletonMemoryKey(combo, skeleton.id, params))) {
+        stale = { question, scene }
+        continue
+      }
       used.values.add(valuesKey)
       used.texts.add(textKey)
       used.scenes.add(sceneKey(scene))
+      memory?.record(skeletonMemoryKey(combo, skeleton.id, params))
       return question
     }
+  }
+  if (stale != null) {
+    const valuesKey = Object.keys(stale.question.params)
+      .sort()
+      .map((name) => stale.question.params[name])
+      .join(',')
+    used.values.add(valuesKey)
+    used.texts.add(stale.question.stem.replace(/\d+/g, '#'))
+    used.scenes.add(sceneKey(stale.scene))
+    memory?.record(skeletonMemoryKey(combo, skeleton.id, stale.question.params))
+    return stale.question
   }
   return null
 }
@@ -494,6 +541,7 @@ export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper
   )
 
   let reused = 0
+  let crossReused = 0
   for (const skeleton of ordered) {
     if (used.skeletons.has(`${combo.id}|${skeleton.id}`)) throw new Error(`骨架重复: ${skeleton.id}`)
     const picked = pickQuestion({
@@ -506,10 +554,20 @@ export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper
       takenScenes,
       exactStems,
       allowReuse: false,
+      memory: options.memory,
     })
     if (!picked) continue
+    if (picked.crossReused) crossReused++
     questions.push(picked.question)
-    commitQuestion({ ...picked, combo, used, takenScenes, exactStems, reuse: false })
+    commitQuestion({
+      ...picked,
+      combo,
+      used,
+      takenScenes,
+      exactStems,
+      reuse: false,
+      memory: options.memory,
+    })
   }
 
   // 骨架复用：同包同骨架换场景/换数字，题干逐字不同；仍不足时如实保留缺口交给上层补
@@ -527,11 +585,21 @@ export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper
         takenScenes,
         exactStems,
         allowReuse: true,
+        memory: options.memory,
       })
       if (!picked) continue
       picked.question.reused = true
+      if (picked.crossReused) crossReused++
       questions.push(picked.question)
-      commitQuestion({ ...picked, combo, used, takenScenes, exactStems, reuse: true })
+      commitQuestion({
+        ...picked,
+        combo,
+        used,
+        takenScenes,
+        exactStems,
+        reuse: true,
+        memory: options.memory,
+      })
       reused++
       progressed = true
     }
@@ -555,6 +623,8 @@ export function buildComboPaper(combo: Combo, options: PaperOptions): PilotPaper
     data: { title, sections },
     questions,
     reused,
+    /** 记忆池轮转一轮后跨卷复用的题数 */
+    crossReused,
   }
 }
 

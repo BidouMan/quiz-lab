@@ -2179,6 +2179,7 @@ export function generateWord(options: GenerateWordOptions): {
   questions: WordQuestion[]
   count: number
   targets: { unitId: string; kpId: string; kpName: string }[]
+  crossReused: number
 } {
   const { count, level, grade } = options
   if (!Number.isInteger(count) || count <= 0) throw new Error('题量必须是正整数')
@@ -2190,10 +2191,13 @@ export function generateWord(options: GenerateWordOptions): {
   const usedStem = new Set<string>()
   const questions: WordQuestion[] = []
   const failures: string[] = []
+  let crossReused = 0
 
   for (let index = 0; index < count; index++) {
     const target = targets[index % targets.length]
     const candidates: { draft: WordDraft; spec: WordRuleSpec; fp: string }[] = []
+    /** 记忆池轮转候选：最近窗口内的题，取 lastPaper 最小（最久未用）的那道 */
+    let stale: { draft: WordDraft; spec: WordRuleSpec; fp: string } | null = null
 
     for (let attempt = 0; attempt < 600 && candidates.length < 8; attempt++) {
       const spec = pick(rng, target.specs)
@@ -2239,8 +2243,16 @@ export function generateWord(options: GenerateWordOptions): {
         if (failures.length < 8) failures.push(problem)
         continue
       }
+      if (memory.recentlyUsed(fp)) {
+        if (stale == null || memory.lastPaper(fp) < memory.lastPaper(stale.fp)) {
+          stale = { draft, spec, fp }
+        }
+        continue
+      }
       candidates.push({ draft, spec, fp })
     }
+
+    if (candidates.length === 0 && stale != null) candidates.push(stale)
 
     if (candidates.length === 0) {
       throw new Error(
@@ -2261,6 +2273,7 @@ export function generateWord(options: GenerateWordOptions): {
       }
     }
     const chosen = pick(rng, best)
+    if (memory.crossPaperUsed(chosen.fp)) crossReused++
     memory.record(chosen.fp)
     usedFp.add(chosen.fp)
     usedStem.add(chosen.draft.stem.replace(/\s+/g, ''))
@@ -2301,6 +2314,7 @@ export function generateWord(options: GenerateWordOptions): {
       kpId: t.kp.kpId,
       kpName: t.kp.kpName,
     })),
+    crossReused,
   }
 }
 

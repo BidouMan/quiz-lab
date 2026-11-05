@@ -100,6 +100,8 @@ export interface FigureLabel {
   text: string
   size?: number
   bold?: boolean
+  /** 标注锚点：默认 left（x/y 为左上角），center 表示 top-center，right 表示 top-right */
+  anchor?: 'left' | 'center' | 'right'
 }
 
 export type FigureStroke = 'solid' | 'dashed' | 'thin' | 'bold'
@@ -242,4 +244,6 @@ export interface PilotPaper {
   questions: PilotQuestion[]
   /** 其中骨架复用题数（题量超过骨架数时产生） */
   reused: number
+  /** 记忆池轮转一轮后跨卷复用的题数 */
+  crossReused?: number
 }

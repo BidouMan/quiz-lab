@@ -197,6 +197,8 @@ export interface GenerateResult {
   count: number
   /** 目标知识点 */
   targets: { unitId: string; kpId: string; kpName: string }[]
+  /** 记忆池轮转后跨卷复用的题数（正常新题不计） */
+  crossReused?: number
 }
 
 /** 填空题：题干用 $...$ 表示数学片段、连续下划线表示空位，answer 用“；”分隔 */
