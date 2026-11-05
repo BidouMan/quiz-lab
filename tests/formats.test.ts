@@ -184,8 +184,8 @@ test('判断题：概念命题占比 ≤1/3，真假各半且连续同答 ≤2',
     const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: units, level, count: 20, seed: 880 + index })
     assert.equal(result.pieces.length, 20, `${level} 应出 20 道`)
     const concepts = result.pieces.filter((piece) => piece.data.pool === 'concept')
-    assert.ok(concepts.length >= 1, `${level} 应含概念命题`)
-    assert.ok(concepts.length <= Math.floor(20 / 3), `${level} 概念命题 ${concepts.length} 道超过 1/3`)
+    // 概念池（27 条）远大于上限，应恰好截断到 6 道，不能多也不能少
+    assert.equal(concepts.length, Math.floor(20 / 3), `${level} 概念命题应恰好 ${Math.floor(20 / 3)} 道`)
     assert.equal(result.pieces.filter((piece) => piece.truth).length, 10, `${level} 真假应各半`)
     assert.ok(longestRun(result.pieces.map((piece) => piece.truth)) <= 2, `${level} 连续同答超过 2`)
     for (const [position, piece] of result.pieces.entries()) {
