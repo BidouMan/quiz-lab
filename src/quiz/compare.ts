@@ -25,6 +25,8 @@ export type CompareForm =
   | 'addSub'
   | 'divVsNum'
   | 'days'
+  | 'perimeter'
+  | 'perimeterFormula'
 
 export interface ComparePiece {
   /** Typst 数学串 */
@@ -81,6 +83,8 @@ const KP: Record<CompareForm, string> = {
   addSub: '两步加减式比较',
   divVsNum: '除法算式与数比较',
   days: '天与时换算比较',
+  perimeter: '长方形与正方形的周长比较',
+  perimeterFormula: '周长公式比较',
 }
 
 /** 三上单元 → 比大小可用形态（L1/L2/L3）；没有对应内容的单元为空数组 */
@@ -90,7 +94,7 @@ const UNIT_FORMS_3A: Record<string, Record<Level, CompareForm[]>> = {
   '3A-U3': { L1: [], L2: [], L3: [] },
   '3A-U4': { L1: ['quotient'], L2: ['quotient', 'divVsNum'], L3: ['quotient', 'divVsNum'] },
   '3A-U5': { L1: ['time'], L2: ['time', 'days'], L3: ['time', 'days'] },
-  '3A-U6': { L1: [], L2: [], L3: [] },
+  '3A-U6': { L1: ['perimeter'], L2: ['perimeterFormula'], L3: ['perimeterFormula'] },
   '3A-U7': { L1: ['length'], L2: ['length', 'mixedUnit'], L3: ['mixedUnit', 'length'] },
 }
 
@@ -336,6 +340,36 @@ function makeDays(rng: Rng): ComparePiece {
     kpName: KP.days,
   }
 }
+function makePerimeter(rng: Rng): ComparePiece {
+  // 长方形周长 (长+宽)×2 与正方形周长（四条边分两组）×2，同以厘米为单位
+  const l = randInt(rng, 3, 10)
+  const w = randInt(rng, 2, l - 1)
+  const s = randInt(rng, 2, 10)
+  return {
+    pre: `(${l} + ${w}) times 2 "厘米"`,
+    post: `(${s} + ${s}) times 2 "厘米"`,
+    answer: sign(2 * (l + w), 4 * s),
+    form: 'perimeter',
+    kpName: KP.perimeter,
+  }
+}
+
+function makePerimeterFormula(rng: Rng, level: Level): ComparePiece {
+  // 公式比较：长方形 (长+宽)×2，正方形 边长×4；数值控制在三年级心算范围
+  const min = level === 'L3' ? 8 : 3
+  const max = level === 'L3' ? 40 : 20
+  const l = randInt(rng, min + 1, max)
+  const w = randInt(rng, min, l - 1)
+  const s = randInt(rng, min, max)
+  return {
+    pre: `(${l} + ${w}) times 2`,
+    post: `4 times ${s}`,
+    answer: sign(2 * (l + w), 4 * s),
+    form: 'perimeterFormula',
+    kpName: KP.perimeterFormula,
+  }
+}
+
 /** 三下沿用按已学上限的通用形态（三下暂不开放成品，仅保持可编译） */
 function formsFor3B(level: Level, caps: ReturnType<typeof compareCaps>): CompareForm[] {
   if (level === 'L1') {
@@ -407,6 +441,10 @@ function makeOne(form: CompareForm, rng: Rng, level: Level): ComparePiece {
       return makeDivVsNum(rng)
     case 'days':
       return makeDays(rng)
+    case 'perimeter':
+      return makePerimeter(rng)
+    case 'perimeterFormula':
+      return makePerimeterFormula(rng, level)
   }
 }
 

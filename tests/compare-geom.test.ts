@@ -71,10 +71,10 @@ test('比大小：按所选单元出对应知识点，不混入未勾单元内�
   const dateForms = new Set(dateOnly.items.map((piece) => piece.form))
   assert.deepEqual([...dateForms].sort(), ['days', 'time'])
 
-  // 只勾「周长」：与比大小无对应内容，不出并写明原因
-  const none = generateCompare({ grade: '3A', unitIds: ['3A-U6'], level: 'L2', count: 30, seed: 42 })
-  assert.equal(none.items.length, 0)
-  assert.ok(none.notes.some((note) => note.includes('没有对应的比较知识点')))
+  // 只勾「周长」：出同量纲的周长比较（长方形 vs 正方形）
+  const perimeter = generateCompare({ grade: '3A', unitIds: ['3A-U6'], level: 'L2', count: 30, seed: 42 })
+  assert.equal(perimeter.items.length, 30)
+  assert.deepEqual([...new Set(perimeter.items.map((piece) => piece.form))].sort(), ['perimeterFormula'])
 })
 
 test('比大小：遵守教材口径（未学除法/分数不出）', () => {
@@ -332,12 +332,54 @@ test('比大小卷面：不编号、整组行内渲染、文字组每行最多 2
   assert.ok(flow.includes('set par(justify: false'), '组内段落不得参与两端对齐折行')
 })
 
-test('接线：所选单元与比大小无对应内容时不出比大小题', () => {
-  const config: AppConfig = { ...DEFAULT_CONFIG, grade: '3A', unitIds: ['3A-U6'], level: 'L2', types: ['compare'], count: 20 }
+test('比大小：U6 周长同量纲比较，答案由独立重算得到（L1/L2/L3）', () => {
+  for (const level of ['L1', 'L2', 'L3'] as const) {
+    const generated = generateCompare({ grade: '3A', unitIds: ['3A-U6'], level, count: 30, seed: 20261105 })
+    assert.equal(generated.items.length, 30, `${level} 应出满 30 题`)
+    const keys = new Set(generated.items.map((piece) => `${piece.pre}|${piece.post}`))
+    assert.equal(keys.size, 30, `${level} 同卷不得重复`)
+    for (const piece of generated.items) {
+      // 只按题面里的边长重算，不信生成器给出的答案
+      const leftMatch = /\((\d+) \+ (\d+)\) times 2/.exec(piece.pre)
+      assert.ok(leftMatch, `长方形周长必须是 (长+宽)×2：${piece.pre}`)
+      const left = 2 * (Number(leftMatch[1]) + Number(leftMatch[2]))
+      let right: number
+      if (piece.form === 'perimeter') {
+        const rightMatch = /\((\d+) \+ (\d+)\) times 2/.exec(piece.post)
+        assert.ok(rightMatch, `正方形周长题面异常：${piece.post}`)
+        right = 2 * (Number(rightMatch[1]) + Number(rightMatch[2]))
+      } else {
+        const rightMatch = /4 times (\d+)/.exec(piece.post)
+        assert.ok(rightMatch, `正方形周长必须是 边长×4：${piece.post}`)
+        right = 4 * Number(rightMatch[1])
+      }
+      const expected = left < right ? '<' : left > right ? '>' : '='
+      assert.equal(piece.answer, expected, `${piece.pre} ? ${piece.post}`)
+      assert.ok(left <= 160 && right <= 160, `周长应在三年级心算范围：${left} / ${right}`)
+      assert.deepEqual(verifyItemStructure(compareItem(piece)), [], `${piece.pre} ? ${piece.post}`)
+    }
+  }
+})
+
+test('比大小：所选单元与比大小无对应内容时不出比大小题', () => {
+  const config: AppConfig = { ...DEFAULT_CONFIG, grade: '3A', unitIds: ['3A-U3'], level: 'L2', types: ['compare'], count: 20 }
   const availability = typeAvailability(config, TEMPLATE)
   assert.equal(availability.compare.enabled, false)
   assert.ok(availability.compare.reason.includes('比大小'))
   const result = buildPaper({ config, template: TEMPLATE, seed: 20261104, memory: new MemoryStore() })
   assert.equal(result.count, 0)
   assert.ok(result.skipped.includes('compare'))
+})
+
+test('接线：U6 只出比大小时可出满，且每题过运行时复核', () => {
+  const config: AppConfig = { ...DEFAULT_CONFIG, grade: '3A', unitIds: ['3A-U6'], level: 'L2', types: ['compare'], count: 20 }
+  const availability = typeAvailability(config, TEMPLATE)
+  assert.equal(availability.compare.enabled, true)
+  const result = buildPaper({ config, template: TEMPLATE, seed: 20261104, memory: new MemoryStore() })
+  assert.equal(result.count, 20)
+  assert.equal(result.skipped.includes('compare'), false)
+  assert.equal(result.stats.runtimeCheck.dropped, 0)
+  for (const item of result.data.sections[0]!.items) {
+    assert.ok(item.pre && item.post, '每题都要有左右式')
+  }
 })
