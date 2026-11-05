@@ -53,6 +53,7 @@ const PAGE_COST: Record<AppType, number> = {
   word: 0.08,
   judge: 0.06,
   choice: 0.08,
+  lieshi: 0.12,
 }
 const roughPages = computed(() => {
   if (activeTypes.value.length === 0) return 0

@@ -7,6 +7,7 @@
  */
 import { evalLatex } from '../quiz/expr.ts'
 import { verifyConceptItem } from '../quiz/concepts.ts'
+import { verifyLieItem } from '../quiz/lieshi.ts'
 import { deriveWrongValues, verifyFormatSource } from '../quiz/formats.ts'
 import { verifyQuestion } from '../quiz/skeleton/index.ts'
 import type { Combo, PilotQuestion } from '../quiz/skeleton/types.ts'
@@ -191,6 +192,9 @@ export function verifyItemStructure(item: TypstItem): string[] {
   }
 
   if (kind === 'judge' || kind === 'choice') return verifyFormatItem(item)
+
+  // 列式计算：复用生成器暴露的双路径复核（独立求值 + 模板反解结构）
+  if (kind === 'lieshi') return verifyLieItem(item)
 
   // 比大小 / 图形题：按题面独立重算，再与标注答案核对
   if (kind === 'compare') {

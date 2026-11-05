@@ -281,6 +281,13 @@
     } else {
       body
     }
+  } else if it.kind == "lieshi" {
+    // 列式计算：题干后纯留白写综合算式，不画横线；默认 3 行（25.5mm）
+    [
+      #par(justify: true)[#lead #it.text]
+      #v(1.5mm)
+      #block(height: it.at("workLines", default: 3) * 8.5mm)
+    ]
   } else if it.kind == "compare" {
     // 兜底：非比大小节里出现时也按组渲染（正常走 compare-flow，不经过这里）
     compare-group(it)
@@ -301,7 +308,7 @@
 
 // 有题号的题型：题号作为行内前导，靠悬挂缩进让折行回到题干起点
 // 口算、比大小按卷面惯例不编号
-#let numbered-kind(kind) = kind in ("fill", "word", "geom", "judge", "choice")
+#let numbered-kind(kind) = kind in ("fill", "word", "geom", "judge", "choice", "lieshi")
 
 #let item-cell(sec, it, no) = {
   let lead = if no == none { [] } else { qno-mark(no) + h(qno-gap) }
@@ -343,7 +350,7 @@
 }
 
 // 恒定通栏的题型：填空整行一题；应用题与图形题占满整行
-#let full-width-kind(kind) = kind in ("fill", "geom", "word", "judge", "choice")
+#let full-width-kind(kind) = kind in ("fill", "geom", "word", "judge", "choice", "lieshi")
 
 // 比大小不编号、不分栏：按组实测宽度贪心装行，装不下就整组换行（组永不拆）
 // 用 context + measure（不用 layout），否则整节会变成不可分页的块，行会溢出页脚
