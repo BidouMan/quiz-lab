@@ -205,26 +205,32 @@ test('判断题：概念命题占比 ≤1/3，真假各半且连续同答 ≤2',
   }
 })
 
-test('U3 单独选判断题：知识点去重后 L1/L2 出满 20，L3 受知识点池限制实出 19', () => {
+test('U3 单独选判断题：知识点池扩到 30，三档都能出满 20，真假各半', () => {
   for (const [index, level] of (['L1', 'L2', 'L3'] as const).entries()) {
     const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3'], level, count: 20, seed: 990 + index })
-    const expected = level === 'L3' ? 19 : 20
-    assert.equal(result.pieces.length, expected, `${level} 实出 ${expected} 道`)
+    assert.equal(result.pieces.length, 20, `${level} 实出 20 道`)
     assert.ok(result.pieces.every((piece) => piece.data.pool === 'concept'), `${level} 应全部是概念命题`)
-    assert.equal(result.pieces.filter((piece) => piece.truth).length, level === 'L3' ? 9 : 10, `${level} 真假比例`)
+    assert.equal(result.pieces.filter((piece) => piece.truth).length, 10, `${level} 真假应各半`)
     const knowledgePoints = result.pieces.map((piece) => findConcept(piece.data.conceptId)!.knowledgePoint)
     assert.equal(new Set(knowledgePoints).size, knowledgePoints.length, `${level} 同卷知识点应唯一`)
-    if (level === 'L3') {
-      assert.ok(
-        result.notes.some((note) => note.includes('全部为概念命题') && note.includes('实出 19')),
-        `${level} 摘要应说明知识点池用尽，实际：${result.notes.join('；')}`,
-      )
-    } else {
-      assert.ok(
-        result.notes.some((note) => note.includes('全部为概念命题') && note.includes('无其他判断来源')),
-        `${level} 摘要应说明全概念及原因，实际：${result.notes.join('；')}`,
-      )
+    assert.ok(
+      result.notes.some((note) => note.includes('全部为概念命题') && note.includes('无其他判断来源')),
+      `${level} 摘要应说明全概念及原因，实际：${result.notes.join('；')}`,
+    )
+    for (const [position, piece] of result.pieces.entries()) {
+      assert.deepEqual(verifyItemStructure(buildItem(piece, position) as never), [], `${level} 第 ${position + 1} 题复核`)
     }
+  }
+})
+
+test('U3 单独选判断题 30 题：三档均出满 30，真 15 / 假 15', () => {
+  for (const [index, level] of (['L1', 'L2', 'L3'] as const).entries()) {
+    const result = generateFormat({ kind: 'judge', grade: '3A', unitIds: ['3A-U3'], level, count: 30, seed: 20261105 + index })
+    assert.equal(result.pieces.length, 30, `${level} 实出 ${result.pieces.length} 道`)
+    assert.equal(result.pieces.filter((piece) => piece.truth).length, 15, `${level} 真命题应为 15 道`)
+    assert.equal(result.pieces.filter((piece) => !piece.truth).length, 15, `${level} 假命题应为 15 道`)
+    const knowledgePoints = result.pieces.map((piece) => findConcept(piece.data.conceptId)!.knowledgePoint)
+    assert.equal(new Set(knowledgePoints).size, 30, `${level} 每题应落在不同知识点`)
     for (const [position, piece] of result.pieces.entries()) {
       assert.deepEqual(verifyItemStructure(buildItem(piece, position) as never), [], `${level} 第 ${position + 1} 题复核`)
     }
