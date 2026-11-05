@@ -6,7 +6,7 @@
 2. 节标题与下方第一行题干间距 ≥ 1.8mm（目标 2mm）；节说明（13pt 缩进行）算标题的一部分
 3. 任何两个字符（char 级 bbox）不得同时横向、纵向重叠（分式的分子/分母只纵向分离，不会误报）
 4. 口算行距（以每题末尾“=”所在基线计）≈ 8.89mm（仅 --compact 样张强制校验）
-5. 比大小题号与题干首字同基线（基线差 ≤ 0.25pt）
+5. 比大小按组：无题号；每组左式/圆圈/右式同基线（差 ≤ 0.25pt）；组内不跨行；每组恰好一个圆圈
 6. 页眉规则：
    - 第 1 页页眉有且仅有 1 个文字块（居中主标题）；
    - 第 2 页及之后页眉必须为空（不得出现标题、页码或任何其他文字）；
@@ -18,7 +18,7 @@
 
 用法：
     python3 typst/check-layout.py [PDF] [--compact]
-失败（任一重叠、间距不达标、页眉违规）退出码为 1。
+失败（任一重叠、间距不达标、页眉违规、比大小分组不合规）退出码为 1。
 """
 import re
 import statistics
@@ -34,6 +34,9 @@ HEAD_BELOW_TARGET = 2.0
 INK_TOL = 0.5  # pt，视为“碰到”的容差
 
 HEAD_RE = re.compile(r"^[一二三四五六七八九十]+、")
+NUM_MARK_RE = re.compile(r"^\(\d+\)$")
+CMP_CIRCLE = "○"
+CMP_GROUP_GAP = 5 * 72 / 25.4  # pt，比大小组间距 ≥5mm 视为换组
 KOUSUAN_PITCH_TARGET = 8.89  # mm
 PITCH_TOL = 0.25
 HEADER_TITLE_CENTER_TOL = 2.0  # mm，主标题字形墨迹中心与页面中线的容差（含全角标点的不对称）
@@ -85,7 +88,8 @@ def extract(pdf):
                         continue
                     sx0, sy0, sx1, sy1 = s["bbox"]
                     spans.append(dict(
-                        page=pno + 1, x0=sx0, y0=sy0, x1=sx1, y1=sy1, text=st,
+                        page=pno + 1, x0=sx0, y0=sy0, x1=sx1, y1=sy1,
+                        oy=s["origin"][1], text=st,
                         size=s["size"], zone=zone, line=txt, lid=lid,
                     ))
                     for c in s["chars"]:
@@ -197,10 +201,16 @@ def main():
         above = [s for s in page_spans if s["y1"] < l["y0"] - INK_TOL]
         below = [s for s in page_spans if s["y0"] > l["y1"] + INK_TOL]
         # 节说明（13pt、缩进）算标题的一部分，下间距从说明之后算
+        # 必须同时是所在行的最左 span，否则比大小圆圈等靠右 span 会被误判成“说明”
         b0 = min(below, key=lambda s: s["y0"]) if below else None
-        if b0 and b0["size"] < l["size"] - 0.5 and b0["x0"] > l["x0"] + 2 * 72 / 25.4:
-            note_bottom = max(s["y1"] for s in page_spans if s["y0"] <= b0["y1"] + INK_TOL and s["y0"] > l["y1"])
-            below = [s for s in page_spans if s["y0"] > note_bottom + INK_TOL]
+        if b0:
+            mates = [s for s in page_spans if s["lid"] == b0["lid"]]
+            leftmost = min(s["x0"] for s in mates) if mates else b0["x0"]
+            if (b0["size"] < l["size"] - 0.5
+                    and b0["x0"] > l["x0"] + 2 * 72 / 25.4
+                    and b0["x0"] <= leftmost + INK_TOL):
+                note_bottom = max(s["y1"] for s in page_spans if s["y0"] <= b0["y1"] + INK_TOL and s["y0"] > l["y1"])
+                below = [s for s in page_spans if s["y0"] > note_bottom + INK_TOL]
         up = mm(l["y0"] - max(s["y1"] for s in above)) if above else float("inf")
         down = mm(min(s["y0"] for s in below) - l["y1"]) if below else float("inf")
         ok = True
@@ -243,51 +253,95 @@ def main():
                 errors.append(f"第{pno}页: 页脚与正文重叠 {-gap:.2f}mm")
     print()
 
-    # ---- 5. 比大小题号与题干首字同基线 ----
-    def number_marks():
-        out = []
-        body = [c for c in chars if c["zone"] == "body"]
-        for i, c in enumerate(body):
-            if c["text"] != "(" or not c["first"]:
-                continue
-            j = i + 1
-            digits = ""
-            while j < len(body) and body[j]["page"] == c["page"] and body[j]["text"].isdigit():
-                digits += body[j]["text"]
-                j += 1
-            if not digits or j >= len(body) or body[j]["text"] != ")":
-                continue
-            if abs(body[j]["oy"] - c["oy"]) > 1.0:
-                continue
-            out.append((c, body[j], i, j))
-        return body, out
+    # ---- 5. 比大小按组：无题号、组内三元素同基线、组不拆行 ----
+    def split_groups(row):
+        groups, cur = [], []
+        for s in row:
+            if cur and s["x0"] - cur[-1]["x1"] > CMP_GROUP_GAP:
+                groups.append(cur)
+                cur = []
+            cur.append(s)
+        if cur:
+            groups.append(cur)
+        return groups
 
-    print("比大小题号基线（题号与题干首字 origin y 差）：")
-    body_chars, marks = number_marks()
-    diffs, gaps = [], []
-    for open_c, close_c, i, j in marks:
-        cand = [
-            c for k, c in enumerate(body_chars)
-            if not (i <= k <= j)
-            and c["page"] == open_c["page"]
-            and c["x0"] > close_c["x1"] + 0.5
-            and c["x0"] < close_c["x1"] + 45.0
-            and abs(c["oy"] - open_c["oy"]) < 20.0
-        ]
-        if not cand:
-            continue
-        first = min(cand, key=lambda c: (round(abs(c["oy"] - open_c["oy"]), 1), c["x0"]))
-        diffs.append(first["oy"] - open_c["oy"])
-        gaps.append(mm(first["x0"] - close_c["x1"]))
-    if marks:
-        worst = max(abs(v) for v in diffs) if diffs else 0.0
-        ok = worst <= 0.25 and len(diffs) == len(marks)
-        print(f"  题号 {len(marks)} 个，已配对 {len(diffs)} 个；最大基线差 {worst:.2f}pt；"
-              f"水平间距 {min(gaps):.2f}–{max(gaps):.2f}mm   {'PASS' if ok else 'FAIL'}")
+    print("比大小分组（无题号 / 组内同基线 / 组不拆行）：")
+    body_spans = [s for s in spans if s["zone"] == "body"]
+    heads = sorted(
+        [s for s in spans if HEAD_RE.match(s["text"]) and "比大小" in s["text"]],
+        key=lambda s: (s["page"], s["oy"]),
+    )
+    all_heads = sorted(
+        [s for s in spans if HEAD_RE.match(s["text"])],
+        key=lambda s: (s["page"], s["oy"]),
+    )
+    ranges = []
+    for h in heads:
+        nxt = None
+        for other in all_heads:
+            if (other["page"], other["oy"]) > (h["page"], h["oy"]):
+                nxt = other
+                break
+        ranges.append(((h["page"], h["oy"]), (nxt["page"], nxt["oy"]) if nxt else (10**9, 10**9)))
+
+    def in_compare(page, y):
+        return any(start <= (page, y) < end for start, end in ranges)
+
+    number_marks = [
+        s for s in body_spans if NUM_MARK_RE.match(s["text"]) and in_compare(s["page"], s["oy"])
+    ]
+    groups = 0
+    worst_base = 0.0
+    bad_base = 0
+    bad_split = 0
+    per_row = {}
+    for pno in range(1, doc.page_count + 1):
+        page_spans = sorted((s for s in body_spans if s["page"] == pno), key=lambda s: (s["oy"], s["x0"]))
+        rows, row, last = [], [], None
+        for s in page_spans:
+            if last is not None and s["oy"] - last > 2.0:
+                rows.append(row)
+                row = []
+            row.append(s)
+            last = s["oy"]
+        if row:
+            rows.append(row)
+        for yield_row in rows:
+            if not in_compare(yield_row[0]["page"], yield_row[0]["oy"]):
+                continue
+            if not any(CMP_CIRCLE in x["text"] for x in yield_row):
+                continue
+            count = 0
+            for seg in split_groups(yield_row):
+                ids = [i for i, x in enumerate(seg) if CMP_CIRCLE in x["text"]]
+                if len(ids) != 1 or ids[0] == 0 or ids[0] == len(seg) - 1:
+                    bad_split += 1
+                    continue
+                left, circle, right = seg[ids[0] - 1], seg[ids[0]], seg[ids[0] + 1]
+                if left["x1"] > circle["x0"] + 0.5 or circle["x1"] > right["x0"] + 0.5:
+                    bad_split += 1
+                    continue
+                base = max(abs(left["oy"] - circle["oy"]), abs(right["oy"] - circle["oy"]))
+                spread = max(x["oy"] for x in seg) - min(x["oy"] for x in seg)
+                groups += 1
+                count += 1
+                worst_base = max(worst_base, base, spread)
+                if base > 0.25 or spread > 0.25:
+                    bad_base += 1
+            if count:
+                per_row[count] = per_row.get(count, 0) + 1
+    ok = bad_base == 0 and bad_split == 0 and len(number_marks) == 0 and (not ranges or groups > 0)
+    if ranges or number_marks:
+        dist = " ".join(f"{k}组:{v}" for k, v in sorted(per_row.items()))
+        print(f"  组 {groups} 个；最大基线差 {worst_base:.2f}pt；跨行/残组 {bad_split}；"
+              f"题号残留 {len(number_marks)}；行分布 [{dist}]   {'PASS' if ok else 'FAIL'}")
         if not ok:
-            errors.append(f"比大小题号与题干首字基线差 {worst:.2f}pt > 0.25pt（{len(diffs)}/{len(marks)} 已配对）")
+            errors.append(
+                f"比大小分组不合规：组 {groups} 个（应 >0，回退成矢量圆圈/整组折行时抓得住）、"
+                f"基线差 {worst_base:.2f}pt、跨行/残组 {bad_split}、题号 {len(number_marks)}"
+            )
     else:
-        print("  未检测到比大小题号，跳过")
+        print("  未检测到比大小节，跳过")
     print()
 
     # ---- 3. 字符级碰撞（同时横向+纵向重叠才算） ----

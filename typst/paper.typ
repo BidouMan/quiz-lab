@@ -26,8 +26,11 @@
 #let sec-above = 4mm
 #let sec-below = 2mm // 默认与 compact 统一为 pad 方案、统一上下间距
 #let kpad = if compact { 1.95mm } else { 0.8mm } // 口算逐题块内边距，保证行间墨迹空隙 ≥4mm
-// 比大小行内上下留白：紧凑版行距目标 10–11mm（原 5.8mm 过挤），非紧凑版同步保持 ~10mm
-#let cmp-pad = if compact { 2.4mm } else { 1.4mm }
+// 比大小按组排：组内三元素同一基线，组间按实测宽度贪心换行
+#let cmp-gap = 1.8mm
+#let cmp-circle-w = 5mm
+#let cmp-between = 8mm
+#let cmp-row-gap = if compact { 5.2mm } else { 7mm }
 #let t-head = if compact { body-pt * 0.55 * 1mm } else { 8mm }
 #let t-gap1 = if compact { 2.5mm } else { 3.5mm }
 #let t-gap2 = if compact { 5mm } else { 6.5mm }
@@ -159,6 +162,18 @@
 // 题号做成行内前导：与题干首行天然同基线（不再用 grid 顶对齐，避免空位框撑高首行后题号抬高 1mm）
 #let qno-mark(no) = box(width: qno-w)[#text(fill: luma(85))[(#no)]]
 
+// 比大小一组：左式 + 圆圈 + 右式全部行内，天然同一基线；整组不可拆行
+// 圆圈用文字字形（不画矢量框），这样与左右文字共享同一基线，而不会“悬”在行框中心
+// 数学串本身不可断行，配合 compare-flow 的整行装组即可保证组内不折行
+#let compare-group(it) = {
+  let disp = it.at("display", default: false)
+  [#eq(it.pre, display: disp)
+   #h(cmp-gap)
+   #box(width: cmp-circle-w)[#align(center)[○]]
+   #h(cmp-gap)
+   #eq(it.post, display: disp)]
+}
+
 #let item-body(it, lead: []) = block(breakable: false, {
   let disp = it.at("display", default: false)
   if it.kind == "kousuan" {
@@ -267,17 +282,8 @@
       body
     }
   } else if it.kind == "compare" {
-    pad(y: cmp-pad)[
-      #grid(
-        columns: (auto, auto, auto),
-        column-gutter: 2.4mm,
-        align: horizon,
-        // 题号与左式同处首格：同一段落同一基线，避免二列顶对齐 + pad 造成的错位
-        [#lead#eq(it.pre, display: disp)],
-        box(width: 4.2mm, height: 4.2mm, radius: 50%, stroke: 0.5pt),
-        eq(it.post, display: disp),
-      )
-    ]
+    // 兜底：非比大小节里出现时也按组渲染（正常走 compare-flow，不经过这里）
+    compare-group(it)
   } else if it.kind == "geom" {
     [
       #grid(
@@ -294,8 +300,8 @@
 })
 
 // 有题号的题型：题号作为行内前导，靠悬挂缩进让折行回到题干起点
-// 比大小的题号放进首格与左式同行，保证同一基线（此前用二列顶对齐会偏移约 2.6mm）
-#let numbered-kind(kind) = kind in ("fill", "word", "geom", "judge", "choice", "compare")
+// 口算、比大小按卷面惯例不编号
+#let numbered-kind(kind) = kind in ("fill", "word", "geom", "judge", "choice")
 
 #let item-cell(sec, it, no) = {
   let lead = if no == none { [] } else { qno-mark(no) + h(qno-gap) }
@@ -339,6 +345,59 @@
 // 恒定通栏的题型：填空整行一题；应用题与图形题占满整行
 #let full-width-kind(kind) = kind in ("fill", "geom", "word", "judge", "choice")
 
+// 比大小不编号、不分栏：按组实测宽度贪心装行，装不下就整组换行（组永不拆）
+// 用 context + measure（不用 layout），否则整节会变成不可分页的块，行会溢出页脚
+#let compare-flow(items, head) = context {
+  let margins = page.margin
+  let avail = page.width - margins.left - margins.right
+  let groups = items.map(it => compare-group(it))
+  let widths = groups.map(g => measure(g).width)
+  // 含文字（题干里的引号串）的组，一行最多 2 组；纯数字组按实测宽度可 3–4 组
+  let is-text = items.map(it => it.pre.contains("\"") or it.post.contains("\""))
+  let lines = ()
+  let current = ()
+  let used = 0pt
+  let current-text = 0
+  for (i, w) in widths.enumerate() {
+    let text-capped = is-text.at(i) and current-text >= 2
+    if current.len() > 0 and (text-capped or used + cmp-between + w > avail) {
+      lines.push(current)
+      current = ()
+      used = 0pt
+      current-text = 0
+    }
+    if current.len() > 0 { used = used + cmp-between }
+    current.push(i)
+    used = used + w
+    if is-text.at(i) { current-text += 1 }
+  }
+  if current.len() > 0 { lines.push(current) }
+  for (li, line) in lines.enumerate() {
+    if li > 0 { v(cmp-row-gap) }
+    block(breakable: false, {
+      if li == 0 {
+        head
+        v(row-gap, weak: true)
+      }
+      block({
+        set par(justify: false, leading: 0pt, spacing: 0pt)
+        for (k, i) in line.enumerate() {
+          if k > 0 { h(cmp-between) }
+          groups.at(i)
+        }
+      })
+    })
+  }
+}
+
+#let compare-only(sec) = {
+  let result = sec.items.len() > 0
+  for it in sec.items {
+    if it.kind != "compare" { result = false }
+  }
+  result
+}
+
 #let section-rows(sec) = {
   let rows = ()
   let pending = none
@@ -369,19 +428,24 @@
 #for sec in cfg.sections {
   if not first-section { v(row-gap, weak: true) }
   first-section = false
-  let rows = section-rows(sec)
-  if rows.len() > 0 {
-    // 节标题 + 首行不可分开：避免节标题落在页底成为孤行
-    block(breakable: false, {
-      section-head(sec)
-      v(row-gap, weak: true)
-      row-body(rows.at(0))
-    })
-    for i in range(1, rows.len()) {
-      v(rows.at(i).gap, weak: true)
+  if compare-only(sec) {
+    // 比大小整节可跨页：标题与首行锁在一起，行组不可拆但行间可分页
+    compare-flow(sec.items, section-head(sec))
+  } else {
+    let rows = section-rows(sec)
+    if rows.len() > 0 {
+      // 节标题 + 首行不可分开：避免节标题落在页底成为孤行
       block(breakable: false, {
-        row-body(rows.at(i))
+        section-head(sec)
+        v(row-gap, weak: true)
+        row-body(rows.at(0))
       })
+      for i in range(1, rows.len()) {
+        v(rows.at(i).gap, weak: true)
+        block(breakable: false, {
+          row-body(rows.at(i))
+        })
+      }
     }
   }
 }

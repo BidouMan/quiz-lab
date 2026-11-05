@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { generateCompare } from '../src/quiz/compare.ts'
 import { generateGeom, geomMissingLabels } from '../src/quiz/geom.ts'
 import { verifyItemStructure } from '../src/app/runtimeCheck.ts'
@@ -226,6 +227,29 @@ test('接线：所选单元不含图形内容时不出图形题，并在界面�
   const result = buildPaper({ config, template: TEMPLATE, seed: 20261104, memory: new MemoryStore() })
   assert.equal(result.count, 0)
   assert.ok(result.skipped.includes('geom'))
+})
+
+test('比大小卷面：不编号、整组行内渲染、文字组每行最多 2 组', () => {
+  const src = readFileSync(new URL('../typst/paper.typ', import.meta.url), 'utf8')
+  const numbered = src.match(/#let numbered-kind\(kind\) = kind in \(([^)]*)\)/)
+  assert.ok(numbered, '缺少 numbered-kind 定义')
+  assert.ok(!numbered![1]!.includes('"compare"'), '比大小不应在 numbered-kind 中（卷面惯例不编号）')
+
+  const branch = src.slice(src.indexOf('} else if it.kind == "compare"'), src.indexOf('} else if it.kind == "geom"'))
+  assert.ok(branch.includes('compare-group(it)'), '比大小分支必须整组渲染')
+  assert.ok(!branch.includes('qno-mark') && !branch.includes('(#no)'), '比大小分支不得输出题号')
+
+  const group = src.slice(src.indexOf('#let compare-group'), src.indexOf('#let item-body'))
+  assert.ok(group.includes('[○]') && !group.includes('radius: 50%'), '圆圈必须是文字字形，不能改回矢量框')
+
+  assert.ok(src.includes('#let compare-flow'), '缺少按组装行逻辑')
+  assert.ok(src.includes('measure(g).width'), '装行必须按实测宽度')
+  assert.ok(src.includes('current-text >= 2'), '文字组必须限制每行最多 2 组')
+  assert.ok(!src.includes('layout(size =>'), '不得用 layout 整节包死（会溢出页脚）')
+
+  const flow = src.slice(src.indexOf('#let compare-flow'), src.indexOf('#let compare-only'))
+  assert.ok(flow.includes('block(breakable: false'), '每行必须放在不可断行块内（组内不折行）')
+  assert.ok(flow.includes('set par(justify: false'), '组内段落不得参与两端对齐折行')
 })
 
 test('接线：所选单元与比大小无对应内容时不出比大小题', () => {
