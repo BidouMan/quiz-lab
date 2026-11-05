@@ -1042,6 +1042,8 @@ const dRentPlan = (rng: Rng): AdvParams | null =>
     const bigCost = randInt(rng, 30, 50)
     const smallCost = randInt(rng, 18, 30)
     const params = { people, bigCap, bigCost, smallCap, smallCost }
+    // 前提：大船人均更便宜（否则“比较空位”的策略点消失，最优几乎总是全租小船）
+    if (bigCost * smallCap >= smallCost * bigCap) return null
     // 方案数 = 大船 0..maxBig，控制在 ≤5 行，孩子才写得下
     if (Math.ceil(people / bigCap) > 4) return null
     const result = rentPlanBest(params)
@@ -1057,12 +1059,13 @@ const rentPlan: AdvancedCategory = {
   units: ['3A-U1', '3A-U2', '3A-U4'],
   primaryKp: '3A-STRATEGY',
   kpKeys: ['3A-STRATEGY', '3A-MUL-1'],
-  sample: '大船限乘6人、30元，小船限乘4人、24元，18人怎样租最省？',
+  sample: '18人去划船。大船限乘6人，租金30元；小船限乘4人，租金24元。不能超载，怎样租最省？最少多少元？',
   pool: '人数 12–30 × 大船 5–8 人 × 小船 3–4 人 × 两种租金 ≈ 4 万（唯一最优且方案 ≤5 后仍充足）',
   workLines: 8,
   draw: dRentPlan,
   stem: (p) =>
-    `有${num(p, 'people')}人去划船。大船限乘${num(p, 'bigCap')}人，每条租金${num(p, 'bigCost')}元；小船限乘${num(p, 'smallCap')}人，每条租金${num(p, 'smallCost')}元。不能超载，怎样租最省？最少要多少元？`,
+    `${num(p, 'people')}人去划船。大船限乘${num(p, 'bigCap')}人，租金${num(p, 'bigCost')}元；` +
+    `小船限乘${num(p, 'smallCap')}人，租金${num(p, 'smallCost')}元。不能超载，怎样租最省？最少多少元？`,
   build: (p) => {
     const result = rentPlanBest(p)
     const { big, small, cost, seats } = result.plan
@@ -1157,6 +1160,8 @@ const rentPlan: AdvancedCategory = {
     const result = rentPlanBest(p)
     if (result.plan.seats < people) return '最优方案坐不下所有人'
     if (result.ties !== 1) return `最优方案有 ${result.ties} 个并列，不能保证唯一解`
+    // 大船人均必须更便宜，否则“先坐大船再补空位”的策略前提不成立
+    if (bigCost * smallCap >= smallCost * bigCap) return '大船人均不比小船便宜，策略前提不成立'
     return null
   },
 }

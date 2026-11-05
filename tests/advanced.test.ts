@@ -382,7 +382,7 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
   assert.equal(category.workLines, 8)
   const rng = createRng(19)
   let scanned = 0
-  for (let index = 0; index < 500; index++) {
+  for (let index = 0; index < 3000; index++) {
     const params = category.draw(rng)
     if (params == null) continue
     scanned++
@@ -390,8 +390,20 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
       Math.ceil(Number(params.people) / Number(params.bigCap)) <= 4,
       `方案表超过 5 行：${JSON.stringify(params)}`,
     )
+    // 前提：大船人均更便宜；不满足必须被 draw 拒掉
+    assert.ok(
+      Number(params.bigCost) * Number(params.smallCap) < Number(params.smallCost) * Number(params.bigCap),
+      `大船人均不便宜仍被生成：${JSON.stringify(params)}`,
+    )
+    const stem = category.stem(params)
+    assert.ok(stem.length <= 50, `题干 ${stem.length} 字，超过 50：${stem}`)
+    assert.ok(stem.includes('不能超载') && stem.includes('怎样租最省') && stem.includes('最少多少元'), stem)
+    const built = category.build(params)
+    assert.equal(built.answer, category.recompute(params))
   }
   assert.ok(scanned >= 100, `租船扫描量只有 ${scanned}`)
+  // 反例：大船人均更贵的参数必须被 invariant 拒掉
+  assert.ok(category.invariant({ people: 15, bigCap: 6, bigCost: 37, smallCap: 4, smallCost: 19 }))
   const lines = Object.fromEntries(ADV_CATEGORIES.map((item) => [item.id, item.workLines]))
   assert.deepEqual(lines, {
     'adv-cycle': 3,
