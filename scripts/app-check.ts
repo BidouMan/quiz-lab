@@ -4,7 +4,7 @@
  * 走的是应用同一条代码路径：paperBuilder.buildPaper → paper-data.json →
  * 与 Tauri generate_paper 相同的 typst 参数（body=14 / compact=1 / vert=26）→ check-layout。
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
@@ -12,7 +12,7 @@ import { buildPaper, recommendedCount, typeAvailability } from '../src/app/paper
 import { DEFAULT_CONFIG, type AppConfig, type AppType, type TemplateInfo } from '../src/app/types.ts'
 import { TYPE_OPTIONS } from '../src/app/typstData.ts'
 import { formatPaperSummary, readableAvailabilityReason, readableNotes } from '../src/app/wording.ts'
-import { MemoryStore } from '../src/quiz/memory.ts'
+import { loadMemoryFile, saveMemoryFile } from '../src/quiz/memoryFile.ts'
 import type { Level } from '../src/quiz/types.ts'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -24,9 +24,9 @@ const template: TemplateInfo = {
   geom: true,
 }
 const memoryPath = resolve(root, '.quizlab/gen-memory.json')
-const memory = existsSync(memoryPath)
-  ? MemoryStore.fromJSON(readFileSync(memoryPath, 'utf8'))
-  : new MemoryStore()
+const loadedMemory = loadMemoryFile(memoryPath)
+if (loadedMemory.notice) console.log(loadedMemory.notice)
+const memory = loadedMemory.store
 
 interface Scenario {
   slug: string
@@ -202,6 +202,6 @@ for (const scenario of scenarios) {
   console.log(`✓ ${relPdf} 编译 + check-layout 通过`)
 }
 
-writeFileSync(memoryPath, memory.toJSON())
+saveMemoryFile(memoryPath, memory)
 console.log(failed ? '\nRESULT: FAIL' : '\nRESULT: PASS')
 process.exit(failed ? 1 : 0)

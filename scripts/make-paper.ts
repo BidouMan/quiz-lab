@@ -1,9 +1,9 @@
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 import { generate } from '../src/quiz/generate.ts'
-import { MemoryStore } from '../src/quiz/memory.ts'
+import { loadMemoryFile, saveMemoryFile } from '../src/quiz/memoryFile.ts'
 import { toTypstPaper } from '../src/quiz/typst.ts'
 import { findUnit } from '../src/data/curriculum.ts'
 import type { CalcType, Grade, Level } from '../src/quiz/types.ts'
@@ -51,12 +51,9 @@ mkdirSync(dirname(jsonPath), { recursive: true })
 mkdirSync(dirname(pdfPath), { recursive: true })
 mkdirSync(dirname(memoryPath), { recursive: true })
 
-let memory: MemoryStore
-if (existsSync(memoryPath)) {
-  memory = MemoryStore.fromJSON(readFileSync(memoryPath, 'utf8'))
-} else {
-  memory = new MemoryStore()
-}
+const loadedMemory = loadMemoryFile(memoryPath)
+if (loadedMemory.notice) console.log(loadedMemory.notice)
+const memory = loadedMemory.store
 memory.beginPaper()
 
 const result = generate({
@@ -73,7 +70,7 @@ const result = generate({
 const paper = toTypstPaper(result.questions, title)
 writeFileSync(jsonPath, JSON.stringify(paper, null, 2) + '\n')
 writeFileSync(answersPath, JSON.stringify({ meta: paper.meta, questions: result.questions }, null, 2) + '\n')
-writeFileSync(memoryPath, memory.toJSON())
+saveMemoryFile(memoryPath, memory)
 
 const relJson = jsonPath.slice(root.length + 1)
 const relPdf = pdfPath.slice(root.length + 1)

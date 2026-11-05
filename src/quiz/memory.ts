@@ -16,6 +16,33 @@ export const RECENT_WINDOW = 6
 /** 记忆条目上限；单条约 50–80 字节，上限对应文件约 1–1.6MB */
 export const MAX_MEMORY_ENTRIES = 20_000
 
+/** 记忆文件体积上限；超过视为损坏（同步工具或异常写入会产生超大文件） */
+export const MAX_MEMORY_BYTES = 8 * 1024 * 1024
+
+/** 损坏备份的时间戳后缀：20261105T101500 */
+export function corruptTimestamp(date: Date = new Date()): string {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(
+    date.getHours(),
+  )}${pad(date.getMinutes())}${pad(date.getSeconds())}`
+}
+
+/** 给家长看的恢复提示；backup 传文件名即可，不暴露完整路径 */
+export function memoryRecoveryNotice(backup?: string): string {
+  return backup
+    ? `上次的出题记录读不出来，已换用一份新的，之前的记录已备份为 ${backup}`
+    : '上次的出题记录读不出来，已换用一份新的，之前的记录已另行备份'
+}
+
+export type MemoryParseStatus = 'ok' | 'corrupt'
+
+export interface MemoryParseResult {
+  status: MemoryParseStatus
+  store: MemoryStore
+  /** 损坏原因，仅用于日志与排查，界面用 memoryRecoveryNotice() */
+  reason: string
+}
+
 export interface MemoryEntry {
   /** 累计出现次数，仅作统计与二级权重 */
   count: number
@@ -126,5 +153,61 @@ export class MemoryStore {
       return diff !== 0 ? diff : a.localeCompare(b)
     })
     for (const key of keys.slice(0, keys.length - maxEntries)) delete this.data.entries[key]
+  }
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0
+}
+
+/**
+ * 严格读取记忆文件：空文件、超大文件、缺字段、字段类型错、JSON 截断都判为损坏。
+ * 损坏时返回可用的空记忆，由调用方负责备份原文并给出提示；绝不抛异常。
+ *
+ * 与 fromJSON 的区别：fromJSON 是宽松兜底（保留能认出的条目），
+ * 这里用于落盘文件的完整性校验，任何结构问题都按损坏处理，避免半坏数据进入去重逻辑。
+ */
+export function parseMemoryJson(text: string): MemoryParseResult {
+  const corrupt = (reason: string): MemoryParseResult => ({
+    status: 'corrupt',
+    store: new MemoryStore(),
+    reason,
+  })
+
+  if (text.length === 0 || text.trim().length === 0) return corrupt('文件为空')
+  if (text.length > MAX_MEMORY_BYTES) {
+    return corrupt(`文件过大（${Math.round(text.length / 1024)} KB，上限 ${MAX_MEMORY_BYTES / 1024} KB）`)
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return corrupt('文件内容不完整（JSON 截断）')
+  }
+  if (!isPlainObject(parsed)) return corrupt('顶层结构不是记忆对象')
+  if (parsed.version !== 1) return corrupt(`版本号不合法：${String(parsed.version)}`)
+  if (!isCount(parsed.papers)) return corrupt('卷号字段缺失或类型错误')
+  if (!isPlainObject(parsed.entries)) return corrupt('条目字段缺失或类型错误')
+
+  const keys = Object.keys(parsed.entries)
+  if (keys.length > MAX_MEMORY_ENTRIES) {
+    return corrupt(`条目过多（${keys.length} 条，上限 ${MAX_MEMORY_ENTRIES} 条）`)
+  }
+  for (const key of keys) {
+    const entry = parsed.entries[key]
+    if (!isPlainObject(entry)) return corrupt(`条目 ${key} 字段类型错误`)
+    if (!isCount(entry.count)) return corrupt(`条目 ${key} 的 count 缺失或类型错误`)
+    if (!isCount(entry.lastPaper)) return corrupt(`条目 ${key} 的 lastPaper 缺失或类型错误`)
+  }
+
+  return {
+    status: 'ok',
+    store: new MemoryStore(parsed as Partial<MemoryData>),
+    reason: '',
   }
 }

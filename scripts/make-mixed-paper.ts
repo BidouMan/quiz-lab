@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 import { buildPaper, recommendedCount } from '../src/app/paperBuilder.ts'
 import { DEFAULT_CONFIG, type AppConfig, type TemplateInfo } from '../src/app/types.ts'
-import { MemoryStore } from '../src/quiz/memory.ts'
+import { loadMemoryFile, saveMemoryFile } from '../src/quiz/memoryFile.ts'
 import type { Level } from '../src/quiz/types.ts'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -62,9 +62,9 @@ const memoryPath = resolve(root, arg('memory', '.quizlab/gen-memory.json')!)
 mkdirSync(dirname(jsonPath), { recursive: true })
 mkdirSync(dirname(pdfPath), { recursive: true })
 
-const memory = existsSync(memoryPath)
-  ? MemoryStore.fromJSON(readFileSync(memoryPath, 'utf8'))
-  : new MemoryStore()
+const loadedMemory = loadMemoryFile(memoryPath)
+if (loadedMemory.notice) console.log(loadedMemory.notice)
+const memory = loadedMemory.store
 
 const result = buildPaper({ config, template, seed, memory })
 if (result.count !== count) {
@@ -93,7 +93,7 @@ writeFileSync(
     2,
   ) + '\n',
 )
-writeFileSync(memoryPath, memory.toJSON())
+saveMemoryFile(memoryPath, memory)
 
 const relJson = jsonPath.slice(root.length + 1)
 const relPdf = pdfPath.slice(root.length + 1)

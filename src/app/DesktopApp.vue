@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { save } from '@tauri-apps/plugin-dialog'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { MemoryStore } from '../quiz/memory.ts'
+import { corruptTimestamp, memoryRecoveryNotice, MemoryStore, parseMemoryJson } from '../quiz/memory.ts'
 import { findUnit } from '../data/curriculum.ts'
 import {
   checkTypst,
@@ -33,14 +33,32 @@ import { formatPaperSummary, readableNotes, shortageNote } from './wording'
 
 const MEMORY_KEY = 'quizlab:quiz-memory.v1'
 
-function loadMemory(): MemoryStore {
+function loadMemory(): { store: MemoryStore; notice: string } {
+  let raw: string | null = null
   try {
-    const raw = localStorage.getItem(MEMORY_KEY)
-    if (raw) return MemoryStore.fromJSON(raw)
+    raw = localStorage.getItem(MEMORY_KEY)
   } catch {
-    // 记忆文件损坏时从空记忆开始
+    return { store: new MemoryStore(), notice: '' }
   }
-  return new MemoryStore()
+  if (!raw) return { store: new MemoryStore(), notice: '' }
+
+  const parsed = parseMemoryJson(raw)
+  if (parsed.status === 'ok') return { store: parsed.store, notice: '' }
+
+  // 损坏：先把原文另存一份备份，再重建可用状态，绝不静默清空
+  const backupKey = `${MEMORY_KEY}.corrupt-${corruptTimestamp()}`
+  try {
+    localStorage.setItem(backupKey, raw)
+  } catch {
+    // 备份写不进去（配额不足）也不阻断出卷
+  }
+  const store = new MemoryStore()
+  try {
+    localStorage.setItem(MEMORY_KEY, store.toJSON())
+  } catch {
+    // localStorage 不可用时仅本进程生效
+  }
+  return { store, notice: memoryRecoveryNotice(backupKey.replace(`${MEMORY_KEY}.`, '')) }
 }
 
 function persistMemory(store: MemoryStore) {
@@ -58,7 +76,8 @@ const config = reactive<AppConfig>({
   counts: { ...PRACTICE_DEFAULT_COUNTS },
 })
 
-const memory = loadMemory()
+const loadedMemory = loadMemory()
+const memory = loadedMemory.store
 const lastBuild = ref<BuildResult | null>(null)
 const template = ref<TemplateInfo | null>(null)
 const typst = ref<TypstInfo | null>(null)
@@ -72,6 +91,7 @@ const pdfData = ref<Uint8Array | null>(null)
 const actualPages = ref(0)
 const errorMessage = ref('')
 const notice = ref('')
+const memoryNotice = ref(loadedMemory.notice)
 const showLayoutDetail = ref(false)
 
 let seed = 0
@@ -343,6 +363,7 @@ onBeforeUnmount(() => {
         <button class="secondary" :disabled="!result || busy" @click="saveAs">另存为</button>
       </div>
 
+      <div v-if="memoryNotice" class="notice">{{ memoryNotice }}</div>
       <div v-if="notice" class="notice">{{ notice }}</div>
       <div v-if="paperSummary" class="summary">{{ paperSummary }}</div>
       <div v-if="layoutSkippedNote" class="notice">{{ layoutSkippedNote }}</div>
