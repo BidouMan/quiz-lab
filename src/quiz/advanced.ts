@@ -200,7 +200,7 @@ export function evalArithmetic(source: string): number {
   return value
 }
 
-// ---------- 14 类拓展题 ----------
+// ---------- 12 类拓展题 ----------
 
 const dCycle = (rng: Rng): AdvParams | null =>
   retry(() => {
@@ -818,82 +818,6 @@ const reverse: AdvancedCategory = {
   },
 }
 
-const dOverlap = (rng: Rng): AdvParams | null =>
-  retry(() => {
-    const both = randInt(rng, 3, 8)
-    const onlyA = randInt(rng, 5, 15)
-    const onlyB = randInt(rng, 5, 15)
-    const a = onlyA + both
-    const b = onlyB + both
-    if (onlyA + onlyB + both > 55) return null
-    return { a, b, both }
-  })
-
-const overlap: AdvancedCategory = {
-  id: 'adv-overlap',
-  label: '两个集合的重叠',
-  tier: 'T2',
-  units: ['3A-U1'],
-  primaryKp: '3A-ADD-SUB',
-  kpKeys: ['3A-ADD-SUB'],
-  sample: '参加跳绳18人，参加踢毽20人，两项都参加6人，至少参加一项的有多少人？',
-  pool: '两项都参加 3–8 × 只跳绳 5–15 × 只踢毽 5–15 ≈ 700',
-  workLines: 5,
-  draw: dOverlap,
-  stem: (p) =>
-    `三（1）班参加跳绳的有${num(p, 'a')}人，参加踢毽的有${num(p, 'b')}人，两项都参加的有${num(p, 'both')}人（可以先画两个圈）。至少参加一项的有多少人？`,
-  build: (p) => {
-    const a = num(p, 'a')
-    const b = num(p, 'b')
-    const both = num(p, 'both')
-    const onlyA = a - both
-    const onlyB = b - both
-    const answer = onlyA + onlyB + both
-    return {
-      known: [`跳绳${a}人`, `踢毽${b}人`, `两项都参加${both}人`],
-      unknown: '至少参加一项的人数',
-      steps: [
-        {
-          text: `只参加跳绳：${a}-${both}=${onlyA}（人）`,
-          kp: '3A-ADD-SUB',
-          expr: `${a}-${both}`,
-          result: onlyA,
-        },
-        {
-          text: `只参加踢毽：${b}-${both}=${onlyB}（人）`,
-          kp: '3A-ADD-SUB',
-          expr: `${b}-${both}`,
-          result: onlyB,
-        },
-        {
-          text: `三部分相加：${onlyA}+${onlyB}+${both}=${answer}（人）`,
-          kp: '3A-ADD-SUB',
-          expr: `${onlyA}+${onlyB}+${both}`,
-          result: answer,
-        },
-      ],
-      answer: String(answer),
-    }
-  },
-  recompute: (p) => {
-    const a = num(p, 'a')
-    const b = num(p, 'b')
-    const both = num(p, 'both')
-    // 独立路径：容斥（两项相加后减去重复算的一次）
-    const value = a + b - both
-    if (value <= 0) throw new Error('容斥结果非正')
-    return value
-  },
-  invariant: (p) => {
-    const a = num(p, 'a')
-    const b = num(p, 'b')
-    const both = num(p, 'both')
-    if (a - both <= 0 || b - both <= 0) return '“只参加一项”的人数必须为正'
-    if (a + b - both > 60) return '全班人数超过 60'
-    return null
-  },
-}
-
 const dCutPerimeter = (rng: Rng): AdvParams | null =>
   retry(() => {
     const w = randInt(rng, 3, 9)
@@ -962,100 +886,6 @@ const cutPerimeter: AdvancedCategory = {
     if (l <= w) return '长必须大于宽'
     if (l === 2 * w) return '长正好是宽的 2 倍，剩下的是正方形而非长方形'
     if (2 * l > 60) return '周长超过 60 厘米'
-    return null
-  },
-}
-
-const dSymbol = (rng: Rng): AdvParams | null =>
-  retry(() => {
-    const shapes = ['△', '□', '☆']
-    const shape = pick(rng, shapes)
-    const others = shapes.filter((item) => item !== shape)
-    const other = pick(rng, others)
-    const k = randInt(rng, 2, 5)
-    const v1 = randInt(rng, 2, 9)
-    const sum = v1 * k
-    if (sum > 99) return null
-    const v2 = randInt(rng, 2, 9)
-    if (v1 === v2) return null
-    const prod = v1 * v2
-    if (prod > 99) return null
-    return { shape, other, k, sum, prod }
-  })
-
-const symbol: AdvancedCategory = {
-  id: 'adv-symbol',
-  label: '图形代表数',
-  tier: 'T2',
-  units: ['3A-U2', '3A-U4'],
-  primaryKp: '3A-DIV-1',
-  kpKeys: ['3A-DIV-1', '3A-MUL-1'],
-  sample: '△+△+△=24，△×□=32，□代表多少？',
-  pool: '3 种图形 × 2 种另一图形 × 个数 2–5 × 值 2–9 ≈ 1400',
-  workLines: 4,
-  draw: dSymbol,
-  stem: (p) =>
-    `${Array.from({ length: num(p, 'k') }, () => str(p, 'shape')).join('+')}=${num(p, 'sum')}，${str(p, 'shape')}×${str(p, 'other')}=${num(p, 'prod')}。${str(p, 'other')}代表多少？（写出算式和答句）`,
-  build: (p) => {
-    const shape = str(p, 'shape')
-    const other = str(p, 'other')
-    const k = num(p, 'k')
-    const sum = num(p, 'sum')
-    const prod = num(p, 'prod')
-    const v1 = sum / k
-    const v2 = prod / v1
-    return {
-      known: [`${k}个${shape}相加得${sum}`, `${shape}×${other}=${prod}`],
-      unknown: `${other}代表多少`,
-      steps: [
-        {
-          text: `${sum}÷${k}=${v1}，所以${shape}=${v1}`,
-          kp: '3A-DIV-1',
-          expr: `${sum}/${k}`,
-          result: v1,
-        },
-        {
-          text: `${prod}÷${v1}=${v2}，所以${other}=${v2}`,
-          kp: '3A-DIV-1',
-          expr: `${prod}/${v1}`,
-          result: v2,
-        },
-        {
-          text: `验算：${v1}×${v2}=${prod}，${k}个${v1}相加是${sum}`,
-          kp: '3A-MUL-1',
-          expr: `${v1}*${v2}`,
-          result: prod,
-        },
-      ],
-      answer: String(v2),
-    }
-  },
-  recompute: (p) => {
-    const k = num(p, 'k')
-    const sum = num(p, 'sum')
-    const prod = num(p, 'prod')
-    const v1 = sum / k
-    // 独立路径：枚举另一个图形，找唯一满足乘积的数
-    let hits = 0
-    let answer = 0
-    for (let candidate = 1; candidate <= prod; candidate++) {
-      if (v1 * candidate === prod) {
-        hits++
-        answer = candidate
-      }
-    }
-    if (hits !== 1) throw new Error(`乘积 ${v1}×?=${prod} 有 ${hits} 个解`)
-    return answer
-  },
-  invariant: (p) => {
-    const k = num(p, 'k')
-    const sum = num(p, 'sum')
-    const prod = num(p, 'prod')
-    if (k < 2) return '相同图形至少 2 个'
-    if (sum % k !== 0) return `和 ${sum} 不能被个数 ${k} 整除`
-    const v1 = sum / k
-    if (prod % v1 !== 0) return `积 ${prod} 不能被 ${v1} 整除`
-    if (prod / v1 === v1) return '两个图形代表同一个数，没有区分价值'
     return null
   },
 }
@@ -1382,9 +1212,7 @@ export const ADV_CATEGORIES: AdvancedCategory[] = [
   joinPerimeter,
   totalize,
   reverse,
-  overlap,
   cutPerimeter,
-  symbol,
   weekday,
   rentPlan,
   arrangeRect,
@@ -1742,7 +1570,7 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     return {
       questions,
       notes: [
-        `拓展题：所选单元在 ${level}（${tier}）没有可用类别（T1 周期/归一/等量代换/时间/年龄差/拼周长/归总；T2 逆向/重叠/剪拼/图形代表数/星期几；T3 租船）`,
+        `拓展题：所选单元在 ${level}（${tier}）没有可用类别（T1 周期/归一/等量代换/时间/年龄差/拼周长/归总；T2 逆向/剪拼/星期几；T3 租船/固定周长摆长方形）`,
       ],
       crossReused: 0,
     }

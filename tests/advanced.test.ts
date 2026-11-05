@@ -54,8 +54,8 @@ const recordOf = (question: {
   key: question.key,
 })
 
-test('拓展题：14 类可做，每类每一步都只挂三上知识点', () => {
-  assert.equal(ADV_CATEGORIES.length, 14, `可做类别应为 14，实际 ${ADV_CATEGORIES.length}`)
+test('拓展题：12 类可做，每类每一步都只挂三上知识点', () => {
+  assert.equal(ADV_CATEGORIES.length, 12, `可做类别应为 12，实际 ${ADV_CATEGORIES.length}`)
   for (const category of ADV_CATEGORIES) {
     for (const kp of category.kpKeys) {
       assert.ok(ADV_3A_KP[kp], `${category.id} 的 ${kp} 不在三上允许集合`)
@@ -225,8 +225,8 @@ test('接入 buildPaper：默认 3 题、按类别留白、运行时复核 0 丢
   assert.equal(items.length, 3)
   for (const item of items) {
     assert.equal(item.kind, 'advanced')
-    // U1 L2 只有逆向（4 行）与重叠（5 行）两类
-    assert.ok([4, 5].includes(item.workLines), `U1 L2 出现 ${item.workLines} 行留白`)
+    // U1 L2 只剩逆向一类（4 行留白）
+    assert.ok([4].includes(item.workLines), `U1 L2 出现 ${item.workLines} 行留白`)
     assert.deepEqual(verifyItemStructure(item), [])
   }
 })
@@ -361,9 +361,7 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
     'adv-join-perimeter': 3,
     'adv-totalize': 3,
     'adv-reverse': 4,
-    'adv-overlap': 5,
     'adv-cut-perimeter': 4,
-    'adv-symbol': 4,
     'adv-weekday': 4,
     'adv-rent-plan': 8,
     'adv-arrange-rect': 6,
@@ -400,16 +398,14 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
   assert.ok(min >= 12 && max <= 24, `周长实测 ${min}–${max} 超出 12–24`)
 })
 
-test('蒙对收紧：星期几与图形代表数题干都要求写算式和答句', () => {
-  for (const id of ['adv-weekday', 'adv-symbol']) {
-    const category = advancedCategory(id)
-    assert.ok(category)
-    const rng = createRng(404)
-    for (let index = 0; index < 300; index++) {
-      const params = category.draw(rng)
-      if (params == null) continue
-      assert.ok(category.stem(params).includes('（写出算式和答句）'), `${id} 题干缺少作答要求`)
-    }
+test('蒙对收紧：星期几题干要求写算式和答句', () => {
+  const category = advancedCategory('adv-weekday')
+  assert.ok(category)
+  const rng = createRng(404)
+  for (let index = 0; index < 300; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    assert.ok(category.stem(params).includes('（写出算式和答句）'), `adv-weekday 题干缺少作答要求`)
   }
 })
 
