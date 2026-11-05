@@ -1,6 +1,7 @@
 import { findUnit } from '../data/curriculum.ts'
 import { generate } from './generate.ts'
 import { generateFill, verifyFill } from './fill.ts'
+import { buildDateKousuan, recomputeDateKousuan, type DateKousuanPiece } from './dateKousuan.ts'
 import { bin, evalLatex, evalNode, num, type BinOp, type ExprNode } from './expr.ts'
 import type { MemoryStore } from './memory.ts'
 import { stableStringify } from './normalize.ts'
@@ -14,6 +15,7 @@ import {
 } from './concepts.ts'
 import type {
   CalcType,
+  DateKousuanKind,
   FillFormName,
   FillQuestion,
   GeneratedQuestion,
@@ -61,7 +63,7 @@ interface Wrong {
 
 /** 复核用的来源描述：够独立重算正确值与每个错因值 */
 export interface FormatSourceData {
-  pool: 'calc' | 'fill' | 'concept' | 'conceptChoice' | 'u4choice'
+  pool: 'calc' | 'fill' | 'concept' | 'conceptChoice' | 'dateKousuan' | 'u4choice'
   form: string
   correct: string
   latex?: string
@@ -110,7 +112,7 @@ export interface FormatResult {
 }
 
 interface Source {
-  pool: 'calc' | 'fill' | 'concept' | 'u4choice'
+  pool: 'calc' | 'fill' | 'concept' | 'dateKousuan' | 'u4choice'
   form: string
   correct: string
   numeric: number | null
@@ -665,6 +667,75 @@ function collectConceptSources(grade: Grade, unitIds: string[], level: Level): S
   return sources
 }
 
+/** 年月日口算：选项/错因必须与正确答案同量纲（天、小时、日） */
+const DATE_BLANK = '（　　）'
+
+const monthDaysByRule = (month: number): number | null => {
+  if ([1, 3, 5, 7, 8, 10, 12].includes(month)) return 31
+  if ([4, 6, 9, 11].includes(month)) return 30
+  return null
+}
+
+function dateWrongs(
+  kind: string,
+  params: Record<string, number | string>,
+  correct: string,
+): Wrong[] {
+  const out: Wrong[] = []
+  const push = (value: number, rule: ErrorRuleId, detail: string): void => {
+    const text = String(value)
+    if (!Number.isInteger(value) || value <= 0) return
+    if (text === correct) return
+    if (out.some((item) => item.value === text)) return
+    out.push({ value: text, rule, detail })
+  }
+  if (kind === 'monthDays') {
+    for (const value of [28, 29, 30, 31]) {
+      push(value, 'wrong-days', `该月不是 ${value} 天（记错了月份天数）`)
+    }
+  } else if (kind === 'bigMonths') {
+    for (const value of [6, 8, 9, 12]) {
+      push(value, 'wrong-days', `大月个数记成 ${value} 个`)
+    }
+  } else if (kind === 'elapsedHour') {
+    const span = Number(params['result'])
+    for (const delta of [1, 2, 3, -1, -2]) {
+      push(span + delta, 'time-off', `经过时间算错（多/少算了 ${Math.abs(delta)} 小时）`)
+    }
+  } else if (kind === 'dateOffset') {
+    const day = Number(params['result'])
+    const month = Number(params['month'])
+    const days = monthDaysByRule(month) ?? 31
+    for (const value of [day + 1, day + 2, day - 1, day - 2]) {
+      if (value <= days) push(value, 'time-off', '日期推算错（往后数错了天数）')
+    }
+  }
+  return out
+}
+
+function dateSource(piece: DateKousuanPiece): Source {
+  const kind = String(piece.features['kind'] ?? '')
+  const correct = piece.answer
+  const text = piece.latex.replace(/^\s*"|"\s*$/g, '')
+  const params: Record<string, number | string> = {}
+  for (const [key, value] of Object.entries(piece.features)) {
+    if (typeof value === 'boolean') params[key] = value ? 1 : 0
+    else params[key] = value
+  }
+  return {
+    pool: 'dateKousuan',
+    form: kind,
+    correct,
+    numeric: Number(correct),
+    kpName: kind === 'elapsedHour' ? '3A-TIME-ELAPSED' : '3A-CALENDAR-DATE',
+    key: `date:${stableStringify(params)}`,
+    judgeStem: (stated) => text.replace(DATE_BLANK, stated),
+    choiceStem: text.replace(DATE_BLANK, '（　）'),
+    wrongs: dateWrongs(kind, params, correct),
+    data: { pool: 'dateKousuan', form: kind, correct, params },
+  }
+}
+
 function u4ChoiceWrongs(
   kind: string,
   params: Record<string, number | string>,
@@ -765,6 +836,19 @@ function collectSources(input: { grade: Grade; unitIds: string[]; level: Level; 
       }
     } catch {
       // 该单元/难度没有填空规则
+    }
+    if (unitId.endsWith('U5')) {
+      for (const kind of ['monthDays', 'bigMonths', 'elapsedHour', 'dateOffset'] as DateKousuanKind[]) {
+        const seen = new Set(sources.map((source) => source.key))
+        for (let attempt = 0; attempt < 80; attempt++) {
+          const rng = createRng(seed + 7001 + attempt * 131 + kind.length * 17)
+          const piece = buildDateKousuan(kind, rng, level)
+          const source = dateSource(piece)
+          if (seen.has(source.key)) continue
+          seen.add(source.key)
+          sources.push(source)
+        }
+      }
     }
     if (unitId.endsWith('U4') && level !== 'L1') {
       sources.push(u4ChoiceSource(seed, 0), u4ChoiceSource(seed, 1))
@@ -1087,7 +1171,10 @@ export function generateFormat(options: FormatOptions): FormatResult {
 
   // 概念命题：默认整卷最多 1/3；只有该单元组合没有任何数值判断来源时，才放宽到 100%
   const conceptSources = collectConceptSources(grade, units, level)
-  const numericSources = collectSources({ grade, unitIds: units, level, seed })
+  const numericSources = collectSources({ grade, unitIds: units, level, seed }).filter(
+    // 年月日来源先只接判断题，选择题下一轮再放开
+    (source) => kind === 'judge' || source.pool !== 'dateKousuan',
+  )
   const conceptOnly = kind === 'judge' && conceptSources.length > 0 && numericSources.length === 0
   // 选择题没有任何数值来源时（例如单独选 U3），用概念命题兜底成“说法选择题”
   const conceptChoiceOnly = kind === 'choice' && conceptSources.length > 0 && numericSources.length === 0
@@ -1175,7 +1262,10 @@ export function generateFormat(options: FormatOptions): FormatResult {
   } else {
     for (let round = 0; round < 10 && pieces.length < count; round++) {
       fillConceptSlots(round)
-      const collected = collectSources({ grade, unitIds: units, level, seed: seed + round * 7919 })
+      const collected = collectSources({ grade, unitIds: units, level, seed: seed + round * 7919 }).filter(
+        // 年月日来源先只接判断题，选择题下一轮再放开
+        (source) => kind === 'judge' || source.pool !== 'dateKousuan',
+      )
       if (collected.length === 0) {
         // 只有概念命题可用（例如单选 U3）：按答案位顺序补齐，仍受 1/3 上限
         while (tryConcept(round)) {
@@ -1317,6 +1407,14 @@ export function verifyFormatSource(data: FormatSourceData): FormatVerifyResult {
     }
   }
 
+  if (data.pool === 'dateKousuan') {
+    const value = recomputeDateKousuan(data.params ?? {})
+    if (value === null) return { ok: false, error: '年月日口算无法独立重算' }
+    if (String(value) !== data.correct) {
+      return { ok: false, error: `独立重算 ${value} ≠ 答案 ${data.correct}` }
+    }
+    return { ok: true, correct: String(value) }
+  }
   if (data.pool === 'u4choice') {
     const params = data.params ?? {}
     const kind = String(params['kind'] ?? '')
@@ -1366,6 +1464,10 @@ export function deriveWrongValues(data: FormatSourceData): Wrong[] {
     const record = findConcept(data.conceptId)
     if (!record || record.truth) return []
     return [{ value: '×', rule: 'concept-error', detail: record.rationale }]
+  }
+  if (data.pool === 'dateKousuan') {
+    const kind = String(data.form)
+    return dateWrongs(kind, data.params ?? {}, data.correct)
   }
   if (data.pool === 'u4choice') {
     const params = data.params ?? {}
