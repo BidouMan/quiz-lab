@@ -1281,13 +1281,13 @@ function lieQuestionToItem(question: LieQuestion): TypstItem {
   }
 }
 
-/** 拓展题：一题一行通栏，题干后留 3–4 行空白写思路/算式 */
+/** 拓展题：一题一行通栏，题干后按类别留 3–8 行空白写思路/算式 */
 function advancedQuestionToItem(question: AdvancedQuestion): TypstItem {
   return {
     id: question.id,
     kind: 'advanced',
     text: question.stem,
-    workLines: question.tier === 'T1' ? 3 : 4,
+    workLines: question.workLines,
     answers: [question.answer],
     solution: question.steps.map((step) => step.text),
     adv: {

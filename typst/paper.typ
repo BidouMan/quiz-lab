@@ -289,7 +289,7 @@
       #block(height: it.at("workLines", default: 3) * 8.5mm)
     ]
   } else if it.kind == "advanced" {
-    // 拓展题：题干后留 3–4 行（25.5mm/34mm）写思路与算式，一题一行通栏
+    // 拓展题：题干后按类别留 3–8 行（25.5–68mm）写思路与算式，一题一行通栏
     [
       #par(justify: true)[#lead #it.text]
       #v(1.5mm)

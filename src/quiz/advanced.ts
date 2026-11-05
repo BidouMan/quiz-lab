@@ -32,7 +32,6 @@ export const ADV_3A_KP = {
   '3A-TIME-ELAPSED': '经过时间（时、分）',
   '3A-CALENDAR': '年、月、日与星期推算',
   '3A-PERIMETER': '长方形、正方形周长',
-  '3A-SHAPE-COUNT': '图形计数（按序分类数）',
   '3A-STRATEGY': '枚举方案并比较（策略选择）',
   '3A-PATTERN': '周期排列（找规律）',
   '3A-AGE-DIFF': '年龄差不变（差不变性质）',
@@ -62,6 +61,8 @@ export interface AdvancedCategory {
   kpKeys: AdvancedKp[]
   sample: string
   pool: string
+  /** 卷面作答留白行数（8.5mm/行）；按类别定，不按档位一刀切 */
+  workLines: number
   draw: (rng: Rng) => AdvParams | null
   stem: (p: AdvParams) => string
   build: (p: AdvParams) => {
@@ -101,6 +102,7 @@ const retry = <T,>(make: () => T | null): T | null => {
 const WEEKDAYS = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'] as const
 const MONTH_DAYS: Record<number, number> = {
   1: 31,
+  2: 28,
   3: 31,
   4: 30,
   5: 31,
@@ -120,6 +122,14 @@ const durationText = (minutes: number): string => {
   if (rest === 0) return `${hours}时`
   return `${hours}时${rest}分`
 }
+
+/** 规范读法：分钟为 0 时只写“X时”，不写“X时0分” */
+const timeText = (hour: number, minute: number): string =>
+  minute === 0 ? `${hour}时` : `${hour}时${minute}分`
+
+/** 答案双写：不足 1 小时只写分钟，超过 1 小时写“1时49分（109分）” */
+const elapsedAnswer = (minutes: number): string =>
+  minutes < 60 ? `${minutes}分` : `${durationText(minutes)}（${minutes}分）`
 
 const UNIT_NAME: Record<string, string> = {
   '3A-U1': '两步四则运算与应用题',
@@ -192,7 +202,7 @@ export function evalArithmetic(source: string): number {
   return value
 }
 
-// ---------- 15 类拓展题 ----------
+// ---------- 13 类拓展题 ----------
 
 const dCycle = (rng: Rng): AdvParams | null =>
   retry(() => {
@@ -216,6 +226,7 @@ const cycle: AdvancedCategory = {
   kpKeys: ['3A-DIV-REMAINDER', '3A-PATTERN'],
   sample: '按“△○□……”重复排列，第17个图形是什么？',
   pool: '5 种周期串 × 第 10–60 个 ≈ 255',
+  workLines: 3,
   draw: dCycle,
   stem: (p) => `按“${str(p, 'pattern')}……”这样的顺序重复排列，第${num(p, 'n')}个${str(p, 'kind')}是什么？`,
   build: (p) => {
@@ -228,8 +239,8 @@ const cycle: AdvancedCategory = {
     const answer = pattern[index]!
     const remainderText =
       remainder === 0
-        ? `没有余数（正好${quotient}组），对应一组里的最后一个`
-        : `余数是${remainder}，对应一组里的第${remainder}个`
+        ? `第${n}个是第${quotient}组的最后一个`
+        : `第${n}个是第${quotient + 1}组的第${remainder}个`
     return {
       known: [`每组${period}个，依次是：${pattern}`],
       unknown: `第${n}个${str(p, 'kind')}`,
@@ -265,19 +276,19 @@ const cycle: AdvancedCategory = {
 const dNormalize = (rng: Rng): AdvParams | null =>
   retry(() => {
     const items = [
-      { item: '笔', measure: '支' },
-      { item: '本子', measure: '本' },
-      { item: '橡皮', measure: '块' },
-      { item: '尺子', measure: '把' },
+      { item: '笔', measure: '支', min: 2, max: 9 },
+      { item: '本子', measure: '本', min: 2, max: 9 },
+      { item: '橡皮', measure: '块', min: 1, max: 5 },
+      { item: '尺子', measure: '把', min: 2, max: 9 },
     ]
     const choice = pick(rng, items)
     const count = randInt(rng, 2, 8)
-    const unitPrice = randInt(rng, 2, 15)
+    const unitPrice = randInt(rng, choice.min, choice.max)
     const total = count * unitPrice
     if (total > 99) return null
-    const newCount = randInt(rng, 3, 12)
+    const newCount = randInt(rng, 3, 9)
     if (newCount === count) return null
-    if (unitPrice * newCount > 999) return null
+    if (unitPrice * newCount > 99) return null
     return {
       count,
       total,
@@ -296,7 +307,8 @@ const normalize: AdvancedCategory = {
   primaryKp: '3A-DIV-1',
   kpKeys: ['3A-DIV-1', '3A-MUL-1'],
   sample: '3支同样的笔共12元，买7支要多少元？',
-  pool: '4 种物品 × 数量 2–8 × 单价 2–15 × 新数量 3–12 ≈ 980',
+  pool: '4 种物品 × 数量 2–8 × 单价 1–9 × 新数量 3–9 ≈ 600',
+  workLines: 3,
   draw: dNormalize,
   stem: (p) =>
     `${num(p, 'count')}${str(p, 'measure')}${str(p, 'item')}一共${num(p, 'total')}${str(p, 'unit')}，照这样计算，买${num(p, 'newCount')}${str(p, 'measure')}${str(p, 'item')}要多少${str(p, 'unit')}？`,
@@ -353,14 +365,15 @@ const normalize: AdvancedCategory = {
 const dSubstitute = (rng: Rng): AdvParams | null =>
   retry(() => {
     const combos = [
-      { big: '大盒', mid: '中盒', small: '小盒' },
-      { big: '大箱', mid: '中箱', small: '小箱' },
-      { big: '大杯', mid: '中杯', small: '小杯' },
+      { big: '西瓜', mid: '菠萝', small: '苹果', verb: '换', smallUnit: '个' },
+      { big: '书包', mid: '文具盒', small: '铅笔', verb: '装', smallUnit: '支' },
     ]
     const combo = pick(rng, combos)
-    const a = randInt(rng, 2, 4)
+    const a = randInt(rng, 2, 5)
     const b = randInt(rng, 2, 5)
-    if (a * b > 60) return null
+    // 答案 4 太容易（2×2），T1 里没有拓展价值
+    if (a * b === 4) return null
+    if (a * b > 99) return null
     return { ...combo, a, b }
   })
 
@@ -371,22 +384,36 @@ const substitute: AdvancedCategory = {
   units: ['3A-U2', '3A-U4', '3A-U9'],
   primaryKp: '3A-MUL-1',
   kpKeys: ['3A-MUL-1'],
-  sample: '1个大盒能装3个中盒，1个中盒能装4个小盒，1个大盒能装多少个小盒？',
-  pool: '3 组名称 × 2–4 × 2–5 ≈ 36',
+  sample: '1个书包能装3个文具盒，1个文具盒能装4支铅笔，1个书包能装多少支铅笔？',
+  pool: '2 组等量关系 × 2–5 × 2–5 ≈ 40（排除答案 4；低频）',
+  workLines: 3,
   draw: dSubstitute,
   stem: (p) =>
-    `1个${str(p, 'big')}能装${num(p, 'a')}个${str(p, 'mid')}，1个${str(p, 'mid')}能装${num(p, 'b')}个${str(p, 'small')}。1个${str(p, 'big')}能装多少个${str(p, 'small')}？`,
+    `1个${str(p, 'big')}能${str(p, 'verb')}${num(p, 'a')}个${str(p, 'mid')}，1个${str(p, 'mid')}能${str(p, 'verb')}${num(p, 'b')}${str(p, 'smallUnit')}${str(p, 'small')}。1个${str(p, 'big')}能${str(p, 'verb')}多少${str(p, 'smallUnit')}${str(p, 'small')}？`,
   build: (p) => {
     const a = num(p, 'a')
     const b = num(p, 'b')
     const answer = a * b
+    const big = str(p, 'big')
+    const mid = str(p, 'mid')
+    const small = str(p, 'small')
+    const verb = str(p, 'verb')
     return {
-      known: [`1个${str(p, 'big')}=${a}个${str(p, 'mid')}`, `1个${str(p, 'mid')}=${b}个${str(p, 'small')}`],
-      unknown: `1个${str(p, 'big')}=?个${str(p, 'small')}`,
+      known: [
+        `1个${big}能${verb}${a}个${mid}`,
+        `1个${mid}能${verb}${b}${str(p, 'smallUnit')}${small}`,
+      ],
+      unknown: `1个${big}能${verb}?${str(p, 'smallUnit')}${small}`,
       steps: [
-        { text: `1个${str(p, 'big')}换成${a}个${str(p, 'mid')}`, kp: '3A-MUL-1' },
         {
-          text: `${a}×${b}=${answer}（个）`,
+          text:
+            verb === '换'
+              ? `1个${big}换成${a}个${mid}`
+              : `1个${big}里能装${a}个${mid}`,
+          kp: '3A-MUL-1',
+        },
+        {
+          text: `${a}×${b}=${answer}，1个${big}能${verb}${answer}${str(p, 'smallUnit')}${small}`,
           kp: '3A-MUL-1',
           expr: `${a}*${b}`,
           result: answer,
@@ -409,6 +436,7 @@ const substitute: AdvancedCategory = {
     const a = num(p, 'a')
     const b = num(p, 'b')
     if (a < 2 || b < 2) return '每一级至少要换 2 个'
+    if (a * b === 4) return '答案为 4 太容易，没有拓展价值'
     if (a * b > 99) return '答案超过 99'
     return null
   },
@@ -416,11 +444,11 @@ const substitute: AdvancedCategory = {
 
 const dElapsed = (rng: Rng): AdvParams | null =>
   retry(() => {
-    const startMin = randInt(rng, 7 * 60, 11 * 60 + 30)
-    const duration = randInt(rng, 30, 150)
+    // 5 分钟步进，与 U5 既有口径一致
+    const startMin = randInt(rng, 84, 138) * 5
+    const duration = randInt(rng, 6, 30) * 5
     const endMin = startMin + duration
     if (endMin > 17 * 60) return null
-    if (startMin % 60 === 0 && endMin % 60 === 0) return null
     return {
       sh: Math.floor(startMin / 60),
       sm: startMin % 60,
@@ -437,10 +465,11 @@ const elapsed: AdvancedCategory = {
   primaryKp: '3A-TIME-ELAPSED',
   kpKeys: ['3A-TIME-ELAPSED'],
   sample: '8时40分开始读书，9时25分读完，一共用了多长时间？',
-  pool: '起点 7:00–11:30 × 时长 30–150 分 ≈ 400',
+  pool: '起点 7:00–11:30（5 分钟步进）× 时长 30–150 分 ≈ 400',
+  workLines: 4,
   draw: dElapsed,
   stem: (p) =>
-    `丽丽${num(p, 'sh')}时${num(p, 'sm')}分开始读书，${num(p, 'eh')}时${num(p, 'em')}分读完。她读书用了多长时间？`,
+    `丽丽${timeText(num(p, 'sh'), num(p, 'sm'))}开始读书，${timeText(num(p, 'eh'), num(p, 'em'))}读完。她读书用了多长时间？`,
   build: (p) => {
     const sh = num(p, 'sh')
     const sm = num(p, 'sm')
@@ -449,22 +478,42 @@ const elapsed: AdvancedCategory = {
     const startMin = sh * 60 + sm
     const endMin = eh * 60 + em
     const duration = endMin - startMin
+    const startText = timeText(sh, sm)
+    const endText = timeText(eh, em)
+    const steps: AdvancedStep[] = []
+    if (sh === eh) {
+      steps.push({
+        text: `开始和结束都在${sh}时内，直接算分钟`,
+        kp: '3A-TIME-ELAPSED',
+      })
+      steps.push({
+        text: `${endMin}-${startMin}=${duration}（分）`,
+        kp: '3A-TIME-ELAPSED',
+        expr: `${endMin}-${startMin}`,
+        result: duration,
+      })
+    } else {
+      const anchor = (sh + 1) * 60
+      const first = anchor - startMin
+      const second = endMin - anchor
+      steps.push({
+        text:
+          `分段算：${startText}到${sh + 1}时是${durationText(first)}；` +
+          `${sh + 1}时到${endText}是${second === 0 ? '整点' : durationText(second)}`,
+        kp: '3A-TIME-ELAPSED',
+      })
+      steps.push({
+        text: `${first}+${second}=${duration}（分），也就是${durationText(duration)}`,
+        kp: '3A-TIME-ELAPSED',
+        expr: `${first}+${second}`,
+        result: duration,
+      })
+    }
     return {
-      known: [`开始：${sh}时${sm}分`, `结束：${eh}时${em}分`],
+      known: [`开始：${startText}`, `结束：${endText}`],
       unknown: '一共用了多长时间',
-      steps: [
-        {
-          text: `换成“分”：${sh}时${sm}分=${startMin}分，${eh}时${em}分=${endMin}分`,
-          kp: '3A-TIME-ELAPSED',
-        },
-        {
-          text: `${endMin}-${startMin}=${duration}（分），也就是${durationText(duration)}`,
-          kp: '3A-TIME-ELAPSED',
-          expr: `${endMin}-${startMin}`,
-          result: duration,
-        },
-      ],
-      answer: durationText(duration),
+      steps,
+      answer: elapsedAnswer(duration),
     }
   },
   recompute: (p) => {
@@ -481,7 +530,7 @@ const elapsed: AdvancedCategory = {
       count++
     }
     if (minutes !== target) throw new Error('结束时刻不在同一天')
-    return durationText(count)
+    return elapsedAnswer(count)
   },
   invariant: (p) => {
     const sh = num(p, 'sh')
@@ -492,6 +541,7 @@ const elapsed: AdvancedCategory = {
     const endMin = eh * 60 + em
     if (endMin <= startMin) return '结束时刻必须晚于开始时刻'
     if (endMin - startMin > 300) return '经过时间超过 5 小时'
+    if (startMin % 5 !== 0 || endMin % 5 !== 0) return '起止时刻必须是 5 分钟步进'
     return null
   },
 }
@@ -513,6 +563,7 @@ const ageDiff: AdvancedCategory = {
   kpKeys: ['3A-ADD-SUB', '3A-AGE-DIFF'],
   sample: '爸爸今年36岁，小明9岁，5年后爸爸比小明大多少岁？',
   pool: '孩子 6–11 岁 × 年龄差 20–34 × 年数 3–10 ≈ 600',
+  workLines: 3,
   draw: dAgeDiff,
   stem: (p) =>
     `爸爸今年${num(p, 'dad')}岁，小明今年${num(p, 'kid')}岁。${num(p, 'years')}年后，爸爸比小明大多少岁？`,
@@ -571,7 +622,8 @@ const joinPerimeter: AdvancedCategory = {
   primaryKp: '3A-PERIMETER',
   kpKeys: ['3A-PERIMETER'],
   sample: '把2个边长5厘米的正方形拼成一排，拼成的长方形的周长是多少？',
-  pool: '个数 2–4 × 边长 3–9 ≈ 21',
+  pool: '个数 2–4 × 边长 3–9 ≈ 21（低频）',
+  workLines: 3,
   draw: dJoinPerimeter,
   stem: (p) =>
     `把${num(p, 'count')}个边长${num(p, 'side')}厘米的正方形拼成一排，拼成的长方形的周长是多少厘米？`,
@@ -583,9 +635,14 @@ const joinPerimeter: AdvancedCategory = {
       known: [`${count}个正方形`, `边长${side}厘米`],
       unknown: '拼成的长方形的周长',
       steps: [
-        { text: `拼成的长方形长${count * side}厘米，宽${side}厘米`, kp: '3A-PERIMETER' },
         {
-          text: `(${count * side}+${side})×2=${answer}（厘米）`,
+          text: `拼成一排后，长：${count}×${side}=${count * side}（厘米）`,
+          kp: '3A-PERIMETER',
+          expr: `${count}*${side}`,
+          result: count * side,
+        },
+        {
+          text: `宽${side}厘米，周长：(${count * side}+${side})×2=${answer}（厘米）`,
           kp: '3A-PERIMETER',
           expr: `(${count * side}+${side})*2`,
           result: answer,
@@ -618,7 +675,7 @@ const dTotalize = (rng: Rng): AdvParams | null =>
     const days = randInt(rng, 3, 9)
     const total = perDay * days
     if (total > 99) return null
-    const newPerDay = randInt(rng, 3, 15)
+    const newPerDay = randInt(rng, 3, 9)
     if (newPerDay === perDay || total % newPerDay !== 0) return null
     const newDays = total / newPerDay
     if (newDays < 2) return null
@@ -633,7 +690,8 @@ const totalize: AdvancedCategory = {
   primaryKp: '3A-MUL-1',
   kpKeys: ['3A-MUL-1', '3A-DIV-1'],
   sample: '每天读6页，8天读完；每天读8页，几天读完？',
-  pool: '每天 4–12 页 × 3–9 天 × 新每天 3–15 页 ≈ 300',
+  pool: '每天 4–12 页 × 3–9 天 × 新每天 3–9 页 ≈ 180',
+  workLines: 3,
   draw: dTotalize,
   stem: (p) =>
     `小华每天读${num(p, 'perDay')}页，${num(p, 'days')}天读完一本书。如果他每天读${num(p, 'newPerDay')}页，几天能读完？`,
@@ -704,6 +762,7 @@ const reverse: AdvancedCategory = {
   kpKeys: ['3A-DIV-1', '3A-ADD-SUB', '3A-TWO-STEP'],
   sample: '一个数先加15，再乘3，得72，这个数是多少？',
   pool: '起点 2–20 × 加数 2–30 × 倍数 2–9 ≈ 4000',
+  workLines: 4,
   draw: dReverse,
   stem: (p) =>
     `一个数先加上${num(p, 'add')}，再乘${num(p, 'mult')}，结果是${num(p, 'result')}。这个数是多少？`,
@@ -718,7 +777,7 @@ const reverse: AdvancedCategory = {
       unknown: '原来的数',
       steps: [
         {
-          text: `倒推：${result}÷${mult}=${middle}`,
+          text: `从结果倒着想：${result}÷${mult}=${middle}`,
           kp: '3A-DIV-1',
           expr: `${result}/${mult}`,
           result: middle,
@@ -781,9 +840,10 @@ const overlap: AdvancedCategory = {
   kpKeys: ['3A-ADD-SUB'],
   sample: '参加跳绳18人，参加踢毽20人，两项都参加6人，至少参加一项的有多少人？',
   pool: '两项都参加 3–8 × 只跳绳 5–15 × 只踢毽 5–15 ≈ 700',
+  workLines: 5,
   draw: dOverlap,
   stem: (p) =>
-    `三（1）班参加跳绳的有${num(p, 'a')}人，参加踢毽的有${num(p, 'b')}人，两项都参加的有${num(p, 'both')}人。至少参加一项的有多少人？`,
+    `三（1）班参加跳绳的有${num(p, 'a')}人，参加踢毽的有${num(p, 'b')}人，两项都参加的有${num(p, 'both')}人（可以先画两个圈）。至少参加一项的有多少人？`,
   build: (p) => {
     const a = num(p, 'a')
     const b = num(p, 'b')
@@ -840,6 +900,8 @@ const dCutPerimeter = (rng: Rng): AdvParams | null =>
   retry(() => {
     const w = randInt(rng, 3, 9)
     const l = w + randInt(rng, 2, 8)
+    // 长=2 宽时剩下的正好是正方形，教学点“剩下一个长方形”失效，直接排除
+    if (l === 2 * w) return null
     if (2 * l > 60) return null
     return { l, w }
   })
@@ -851,22 +913,24 @@ const cutPerimeter: AdvancedCategory = {
   units: ['3A-U6'],
   primaryKp: '3A-PERIMETER',
   kpKeys: ['3A-PERIMETER'],
-  sample: '长8厘米、宽5厘米的长方形，剪下一个最大的正方形，剩下图形的周长是多少？',
-  pool: '宽 3–9 × 长比宽多 2–8 ≈ 49',
+  sample: '长8厘米、宽5厘米的长方形纸，从一端剪下一个最大的正方形，剩下图形的周长是多少？',
+  pool: '宽 3–9 × 长比宽多 2–8（排除长=2宽）≈ 40',
+  workLines: 4,
   draw: dCutPerimeter,
   stem: (p) =>
-    `一张长${num(p, 'l')}厘米、宽${num(p, 'w')}厘米的长方形纸，剪下一个最大的正方形。剩下图形的周长是多少厘米？`,
+    `一张长${num(p, 'l')}厘米、宽${num(p, 'w')}厘米的长方形纸，从一端剪下一个最大的正方形。剩下图形的周长是多少厘米？`,
   build: (p) => {
     const l = num(p, 'l')
     const w = num(p, 'w')
     const rest = l - w
     const answer = 2 * (rest + w)
+    const original = 2 * (l + w)
     return {
-      known: [`长${l}厘米`, `宽${w}厘米`, `剪下最大的正方形（边长${w}厘米）`],
+      known: [`长${l}厘米`, `宽${w}厘米`, `从一端剪下最大的正方形`],
       unknown: '剩下图形的周长',
       steps: [
         {
-          text: `剪下的正方形边长是${w}厘米，剩下部分是长${rest}厘米、宽${w}厘米的长方形`,
+          text: `最大的正方形边长最多是${w}厘米（不能超过宽）；从一端剪下后，剩下部分长${rest}厘米、宽${w}厘米`,
           kp: '3A-PERIMETER',
         },
         {
@@ -876,9 +940,9 @@ const cutPerimeter: AdvancedCategory = {
           result: answer,
         },
         {
-          text: `验算：${rest}+${w}+${rest}+${w}=${answer}（厘米）`,
+          text: `验算：原周长(${l}+${w})×2=${original}（厘米），减去剪口处的2个宽：${original}-${w}×2=${answer}（厘米）`,
           kp: '3A-PERIMETER',
-          expr: `${rest}+${w}+${rest}+${w}`,
+          expr: `(${l}+${w})*2-${w}*2`,
           result: answer,
         },
       ],
@@ -898,7 +962,7 @@ const cutPerimeter: AdvancedCategory = {
     const l = num(p, 'l')
     const w = num(p, 'w')
     if (l <= w) return '长必须大于宽'
-    if (l - w < 1) return '剩下部分长度必须为正'
+    if (l === 2 * w) return '长正好是宽的 2 倍，剩下的是正方形而非长方形'
     if (2 * l > 60) return '周长超过 60 厘米'
     return null
   },
@@ -906,7 +970,7 @@ const cutPerimeter: AdvancedCategory = {
 
 const dSymbol = (rng: Rng): AdvParams | null =>
   retry(() => {
-    const shapes = ['○', '△', '□', '☆']
+    const shapes = ['△', '□', '☆']
     const shape = pick(rng, shapes)
     const others = shapes.filter((item) => item !== shape)
     const other = pick(rng, others)
@@ -928,8 +992,9 @@ const symbol: AdvancedCategory = {
   units: ['3A-U2', '3A-U4', '3A-U9'],
   primaryKp: '3A-DIV-1',
   kpKeys: ['3A-DIV-1', '3A-MUL-1'],
-  sample: '○+○+○=24，○×□=32，□代表多少？',
-  pool: '4 种图形 × 3 种另一图形 × 个数 2–5 × 值 2–9 ≈ 2000',
+  sample: '△+△+△=24，△×□=32，□代表多少？',
+  pool: '3 种图形 × 2 种另一图形 × 个数 2–5 × 值 2–9 ≈ 1400',
+  workLines: 4,
   draw: dSymbol,
   stem: (p) =>
     `${Array.from({ length: num(p, 'k') }, () => str(p, 'shape')).join('+')}=${num(p, 'sum')}，${str(p, 'shape')}×${str(p, 'other')}=${num(p, 'prod')}。${str(p, 'other')}代表多少？`,
@@ -997,87 +1062,12 @@ const symbol: AdvancedCategory = {
   },
 }
 
-const dCountRect = (rng: Rng): AdvParams | null =>
-  retry(() => {
-    const m = randInt(rng, 2, 4)
-    const n = randInt(rng, 2, 4)
-    const answer = (m * (m + 1) / 2) * (n * (n + 1) / 2)
-    if (answer > 100) return null
-    return { m, n }
-  })
-
-const countRect: AdvancedCategory = {
-  id: 'adv-count-rect',
-  label: '数长方形',
-  tier: 'T2',
-  units: ['3A-U3', '3A-U9'],
-  primaryKp: '3A-SHAPE-COUNT',
-  kpKeys: ['3A-SHAPE-COUNT', '3A-MUL-1'],
-  sample: '用2行3列的小长方形拼成大长方形，一共有多少个长方形？',
-  pool: '行 2–4 × 列 2–4 ≈ 9（结构有限，用尽即如实少出）',
-  draw: dCountRect,
-  stem: (p) =>
-    `用${num(p, 'm')}行${num(p, 'n')}列同样大的小长方形拼成一个大长方形，大长方形里一共有多少个长方形？`,
-  build: (p) => {
-    const m = num(p, 'm')
-    const n = num(p, 'n')
-    const across = n * (n + 1) / 2
-    const down = m * (m + 1) / 2
-    const answer = across * down
-    return {
-      known: [`${m}行`, `每行${n}个小长方形`],
-      unknown: '大长方形里一共有多少个长方形',
-      steps: [
-        {
-          text: `横着数：1+2+…+${n}=${across}（个）`,
-          kp: '3A-SHAPE-COUNT',
-          expr: `${n}*(${n}+1)/2`,
-          result: across,
-        },
-        {
-          text: `竖着数：1+2+…+${m}=${down}（个）`,
-          kp: '3A-SHAPE-COUNT',
-          expr: `${m}*(${m}+1)/2`,
-          result: down,
-        },
-        {
-          text: `${across}×${down}=${answer}（个）`,
-          kp: '3A-MUL-1',
-          expr: `${across}*${down}`,
-          result: answer,
-        },
-      ],
-      answer: String(answer),
-    }
-  },
-  recompute: (p) => {
-    const m = num(p, 'm')
-    const n = num(p, 'n')
-    // 独立路径：枚举上下边与左右边的所有配对
-    let total = 0
-    for (let top = 0; top < m; top++) {
-      for (let bottom = top + 1; bottom <= m; bottom++) {
-        for (let left = 0; left < n; left++) {
-          for (let right = left + 1; right <= n; right++) total++
-        }
-      }
-    }
-    return total
-  },
-  invariant: (p) => {
-    const m = num(p, 'm')
-    const n = num(p, 'n')
-    if (m < 2 || n < 2) return '行列都至少 2，才需要“多绕一步”'
-    if (m * (m + 1) / 2 * (n * (n + 1) / 2) > 100) return '答案超过 100'
-    return null
-  },
-}
-
 const dWeekday = (rng: Rng): AdvParams | null =>
   retry(() => {
     const months = Object.keys(MONTH_DAYS).map(Number)
     const month = pick(rng, months)
-    const day = randInt(rng, 2, MONTH_DAYS[month]!)
+    // 日期下限 8：保证“经过了 ≥7 天”，不出现商 0 的除法，也不退化成“第二天”
+    const day = randInt(rng, 8, MONTH_DAYS[month]!)
     const start = randInt(rng, 0, 6)
     return { month, day, start }
   })
@@ -1090,10 +1080,11 @@ const weekday: AdvancedCategory = {
   primaryKp: '3A-CALENDAR',
   kpKeys: ['3A-CALENDAR', '3A-DIV-REMAINDER'],
   sample: '5月1日是星期二，5月20日是星期几？',
-  pool: '11 个月 × 日期 2–31 × 起始星期 7 ≈ 2000',
+  pool: '12 个月 × 日期 8–月末 × 起始星期 7 ≈ 1600',
+  workLines: 4,
   draw: dWeekday,
   stem: (p) =>
-    `${num(p, 'month')}月1日是${WEEKDAYS[num(p, 'start')]!}，${num(p, 'month')}月${num(p, 'day')}日是星期几？`,
+    `${num(p, 'month')}月1日是${WEEKDAYS[num(p, 'start')]!}，从1日算起，${num(p, 'month')}月${num(p, 'day')}日是星期几？`,
   build: (p) => {
     const month = num(p, 'month')
     const day = num(p, 'day')
@@ -1102,17 +1093,35 @@ const weekday: AdvancedCategory = {
     const quotient = Math.floor(passed / 7)
     const remainder = passed % 7
     const answer = WEEKDAYS[(start + passed) % 7]!
+    const steps: AdvancedStep[] = [
+      { text: `从1日到${day}日，经过了${passed}天（1日算第1天）`, kp: '3A-CALENDAR' },
+      {
+        text:
+          remainder === 0
+            ? `${passed}÷7=${quotient}（正好${quotient}周，没有余数）`
+            : `${passed}÷7=${quotient}……${remainder}`,
+        kp: '3A-DIV-REMAINDER',
+      },
+    ]
+    if (remainder === 0) {
+      steps.push({
+        text: `过了${quotient}周，星期不变，所以${month}月${day}日还是${answer}`,
+        kp: '3A-CALENDAR',
+      })
+    } else {
+      const days = Array.from(
+        { length: remainder },
+        (_, index) => `第${index + 1}天是${WEEKDAYS[(start + index + 1) % 7]}`,
+      )
+      steps.push({
+        text: `${WEEKDAYS[start]!}之后：${days.join('，')}，所以${month}月${day}日是${answer}`,
+        kp: '3A-CALENDAR',
+      })
+    }
     return {
       known: [`${month}月1日是${WEEKDAYS[start]!}`, `问${month}月${day}日`],
       unknown: `${month}月${day}日是星期几`,
-      steps: [
-        { text: `从1日到${day}日，中间过了${passed}天`, kp: '3A-CALENDAR' },
-        { text: `${passed}÷7=${quotient}……${remainder}`, kp: '3A-DIV-REMAINDER' },
-        {
-          text: `从${WEEKDAYS[start]!}往后数${remainder}天，是${answer}`,
-          kp: '3A-CALENDAR',
-        },
-      ],
+      steps,
       answer,
     }
   },
@@ -1129,76 +1138,8 @@ const weekday: AdvancedCategory = {
     const day = num(p, 'day')
     const start = num(p, 'start')
     if (MONTH_DAYS[month] == null) return `不支持 ${month} 月`
-    if (day < 2 || day > MONTH_DAYS[month]!) return `日期 ${day} 超出 ${month} 月范围`
+    if (day < 8 || day > MONTH_DAYS[month]!) return `日期 ${day} 超出 ${month} 月可用范围（8–${MONTH_DAYS[month]}）`
     if (start < 0 || start > 6) return '起始星期越界'
-    return null
-  },
-}
-
-const dSumDiff = (rng: Rng): AdvParams | null =>
-  retry(() => {
-    const smaller = randInt(rng, 5, 30)
-    const diff = randInt(rng, 2, 20)
-    const sum = 2 * smaller + diff
-    if (sum > 99) return null
-    return { sum, diff }
-  })
-
-const sumDiff: AdvancedCategory = {
-  id: 'adv-sum-diff',
-  label: '和差问题',
-  tier: 'T3',
-  units: ['3A-U1', '3A-U9'],
-  primaryKp: '3A-TWO-STEP',
-  kpKeys: ['3A-ADD-SUB', '3A-TWO-STEP'],
-  sample: '两个数的和是30，差是6，这两个数分别是多少？',
-  pool: '较小数 5–30 × 差 2–20（和≤99）≈ 390',
-  draw: dSumDiff,
-  stem: (p) => `两个数的和是${num(p, 'sum')}，差是${num(p, 'diff')}。这两个数分别是多少？`,
-  build: (p) => {
-    const sum = num(p, 'sum')
-    const diff = num(p, 'diff')
-    const bigger = (sum + diff) / 2
-    const smaller = (sum - diff) / 2
-    return {
-      known: [`和${sum}`, `差${diff}`],
-      unknown: '较大数和较小数',
-      steps: [
-        { text: `画线段图：较大的数比较小的数多${diff}`, kp: '3A-ADD-SUB' },
-        {
-          text: `(${sum}+${diff})÷2=${bigger}`,
-          kp: '3A-TWO-STEP',
-          expr: `(${sum}+${diff})/2`,
-          result: bigger,
-        },
-        {
-          text: `(${sum}-${diff})÷2=${smaller}`,
-          kp: '3A-TWO-STEP',
-          expr: `(${sum}-${diff})/2`,
-          result: smaller,
-        },
-        { text: `验算：${bigger}+${smaller}=${sum}，${bigger}-${smaller}=${diff}`, kp: '3A-ADD-SUB' },
-      ],
-      answer: `较大数是${bigger}，较小数是${smaller}`,
-    }
-  },
-  recompute: (p) => {
-    const sum = num(p, 'sum')
-    const diff = num(p, 'diff')
-    // 独立路径：先由“和 - 差”求两个较小数的和，再拆分
-    const smaller = (sum - diff) / 2
-    if (!Number.isInteger(smaller)) throw new Error('差与和的奇偶性不一致')
-    const bigger = smaller + diff
-    if (bigger + smaller !== sum) throw new Error('和差重算不符')
-    return `较大数是${bigger}，较小数是${smaller}`
-  },
-  invariant: (p) => {
-    const sum = num(p, 'sum')
-    const diff = num(p, 'diff')
-    if (sum <= diff) return '和必须大于差'
-    if (diff <= 0) return '差必须为正'
-    if ((sum + diff) % 2 !== 0) return '和与差的奇偶性不一致'
-    if ((sum + diff) / 2 > 999) return '较大数超过 999'
     return null
   },
 }
@@ -1241,6 +1182,8 @@ const dRentPlan = (rng: Rng): AdvParams | null =>
     const bigCost = randInt(rng, 30, 50)
     const smallCost = randInt(rng, 18, 30)
     const params = { people, bigCap, bigCost, smallCap, smallCost }
+    // 方案数 = 大船 0..maxBig，控制在 ≤5 行，孩子才写得下
+    if (Math.ceil(people / bigCap) > 4) return null
     const result = rentPlanBest(params)
     if (result.ties !== 1) return null
     if (result.plan.seats < people) return null
@@ -1255,30 +1198,45 @@ const rentPlan: AdvancedCategory = {
   primaryKp: '3A-STRATEGY',
   kpKeys: ['3A-STRATEGY', '3A-MUL-1'],
   sample: '大船限乘6人、30元，小船限乘4人、24元，18人怎样租最省？',
-  pool: '人数 12–30 × 大船 5–8 人 × 小船 3–4 人 × 两种租金 ≈ 4 万（唯一最优筛选后仍充足）',
+  pool: '人数 12–30 × 大船 5–8 人 × 小船 3–4 人 × 两种租金 ≈ 4 万（唯一最优且方案 ≤5 后仍充足）',
+  workLines: 8,
   draw: dRentPlan,
   stem: (p) =>
-    `有${num(p, 'people')}人去划船。大船每条限乘${num(p, 'bigCap')}人，租金${num(p, 'bigCost')}元；小船每条限乘${num(p, 'smallCap')}人，租金${num(p, 'smallCost')}元。每条船不能超载，可以有空位。怎样租最省钱？最少要多少元？`,
+    `有${num(p, 'people')}人去划船。大船限乘${num(p, 'bigCap')}人，每条租金${num(p, 'bigCost')}元；小船限乘${num(p, 'smallCap')}人，每条租金${num(p, 'smallCost')}元。不能超载，怎样租最省？最少要多少元？`,
   build: (p) => {
     const result = rentPlanBest(p)
     const { big, small, cost, seats } = result.plan
     const people = num(p, 'people')
     const maxBig = Math.ceil(people / num(p, 'bigCap'))
+    const answer =
+      big === 0
+        ? `只租小船${small}条，最少${cost}元`
+        : small === 0
+          ? `只租大船${big}条，最少${cost}元`
+          : `${big}条大船、${small}条小船，最少${cost}元`
     return {
       known: [
         `共${people}人`,
-        `大船限乘${num(p, 'bigCap')}人、${num(p, 'bigCost')}元`,
-        `小船限乘${num(p, 'smallCap')}人、${num(p, 'smallCost')}元`,
+        `大船限乘${num(p, 'bigCap')}人、每条${num(p, 'bigCost')}元`,
+        `小船限乘${num(p, 'smallCap')}人、每条${num(p, 'smallCost')}元`,
       ],
       unknown: '最省钱的租船方案和最少租金',
       steps: [
-        { text: `大船最多租${maxBig}条，按0到${maxBig}条逐一列举`, kp: '3A-STRATEGY' },
         {
-          text: `大船每多租1条，就少坐${num(p, 'bigCap')}人；剩下的人再除以${num(p, 'smallCap')}，有余数就多租1条小船`,
+          text: `大船可以租0条到${maxBig}条，把每种方案的小船条数和租金列成表`,
           kp: '3A-STRATEGY',
         },
         {
-          text: `逐项比较租金：${big}条大船、${small}条小船最省，共${cost}元`,
+          text: '逐行比较租金，找出最少的一种',
+          kp: '3A-STRATEGY',
+        },
+        {
+          text:
+            big === 0
+              ? `只租小船${small}条最省，共${cost}元`
+              : small === 0
+                ? `只租大船${big}条最省，共${cost}元`
+                : `${big}条大船、${small}条小船最省，共${cost}元`,
           kp: '3A-STRATEGY',
         },
         {
@@ -1289,7 +1247,7 @@ const rentPlan: AdvancedCategory = {
         },
         { text: `答：最少要${cost}元`, kp: '3A-STRATEGY' },
       ],
-      answer: `${big}条大船、${small}条小船，最少${cost}元`,
+      answer,
     }
   },
   recompute: (p) => {
@@ -1321,7 +1279,11 @@ const rentPlan: AdvancedCategory = {
     }
     if (!Number.isFinite(bestCost)) throw new Error('没有能坐下所有人的方案')
     if (ties !== 1) throw new Error(`最优方案有 ${ties} 个并列，违反唯一解约束`)
-    return `${bestBig}条大船、${bestSmall}条小船，最少${bestCost}元`
+    return bestBig === 0
+      ? `只租小船${bestSmall}条，最少${bestCost}元`
+      : bestSmall === 0
+        ? `只租大船${bestBig}条，最少${bestCost}元`
+        : `${bestBig}条大船、${bestSmall}条小船，最少${bestCost}元`
   },
   invariant: (p) => {
     const people = num(p, 'people')
@@ -1331,6 +1293,7 @@ const rentPlan: AdvancedCategory = {
     const smallCost = num(p, 'smallCost')
     if (people <= 0 || bigCap <= 0 || smallCap <= 0) return '人数与限乘必须为正'
     if (bigCost <= 0 || smallCost <= 0) return '租金必须为正'
+    if (Math.ceil(people / bigCap) > 4) return '方案超过 5 种，表格写不下'
     const result = rentPlanBest(p)
     if (result.plan.seats < people) return '最优方案坐不下所有人'
     if (result.ties !== 1) return `最优方案有 ${result.ties} 个并列，不能保证唯一解`
@@ -1350,9 +1313,7 @@ export const ADV_CATEGORIES: AdvancedCategory[] = [
   overlap,
   cutPerimeter,
   symbol,
-  countRect,
   weekday,
-  sumDiff,
   rentPlan,
 ]
 
@@ -1451,6 +1412,24 @@ export function ambiguousIssue(text: string): string | null {
   return null
 }
 
+/** 教材写法禁区：三年级不该出现的除法形式、口语化表述与省略号算式 */
+const STYLE_GUARDS: Array<[RegExp, string]> = [
+  [/时0分/, '“X时0分”不是规范读法，应写“X时”'],
+  [/÷7=0……/, '有余数除法不写商 0'],
+  [/……0/, '有余数除法不写“……0”'],
+  [/往后数0天/, '“往后数0天”不是数学语言'],
+  [/中间过了/, '“中间过了”应写“经过了”'],
+  [/1\+2\+…/, '“1+2+…”不是孩子会写的算式'],
+  [/大杯能装/, '“大杯能装中杯”语义不当'],
+]
+
+export function advancedStyleIssue(text: string): string | null {
+  for (const [pattern, reason] of STYLE_GUARDS) {
+    if (pattern.test(text)) return reason
+  }
+  return null
+}
+
 const MIN_STEPS: Record<AdvancedTier, number> = { T1: 2, T2: 3, T3: 4 }
 
 export function verifyAdvancedRecord(record: AdvancedRecord): string[] {
@@ -1481,6 +1460,14 @@ export function verifyAdvancedRecord(record: AdvancedRecord): string[] {
       issues.push(forbidden)
       break
     }
+    const style = advancedStyleIssue(text)
+    if (style) {
+      issues.push(style)
+      break
+    }
+  }
+  if (record.categoryId === 'adv-cut-perimeter' && !record.stem.includes('从一端剪下')) {
+    issues.push('剪拼题必须写明“从一端剪下”，否则从中间剪会得到第二个答案')
   }
 
   // 路径 2：题干必须由类别模板渲染，防止“题干与结构不一致”
@@ -1585,6 +1572,7 @@ export interface AdvancedQuestion {
   answer: string
   params: AdvParams
   key: string
+  workLines: number
   reused?: boolean
 }
 
@@ -1681,7 +1669,7 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     return {
       questions,
       notes: [
-        `拓展题：所选单元在 ${level}（${tier}）没有可用类别（T1 周期/归一/等量代换/时间/年龄差/拼周长/归总；T2 逆向/重叠/剪拼/图形代表数/数长方形/星期几；T3 和差/租船）`,
+        `拓展题：所选单元在 ${level}（${tier}）没有可用类别（T1 周期/归一/等量代换/时间/年龄差/拼周长/归总；T2 逆向/重叠/剪拼/图形代表数/星期几；T3 租船）`,
       ],
       crossReused: 0,
     }
@@ -1714,6 +1702,7 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
       answer: candidate.answer,
       params: candidate.params,
       key: candidate.key,
+      workLines: category.workLines,
       ...(reused ? { reused: true } : {}),
     })
     seen.add(candidate.key)
