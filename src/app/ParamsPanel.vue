@@ -20,7 +20,7 @@ const props = defineProps<{
   pageEstimate?: number
 }>()
 
-const emit = defineEmits<{ checkTypst: [] }>()
+const emit = defineEmits<{ checkTypst: []; exportConfig: []; importConfig: [] }>()
 
 const LEVELS: { level: Level; label: string; hint: string }[] = [
   { level: 'L1', label: 'L1', hint: '基础' },
@@ -247,6 +247,15 @@ function toggleAll(checked: boolean) {
       </div>
       <p v-if="typstError" class="engine-error">{{ typstError }}</p>
       <p v-else-if="typst" class="engine-path">{{ typst.path }}</p>
+    </section>
+
+    <section class="group">
+      <h2>设置备份</h2>
+      <p class="hint">设置会自动留三份备份，读不出来时自动换回最近一份；换电脑时可导出成文件，之后再导入。</p>
+      <div class="engine-row">
+        <button class="small" @click="emit('exportConfig')">导出设置</button>
+        <button class="small" @click="emit('importConfig')">导入设置</button>
+      </div>
     </section>
 
     <p class="footnote">参数会自动保存，下次启动仍然生效。</p>

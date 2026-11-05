@@ -2,15 +2,17 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
     process::Command,
-    time::Instant,
+    time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
 use base64::Engine;
 use serde::Serialize;
-use serde_json::Value;
+use serde_json::{json, Value};
 use tauri::Manager;
 
 const TYPST_DATA_ARG: &str = "/.quizlab/paper-data.json";
+/// 设置备份保留份数：config.bak.1 最新，config.bak.3 最旧
+const CONFIG_BACKUPS: usize = 3;
 /// 旧版运行时目录，仅用于首次启动迁移
 const LEGACY_RUNTIME_DIR: &str = ".leomath";
 /// 随包字体目录：Typst 不会自动扫描项目字体，必须显式传入
@@ -61,6 +63,16 @@ struct GenerateResult {
     /// 是否出现 unknown font family（字体回退）
     font_fallback: bool,
     layout: LayoutCheck,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ConfigLoad {
+    config: Value,
+    /// 备份回落 / 重建时给家长看的提示
+    notice: Option<String>,
+    /// 实际采用的备份路径，便于排查
+    recovered_from: Option<String>,
 }
 
 // ---------- 路径 ----------
@@ -521,20 +533,152 @@ fn migrate_legacy_config(dir: &Path) {
     let _ = fs::copy(&legacy, &target);
 }
 
+fn config_backup_path(dir: &Path, index: usize) -> PathBuf {
+    dir.join(format!("config.bak.{index}"))
+}
+
+/// 损坏文件改名后缀；用毫秒时间戳，避免同一秒内多次恢复撞名
+fn corrupt_stamp() -> String {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_millis().to_string())
+        .unwrap_or_else(|_| "unknown".to_string())
+}
+
+/// 设置必须是 JSON 对象；数组 / 字符串 / null 都属于非法文件
+fn validate_config_value(value: &Value) -> Result<(), String> {
+    if value.is_object() {
+        Ok(())
+    } else {
+        Err("设置文件内容不是对象".to_string())
+    }
+}
+
+/// 读取并校验设置文件；空文件、截断 JSON、非对象都返回错误，不抛 panic
+fn read_config_file(path: &Path) -> Result<Value, String> {
+    let raw = fs::read_to_string(path)
+        .map_err(|e| format!("无法读取 {}：{e}", path.display()))?;
+    if raw.trim().is_empty() {
+        return Err("设置文件为空".to_string());
+    }
+    let value: Value = serde_json::from_str(&raw)
+        .map_err(|e| format!("设置文件格式错误：{e}"))?;
+    validate_config_value(&value)?;
+    Ok(value)
+}
+
+/// 原子写：先写同目录临时文件，再 rename 覆盖，避免断电留下半个文件
+fn write_text_atomic(path: &Path, content: &str) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("无法创建目录 {}：{e}", parent.display()))?;
+    }
+    let name = path
+        .file_name()
+        .map(|value| value.to_string_lossy().to_string())
+        .unwrap_or_else(|| "config.json".to_string());
+    let tmp = path.with_file_name(format!(".{name}.tmp-{}", std::process::id()));
+    fs::write(&tmp, content).map_err(|e| format!("无法写入临时文件 {}：{e}", tmp.display()))?;
+    fs::rename(&tmp, path).map_err(|e| {
+        let _ = fs::remove_file(&tmp);
+        format!("无法保存 {}：{e}", path.display())
+    })
+}
+
+/// 保存前滚动备份：config.bak.1 最新，最多 CONFIG_BACKUPS 份。
+/// 当前文件已损坏（不是合法设置）时跳过滚动，保住更早的可用备份。
+fn rotate_config_backups(dir: &Path) {
+    let current = dir.join("config.json");
+    if read_config_file(&current).is_err() {
+        return;
+    }
+    let _ = fs::remove_file(config_backup_path(dir, CONFIG_BACKUPS));
+    for index in (1..CONFIG_BACKUPS).rev() {
+        let from = config_backup_path(dir, index);
+        let to = config_backup_path(dir, index + 1);
+        if from.is_file() {
+            let _ = fs::rename(&from, &to);
+        }
+    }
+    let _ = fs::copy(&current, config_backup_path(dir, 1));
+}
+
+fn load_config_from_dir(dir: &Path) -> ConfigLoad {
+    let path = dir.join("config.json");
+    if !path.is_file() {
+        return ConfigLoad {
+            config: json!({}),
+            notice: None,
+            recovered_from: None,
+        };
+    }
+
+    match read_config_file(&path) {
+        Ok(config) => ConfigLoad {
+            config,
+            notice: None,
+            recovered_from: None,
+        },
+        Err(_) => {
+            // 坏文件先改名留证，再尝试最近三份备份
+            let corrupt_name = format!("config.json.corrupt-{}", corrupt_stamp());
+            let corrupt_path = dir.join(&corrupt_name);
+            let backed_up = fs::rename(&path, &corrupt_path).is_ok();
+
+            for index in 1..=CONFIG_BACKUPS {
+                let backup = config_backup_path(dir, index);
+                if let Ok(config) = read_config_file(&backup) {
+                    return ConfigLoad {
+                        config,
+                        notice: Some("上次的设置文件读不出来，已自动恢复到最近一次保存的设置".to_string()),
+                        recovered_from: Some(backup.display().to_string()),
+                    };
+                }
+            }
+
+            ConfigLoad {
+                config: json!({}),
+                notice: Some(if backed_up {
+                    format!(
+                        "上次的设置文件读不出来，已用默认设置重新开始，原文件已备份为 {corrupt_name}"
+                    )
+                } else {
+                    "上次的设置文件读不出来，已用默认设置重新开始".to_string()
+                }),
+                recovered_from: None,
+            }
+        }
+    }
+}
+
+fn save_config_to_dir(dir: &Path, config: &Value) -> Result<(), String> {
+    validate_config_value(config)?;
+    fs::create_dir_all(dir).map_err(|e| format!("无法创建配置目录 {}：{e}", dir.display()))?;
+    rotate_config_backups(dir);
+    let raw = serde_json::to_string_pretty(config)
+        .map_err(|e| format!("配置序列化失败：{e}"))?;
+    write_text_atomic(&dir.join("config.json"), &raw)
+}
+
+fn export_config_to(path: &Path, config: &Value) -> Result<(), String> {
+    validate_config_value(config)?;
+    let raw = serde_json::to_string_pretty(config)
+        .map_err(|e| format!("配置序列化失败：{e}"))?;
+    write_text_atomic(path, &raw)
+}
+
+fn import_config_from(path: &Path) -> Result<Value, String> {
+    read_config_file(path).map_err(|e| format!("导入失败：{e}"))
+}
+
 #[tauri::command]
-fn load_config(app: tauri::AppHandle) -> Result<Value, String> {
+fn load_config(app: tauri::AppHandle) -> Result<ConfigLoad, String> {
     let dir = app
         .path()
         .app_config_dir()
         .map_err(|e| format!("无法定位应用配置目录：{e}"))?;
     migrate_legacy_config(&dir);
-    let path = dir.join("config.json");
-    if !path.is_file() {
-        return Ok(Value::Object(Default::default()));
-    }
-    let raw = fs::read_to_string(&path)
-        .map_err(|e| format!("无法读取配置 {}：{e}", path.display()))?;
-    serde_json::from_str(&raw).map_err(|e| format!("配置文件格式错误：{e}"))
+    Ok(load_config_from_dir(&dir))
 }
 
 #[tauri::command]
@@ -543,11 +687,21 @@ fn save_config(app: tauri::AppHandle, config: Value) -> Result<(), String> {
         .path()
         .app_config_dir()
         .map_err(|e| format!("无法定位应用配置目录：{e}"))?;
-    fs::create_dir_all(&dir).map_err(|e| format!("无法创建配置目录 {}：{e}", dir.display()))?;
-    let path = dir.join("config.json");
-    let raw = serde_json::to_string_pretty(&config)
-        .map_err(|e| format!("配置序列化失败：{e}"))?;
-    fs::write(&path, raw).map_err(|e| format!("无法写入配置 {}：{e}", path.display()))
+    save_config_to_dir(&dir, &config)
+}
+
+/// 导出设置到用户选择的 JSON 文件，返回实际写入路径
+#[tauri::command]
+fn export_config(path: String, config: Value) -> Result<String, String> {
+    let dest = expand_home(&path);
+    export_config_to(&dest, &config)?;
+    Ok(dest.display().to_string())
+}
+
+/// 导入设置：只做读取与校验，非法文件直接拒绝，不触碰当前配置
+#[tauri::command]
+fn import_config(path: String) -> Result<Value, String> {
+    import_config_from(&expand_home(&path))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -561,8 +715,132 @@ pub fn run() {
             save_pdf_as,
             open_pdf,
             load_config,
-            save_config
+            save_config,
+            export_config,
+            import_config
         ])
         .run(tauri::generate_context!())
         .expect("QuizLab 启动失败");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_config_dir(name: &str) -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = env::temp_dir().join(format!(
+            "quizlab-config-{name}-{}-{nanos}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn export_change_import_restores_previous_settings() {
+        let dir = temp_config_dir("roundtrip");
+        let exported = json!({
+            "grade": "3A",
+            "level": "L2",
+            "types": ["kousuan", "tiankong"],
+            "counts": { "kousuan": 20, "tiankong": 10 }
+        });
+        let file = dir.join("settings.json");
+        export_config_to(&file, &exported).unwrap();
+
+        // 导出后把当前设置改掉
+        let changed = json!({ "grade": "3A", "level": "L3", "types": ["word"], "counts": { "word": 8 } });
+        save_config_to_dir(&dir, &changed).unwrap();
+        assert_eq!(read_config_file(&dir.join("config.json")).unwrap(), changed);
+
+        // 从导出文件导入，应回到导出时的设置
+        let restored = import_config_from(&file).unwrap();
+        assert_eq!(restored, exported);
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn import_rejects_invalid_files_without_touching_config() {
+        let dir = temp_config_dir("invalid-import");
+        let current = json!({ "grade": "3A", "level": "L2" });
+        save_config_to_dir(&dir, &current).unwrap();
+
+        let file = dir.join("bad.json");
+        for bad in ["{bad json", "", "[1, 2]", "null"] {
+            fs::write(&file, bad).unwrap();
+            assert!(import_config_from(&file).is_err(), "非法文件应被拒绝：{bad}");
+            // 当前配置保持原样
+            assert_eq!(
+                read_config_file(&dir.join("config.json")).unwrap(),
+                current,
+                "导入失败不得写入当前配置"
+            );
+        }
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn broken_config_falls_back_to_latest_backup() {
+        let dir = temp_config_dir("fallback");
+        let first = json!({ "level": "L1", "counts": { "kousuan": 10 } });
+        let second = json!({ "level": "L2", "counts": { "kousuan": 20 } });
+
+        save_config_to_dir(&dir, &first).unwrap();
+        save_config_to_dir(&dir, &second).unwrap();
+        assert!(config_backup_path(&dir, 1).is_file(), "第二次保存应留下 .bak.1");
+
+        // 主文件被同步工具截断
+        fs::write(dir.join("config.json"), "{\"level\":\"L2\",\"counts\":{\"kousuan\":2").unwrap();
+        let loaded = load_config_from_dir(&dir);
+        assert_eq!(loaded.config, first, "应回落到最近一份可用备份");
+        assert!(loaded.notice.is_some(), "回落时必须有提示");
+        assert!(loaded.recovered_from.is_some(), "应记录回落来源");
+        assert!(
+            fs::read_dir(&dir)
+                .unwrap()
+                .filter_map(|entry| entry.ok())
+                .any(|entry| entry.file_name().to_string_lossy().contains(".corrupt-")),
+            "损坏文件应改名留证"
+        );
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn empty_config_does_not_crash() {
+        let dir = temp_config_dir("empty");
+        fs::write(dir.join("config.json"), "").unwrap();
+        let loaded = load_config_from_dir(&dir);
+        assert_eq!(loaded.config, json!({}), "空设置按默认开始");
+        assert!(loaded.notice.is_some(), "空设置应提示");
+
+        // 空文件重新保存后应恢复正常
+        save_config_to_dir(&dir, &json!({ "level": "L2" })).unwrap();
+        let loaded = load_config_from_dir(&dir);
+        assert_eq!(loaded.config, json!({ "level": "L2" }));
+        assert!(loaded.notice.is_none());
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn backups_roll_and_keep_at_most_three() {
+        let dir = temp_config_dir("rotate");
+        for index in 0..=CONFIG_BACKUPS {
+            let value = json!({ "round": index });
+            save_config_to_dir(&dir, &value).unwrap();
+        }
+        assert!(config_backup_path(&dir, 1).is_file());
+        assert!(config_backup_path(&dir, 2).is_file());
+        assert!(config_backup_path(&dir, 3).is_file());
+        assert!(!config_backup_path(&dir, 4).exists(), "最多保留三份备份");
+
+        let _ = fs::remove_dir_all(&dir);
+    }
 }

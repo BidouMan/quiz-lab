@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { save } from '@tauri-apps/plugin-dialog'
+import { open, save } from '@tauri-apps/plugin-dialog'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { corruptTimestamp, memoryRecoveryNotice, MemoryStore, parseMemoryJson } from '../quiz/memory.ts'
 import { findUnit } from '../data/curriculum.ts'
 import {
   checkTypst,
   errorText,
+  exportConfig,
   generatePaper,
   getTemplateInfo,
+  importConfig,
   loadConfig,
   openPdf,
   saveConfig,
@@ -92,6 +94,8 @@ const actualPages = ref(0)
 const errorMessage = ref('')
 const notice = ref('')
 const memoryNotice = ref(loadedMemory.notice)
+/** 设置备份 / 导入导出的提示；与出卷提示分开，避免被下一次生成清掉 */
+const configNotice = ref('')
 const showLayoutDetail = ref(false)
 
 let seed = 0
@@ -242,19 +246,94 @@ function onPreviewLoaded(pages: number) {
   actualPages.value = pages
 }
 
+function normalizedConfig(): AppConfig {
+  return {
+    ...config,
+    types: config.types.filter((type) => typeVisibleInGrade(config.grade, type)),
+    counts: Object.fromEntries(
+      Object.entries(config.counts ?? {})
+        .filter(([type]) => typeVisibleInGrade(config.grade, type as AppType))
+        .map(([type, value]) => [type, clampTypeCount(value)]),
+    ),
+  }
+}
+
+/** 把读到的设置归一化后套用到当前配置；返回需要提示的迁移说明 */
+function applyStoredConfig(stored: Partial<AppConfig>): string {
+  // 范围锁定三上：旧配置里的三下年级/单元一律钳回三上 8 个包单元
+  const grade: AppConfig['grade'] = '3A'
+  const allowedUnits = new Set(panelUnits().map((unit) => unit.unitId))
+  // 旧配置里的 angle 题型已并入填空，选择它时迁移为 tiankong
+  const rawTypes: unknown[] = Array.isArray(stored.types) ? stored.types : []
+  const migratedTypes = rawTypes.flatMap((type) => (type === 'angle' ? ['tiankong'] : [type]))
+  const types: AppType[] = Array.from(
+    new Set(migratedTypes.filter(isAppType).filter((type) => typeVisibleInGrade(grade, type))),
+  )
+  const storedUnits = Array.isArray(stored.unitIds)
+    ? stored.unitIds.filter(
+        (id): id is string => typeof id === 'string' && allowedUnits.has(id) && findUnit(id)?.grade === grade,
+      )
+    : null
+  const level: AppConfig['level'] = stored.level === 'L1' || stored.level === 'L3' ? stored.level : 'L2'
+  const storedCounts =
+    stored.counts != null && typeof stored.counts === 'object' ? (stored.counts as Record<string, unknown>) : null
+  const migrated = migrateLegacyCounts(storedCounts)
+  const counts: AppConfig['counts'] =
+    migrated != null
+      ? { ...PRACTICE_DEFAULT_COUNTS, ...migrated }
+      : migrateCounts(typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count, types)
+  Object.assign(config, {
+    grade,
+    level,
+    unitIds: storedUnits && storedUnits.length > 0 ? storedUnits : defaultUnitIds(grade),
+    types: types.length > 0 ? types : PRACTICE_DEFAULT_TYPES.filter((type) => typeVisibleInGrade(grade, type)),
+    counts,
+    count: typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count,
+    pages: typeof stored.pages === 'number' ? stored.pages : DEFAULT_CONFIG.pages,
+    typstPath: typeof stored.typstPath === 'string' ? stored.typstPath : '',
+  })
+  return typeof storedCounts?.angle === 'number' && storedCounts.angle > 0
+    ? '「角与图形计数」已并入填空，原题量已累加到填空题'
+    : ''
+}
+
+async function exportSettings() {
+  try {
+    const dest = await save({
+      title: '导出设置',
+      defaultPath: 'QuizLab-设置.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    })
+    if (!dest) return
+    const saved = await exportConfig(dest, normalizedConfig())
+    configNotice.value = `设置已导出到：${saved}`
+  } catch (reason) {
+    configNotice.value = `设置导出失败：${errorText(reason)}`
+  }
+}
+
+async function importSettings() {
+  try {
+    const file = await open({
+      title: '导入设置',
+      multiple: false,
+      directory: false,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    })
+    if (!file || Array.isArray(file)) return
+    const imported = await importConfig(file)
+    const migration = applyStoredConfig(imported)
+    configNotice.value = migration ? `设置已导入并生效；${migration}` : '设置已导入并生效'
+  } catch (reason) {
+    configNotice.value = `设置导入失败：${errorText(reason)}。当前设置没有改动`
+  }
+}
+
 function scheduleSave() {
   if (!ready.value) return
   window.clearTimeout(saveTimer)
   saveTimer = window.setTimeout(() => {
-    void saveConfig({
-      ...config,
-      types: config.types.filter((type) => typeVisibleInGrade(config.grade, type)),
-      counts: Object.fromEntries(
-        Object.entries(config.counts ?? {})
-          .filter(([type]) => typeVisibleInGrade(config.grade, type as AppType))
-          .map(([type, value]) => [type, clampTypeCount(value)]),
-      ),
-    }).catch((reason) => {
+    void saveConfig(normalizedConfig()).catch((reason) => {
       errorMessage.value = errorText(reason)
     })
   }, 400)
@@ -264,43 +343,10 @@ watch(config, scheduleSave, { deep: true })
 
 onMounted(async () => {
   try {
-    const stored = await loadConfig()
-    // 范围锁定三上：旧配置里的三下年级/单元一律钳回三上 8 个包单元
-    const grade: AppConfig['grade'] = '3A'
-    const allowedUnits = new Set(panelUnits().map((unit) => unit.unitId))
-    // 旧配置里的 angle 题型已并入填空，选择它时迁移为 tiankong
-    const rawTypes: unknown[] = Array.isArray(stored.types) ? stored.types : []
-    const migratedTypes = rawTypes.flatMap((type) => (type === 'angle' ? ['tiankong'] : [type]))
-    const types: AppType[] = Array.from(
-      new Set(migratedTypes.filter(isAppType).filter((type) => typeVisibleInGrade(grade, type))),
-    )
-    const storedUnits = Array.isArray(stored.unitIds)
-      ? stored.unitIds.filter(
-          (id): id is string => typeof id === 'string' && allowedUnits.has(id) && findUnit(id)?.grade === grade,
-        )
-      : null
-    const level: AppConfig['level'] =
-      stored.level === 'L1' || stored.level === 'L3' ? stored.level : 'L2'
-    const storedCounts =
-      stored.counts != null && typeof stored.counts === 'object' ? (stored.counts as Record<string, unknown>) : null
-    const migrated = migrateLegacyCounts(storedCounts)
-    if (typeof storedCounts?.angle === 'number' && storedCounts.angle > 0) {
-      notice.value = '「角与图形计数」已并入填空，原题量已累加到填空题'
-    }
-    const counts: AppConfig['counts'] =
-      migrated != null
-        ? { ...PRACTICE_DEFAULT_COUNTS, ...migrated }
-        : migrateCounts(typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count, types)
-    Object.assign(config, {
-      grade,
-      level,
-      unitIds: storedUnits && storedUnits.length > 0 ? storedUnits : defaultUnitIds(grade),
-      types: types.length > 0 ? types : PRACTICE_DEFAULT_TYPES.filter((type) => typeVisibleInGrade(grade, type)),
-      counts,
-      count: typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count,
-      pages: typeof stored.pages === 'number' ? stored.pages : DEFAULT_CONFIG.pages,
-      typstPath: typeof stored.typstPath === 'string' ? stored.typstPath : '',
-    })
+    const loaded = await loadConfig()
+    const migration = applyStoredConfig(loaded.config)
+    if (loaded.notice) configNotice.value = loaded.notice
+    if (migration) notice.value = migration
   } catch (reason) {
     errorMessage.value = errorText(reason)
   }
@@ -317,17 +363,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.clearTimeout(saveTimer)
-  if (ready.value) {
-    void saveConfig({
-      ...config,
-      types: config.types.filter((type) => typeVisibleInGrade(config.grade, type)),
-      counts: Object.fromEntries(
-        Object.entries(config.counts ?? {})
-          .filter(([type]) => typeVisibleInGrade(config.grade, type as AppType))
-          .map(([type, value]) => [type, clampTypeCount(value)]),
-      ),
-    })
-  }
+  if (ready.value) void saveConfig(normalizedConfig())
 })
 </script>
 
@@ -346,6 +382,8 @@ onBeforeUnmount(() => {
         :checking="checking"
         :page-estimate="previewPages"
         @check-typst="runCheckTypst"
+        @export-config="exportSettings"
+        @import-config="importSettings"
       />
     </aside>
 
@@ -364,6 +402,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="memoryNotice" class="notice">{{ memoryNotice }}</div>
+      <div v-if="configNotice" class="notice">{{ configNotice }}</div>
       <div v-if="notice" class="notice">{{ notice }}</div>
       <div v-if="paperSummary" class="summary">{{ paperSummary }}</div>
       <div v-if="layoutSkippedNote" class="notice">{{ layoutSkippedNote }}</div>
