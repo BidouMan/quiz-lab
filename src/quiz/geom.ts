@@ -957,7 +957,7 @@ function makeCountRectangles(rng: Rng): GeomPiece {
   }
   const answer = ((m * (m + 1)) / 2) * ((n * (n + 1)) / 2)
   return {
-    text: '图中由已有线段围成的长方形一共有多少个？',
+    text: '图中由已有线段围成的长方形（正方形也算长方形）一共有多少个？',
     fig: renderSegmentScene({ segments }),
     blank: 8,
     answer: String(answer),
