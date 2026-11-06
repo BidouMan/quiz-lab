@@ -68,11 +68,12 @@
       .seg button { height: 32px; font-size: 13px; background: #fff; border: 0; border-right: 1px solid #e0e0e0; }
       .seg button:last-child { border-right: 0; }
       .seg button[aria-pressed='true'] { background: var(--ink); color: #fff; }
-      .help { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
+      .help { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--ink-3); white-space: nowrap; }
 
       .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
       .preset {
-        padding: 8px 6px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: left;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        min-height: 52px; padding: 8px 6px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: center;
       }
       .preset b { display: block; font-size: 13px; font-weight: 500; }
       .preset small { display: block; margin-top: 2px; font-size: 11px; color: var(--ink-3); }
@@ -171,9 +172,9 @@
       .warnline[hidden] { display: none; }
 
       .side-foot { flex: none; border-top: 1px solid var(--line); padding: 12px 20px 16px; background: #fff; }
-      .totals { display: flex; align-items: baseline; gap: 6px; font-size: 12px; color: var(--ink-2); margin-bottom: 4px; }
+      .totals { display: flex; align-items: baseline; justify-content: center; gap: 6px; font-size: 12px; color: var(--ink-2); margin-bottom: 4px; }
       .totals b { font-size: 20px; color: var(--ink); font-weight: 600; }
-      .totals span:last-child { margin-left: auto; color: var(--ink-3); }
+      .totals span:last-child { color: var(--ink-3); }
       .primary {
         width: 100%; height: 40px; border: 1px solid var(--ink); border-radius: 6px; background: var(--ink);
         color: #fff; font-size: 16px; font-weight: 500;
@@ -341,7 +342,7 @@
               <button data-level="L2">标准</button>
               <button data-level="L3">挑战</button>
             </div>
-            <p class="help" id="levelHelp">课本练习的难度，多数题要两步</p>
+            <p class="help" id="levelHelp">在基础之上增加变式题，适合查漏补缺</p>
 
             <div class="presets" id="presets"></div>
             <p class="preset-desc" id="presetDesc"></p>
@@ -358,7 +359,7 @@
           <p class="warnline" id="capacityHint" hidden></p>
           <div class="totals">
             <b id="total">28</b><span>题</span>
-            <span>· 约 <b id="pages">2</b> 页 · 约 <b id="minutes">20</b> 分钟</span>
+            <span>· 约 <b id="minutes">20</b> 分钟 · 约 <b id="pages">2</b> 页</span>
             <span id="scopeNote"></span>
           </div>
           <button class="primary" id="buildBtn">出卷</button>
@@ -515,9 +516,9 @@
         { id: 'weekend', name: '周末加练', desc: '周末加量，挑难一点的', level: 'L3', values: { kousuan: 30, chushi: 8, tuoshi: 6, tiankong: 8, word: 6 } },
       ]
       const LEVEL_HELP = {
-        L1: '对准课本例题，一步算完',
-        L2: '课本练习的难度，多数题要两步',
-        L3: '需要多绕一步，用来查漏',
+        L1: '覆盖课内核心知识点，适合日常随堂练习',
+        L2: '在基础之上增加变式题，适合查漏补缺',
+        L3: '综合性强、难度更高，适合学有余力的孩子',
       }
 
       const params = new URLSearchParams(location.search)
@@ -1181,6 +1182,8 @@
 
       // ---------------- 初始视图（供截图与演示） ----------------
       function applyInitialView() {
+        const initialLevel = params.get('level')
+        if (initialLevel && LEVEL_HELP[initialLevel]) state.level = initialLevel
         if (initialView === 'result') {
           state.built = true
           state.result = { count: total(), pages: roughPages(), minutes: minutes(), path: '文稿/数学练习/三上-每日一练-20261105.pdf', title: '全部单元 · 每日一练' }
