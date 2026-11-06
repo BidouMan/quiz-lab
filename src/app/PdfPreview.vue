@@ -164,6 +164,18 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="preview">
+    <div ref="stageEl" class="stage">
+      <div v-if="data && !error" class="sheet">
+        <canvas ref="canvasEl"></canvas>
+      </div>
+      <div v-if="!data" class="empty">尚未生成试卷</div>
+      <div v-if="loading" class="float">正在加载 PDF…</div>
+      <div v-if="error" class="error">
+        <p class="error-title">预览失败</p>
+        <pre>{{ error }}</pre>
+      </div>
+    </div>
+
     <div class="bar">
       <button class="tool" :disabled="!hasDoc || pageNo <= 1" @click="goToPage(pageNo - 1)">
         上一页
@@ -188,18 +200,6 @@ onBeforeUnmount(() => {
         适应宽度
       </button>
     </div>
-
-    <div ref="stageEl" class="stage">
-      <div v-if="data && !error" class="sheet">
-        <canvas ref="canvasEl"></canvas>
-      </div>
-      <div v-if="!data" class="empty">尚未生成试卷</div>
-      <div v-if="loading" class="float">正在加载 PDF…</div>
-      <div v-if="error" class="error">
-        <p class="error-title">预览失败</p>
-        <pre>{{ error }}</pre>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -209,6 +209,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 .bar {
   flex: none;
@@ -218,7 +219,7 @@ onBeforeUnmount(() => {
   height: 44px;
   padding: 0 16px;
   background: #fafafa;
-  border-bottom: 1px solid #dcdcdc;
+  border-top: 1px solid #dcdcdc;
   font-size: 12px;
   color: #333;
 }

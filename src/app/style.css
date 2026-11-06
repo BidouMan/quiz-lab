@@ -25,6 +25,12 @@ select {
   font-family: inherit;
 }
 
+/* 所有按钮与标签不折行、不被压缩，宽度由内容决定 */
+button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 ::selection {
   background: #d8d8d8;
 }

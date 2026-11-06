@@ -1,563 +1,784 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { Level } from '../quiz/types.ts'
+import { computed, ref } from 'vue'
+import { panelUnits, typeAvailability } from './paperBuilder'
+import { LEVEL_HELP, LEVEL_LABELS, PRESETS, estimateMinutes, matchesPreset, presetTotal, type PaperLevel, type Preset } from './presets'
+import { TYPE_ORDER, typeLabel } from './typstData'
 import {
-  panelUnits,
-  typeAvailability,
-  typeVisibleInGrade,
-} from './paperBuilder'
-import { MAX_TYPE_COUNT, type AppConfig, type AppType, type TemplateInfo, type TypstInfo } from './types'
-import { PARENT_SOURCE_LABELS, readableAvailabilityReason } from './wording'
-import { TYPE_OPTIONS } from './typstData'
-import {
-  CAPACITY_PROBE_MIN_COUNT,
-  estimateTypeCapacity,
-  type TypeCapacityResult,
-  typeCapacityHint,
-} from './typeCapacity'
+  clampTypeCount,
+  PRACTICE_DEFAULT_COUNTS,
+  type AppConfig,
+  type AppType,
+  type TemplateInfo,
+} from './types'
+import { readableAvailabilityReason } from './wording'
 
 const props = defineProps<{
   config: AppConfig
   template: TemplateInfo | null
-  typst: TypstInfo | null
-  typstError: string
-  checking: boolean
-  /** 排版回填的实际页数；未排版时为空，界面用总数粗估 */
-  pageEstimate?: number
+  pageEstimate: number
 }>()
 
-const emit = defineEmits<{ checkTypst: []; exportConfig: []; importConfig: [] }>()
+const emit = defineEmits<{
+  generate: []
+  touch: []
+}>()
 
-const LEVELS: { level: Level; label: string; hint: string }[] = [
-  { level: 'L1', label: 'L1', hint: '基础' },
-  { level: 'L2', label: 'L2', hint: '常规' },
-  { level: 'L3', label: 'L3', hint: '易错' },
+const GROUPS: { name: string; types: AppType[] }[] = [
+  { name: '计算题', types: ['kousuan', 'chushi', 'tuoshi', 'jianbian'] },
+  { name: '填一填、选一选', types: ['tiankong', 'compare', 'judge', 'choice'] },
+  { name: '综合应用', types: ['geom', 'lieshi', 'word', 'advanced'] },
 ]
 
-const units = computed(() => panelUnits())
+const units = panelUnits()
+const selectedIds = computed(() => new Set(props.config.unitIds))
+
+/** 折叠状态只在本次运行内保留：重启后回到默认展开，避免把设置藏起来 */
+const sectionOpen = ref({ units: true, types: true })
+
+function toggleSection(key: 'units' | 'types') {
+  sectionOpen.value = { ...sectionOpen.value, [key]: !sectionOpen.value[key] }
+}
+
 const availability = computed(() => typeAvailability(props.config, props.template))
-const visibleOptions = computed(() =>
-  TYPE_OPTIONS.filter((option) => typeVisibleInGrade(props.config.grade, option.type)),
+const activePreset = computed(() =>
+  matchesPreset(props.config.level as PaperLevel, props.config.types, props.config.counts ?? {}),
 )
-const allSelected = computed(() => props.config.unitIds.length === units.value.length)
+const fromPreset = ref<Preset | null>(null)
 
-/** 已勾选且当前单元确实能出的题型 */
-const activeTypes = computed(() =>
-  visibleOptions.value
-    .map((option) => option.type)
-    .filter((type) => props.config.types.includes(type) && availability.value[type].enabled),
+const selectedTypes = computed(() =>
+  GROUPS.flatMap((group) => group.types)
+    .filter((type) => props.config.types.includes(type) && (props.config.counts?.[type] ?? 0) > 0)
+    .map((type) => ({
+      type,
+      label: typeLabel(type),
+      count: props.config.counts?.[type] ?? 0,
+      available: availability.value[type]?.enabled ?? false,
+      reason: readableAvailabilityReason(availability.value[type]?.reason ?? ''),
+    })),
 )
-const totalCount = computed(() => activeTypes.value.reduce((sum, type) => sum + countFor(type), 0))
-/** 出卷前按题型数量粗估页数（仅用于界面提示，排版后一律以实际页数为准） */
-const PAGE_COST: Record<AppType, number> = {
-  kousuan: 0.02,
-  chushi: 0.06,
-  tuoshi: 0.06,
-  jianbian: 0.06,
-  tiankong: 0.06,
-  compare: 0.06,
-  geom: 0.2,
-  word: 0.08,
-  judge: 0.06,
-  choice: 0.08,
-  lieshi: 0.12,
-  advanced: 0.2,
-}
-const roughPages = computed(() => {
-  if (activeTypes.value.length === 0) return 0
-  const pages = activeTypes.value.reduce((sum, type) => sum + countFor(type) * (PAGE_COST[type] ?? 0.06), 0)
-  return Math.max(1, Math.round(pages + activeTypes.value.length * 0.5))
-})
-const estimatedPages = computed(() => {
-  const actual = props.pageEstimate ?? 0
-  return actual > 0 ? actual : roughPages.value
+
+const total = computed(() =>
+  TYPE_ORDER.reduce(
+    (sum, type) => sum + (props.config.types.includes(type) ? (props.config.counts?.[type] ?? 0) : 0),
+    0,
+  ),
+)
+
+const minutes = computed(() => estimateMinutes(props.config.counts ?? {}))
+
+const pages = computed(() => {
+  if (props.pageEstimate > 0) return props.pageEstimate
+  return Math.max(1, Math.round(total.value / 12))
 })
 
-const SOURCE_LABELS = PARENT_SOURCE_LABELS
+const activeDesc = computed(() => activePreset.value?.desc ?? '按自己的需要搭配题型')
+const customLabel = computed(() => `自定义 · ${total.value} 题`)
 
-function sourceLabel(type: AppType): string {
-  const source = availability.value[type].source
-  return source ? SOURCE_LABELS[source] ?? '' : ''
+function defaultCount(type: AppType): number {
+  return PRACTICE_DEFAULT_COUNTS[type] || 4
 }
 
-function countFor(type: AppType): number {
-  return Math.max(0, Math.round(Number(props.config.counts?.[type] ?? 0)) || 0)
+/** 弹层里显示的题量：已勾选显示当前题量，未勾选显示默认题量 */
+function itemCount(type: AppType): number {
+  return draft.value.has(type) ? (props.config.counts?.[type] ?? defaultCount(type)) : defaultCount(type)
 }
 
-const countNotice = ref('')
-const optionLabels = new Map(TYPE_OPTIONS.map((option) => [option.type, option.label]))
-
-/** 单题型可用量提示：只对题量较大的已选题型做采样，避免面板启动变慢 */
-const capacity = ref<Partial<Record<AppType, TypeCapacityResult>>>({})
-let capacityTimer = 0
-
-function scheduleCapacity() {
-  window.clearTimeout(capacityTimer)
-  capacityTimer = window.setTimeout(() => {
-    const next: Partial<Record<AppType, TypeCapacityResult>> = {}
-    if (props.config.unitIds.length === 0) {
-      capacity.value = next
-      return
-    }
-    for (const type of activeTypes.value) {
-      if (countFor(type) <= CAPACITY_PROBE_MIN_COUNT) continue
-      next[type] = estimateTypeCapacity(props.config, type)
-    }
-    capacity.value = next
-  }, 350)
-}
-
-function capacityMessage(type: AppType): string {
-  if (!props.config.types.includes(type) || !availability.value[type].enabled) return ''
-  const result = capacity.value[type]
-  if (!result) return ''
-  const text = typeCapacityHint(result, countFor(type))
-  return text ? `${optionLabels.get(type) ?? '这类题'}：${text}` : ''
-}
-
-function setCount(type: AppType, raw: string) {
-  const value = Number(raw)
-  const rounded = Number.isFinite(value) ? Math.round(value) : 0
-  const next = Math.min(MAX_TYPE_COUNT, Math.max(0, rounded))
-  countNotice.value =
-    rounded > MAX_TYPE_COUNT
-      ? `${optionLabels.get(type) ?? '这类题'}最多 ${MAX_TYPE_COUNT} 题，已从 ${rounded} 调整为 ${MAX_TYPE_COUNT} 题。`
-      : ''
-  props.config.counts = { ...(props.config.counts ?? {}), [type]: next }
-}
-
-function toggleType(type: AppType, checked: boolean) {
-  const list = props.config.types
-  const index = list.indexOf(type)
-  if (checked && index < 0) list.push(type)
-  if (!checked && index >= 0) list.splice(index, 1)
-}
-
-function setLevel(level: Level) {
-  props.config.level = level
-}
-
-function toggleUnit(unitId: string, checked: boolean) {
-  const list = props.config.unitIds
+function toggleUnit(unitId: string) {
+  const list = props.config.unitIds.slice()
   const index = list.indexOf(unitId)
-  if (checked && index < 0) list.push(unitId)
-  if (!checked && index >= 0) list.splice(index, 1)
+  if (index >= 0) list.splice(index, 1)
+  else list.push(unitId)
+  props.config.unitIds = list
+  emit('touch')
 }
 
-function toggleAll(checked: boolean) {
-  props.config.unitIds = checked ? units.value.map((unit) => unit.unitId) : []
+function setLevel(level: PaperLevel) {
+  props.config.level = level
+  emit('touch')
 }
 
-watch(
-  () => [
-    props.config.grade,
-    props.config.level,
-    props.config.unitIds.join(','),
-    props.config.types.join(','),
-    Object.entries(props.config.counts ?? {})
-      .map(([type, value]) => `${type}:${value}`)
-      .join(','),
-  ],
-  scheduleCapacity,
+function applyPreset(preset: Preset) {
+  props.config.level = preset.level
+  props.config.types = Object.keys(preset.values) as AppType[]
+  props.config.counts = { ...preset.values }
+  props.config.count = presetTotal(preset)
+  fromPreset.value = preset
+  emit('touch')
+}
+
+function restorePreset() {
+  if (!fromPreset.value) return
+  applyPreset(fromPreset.value)
+}
+
+function changeCount(type: AppType, delta: number) {
+  const current = props.config.counts?.[type] ?? 0
+  // 题量下限为 1：移除题型只能回到弹层取消勾选，减号不能把行减没
+  const next = Math.max(1, clampTypeCount(current + delta))
+  props.config.counts = { ...(props.config.counts ?? {}), [type]: next }
+  props.config.count = TYPE_ORDER.reduce((sum, item) => sum + (props.config.counts?.[item] ?? 0), 0)
+  emit('touch')
+}
+
+const panelOpen = ref(false)
+const draft = ref<Set<AppType>>(new Set())
+const groupOpen = ref<Record<string, boolean>>(
+  Object.fromEntries(GROUPS.map((group) => [group.name, true])),
 )
 
-onMounted(scheduleCapacity)
-onBeforeUnmount(() => window.clearTimeout(capacityTimer))
+function openAdd() {
+  draft.value = new Set(
+    (Object.keys(props.config.counts ?? {}) as AppType[]).filter(
+      (type) => (props.config.counts?.[type] ?? 0) > 0,
+    ),
+  )
+  groupOpen.value = Object.fromEntries(GROUPS.map((group) => [group.name, true]))
+  panelOpen.value = true
+}
+
+function closeAdd(commit: boolean) {
+  if (commit) {
+    const types = GROUPS.flatMap((group) => group.types).filter((type) => draft.value.has(type))
+    const counts = { ...(props.config.counts ?? {}) }
+    for (const type of TYPE_ORDER) {
+      if (draft.value.has(type)) {
+        if ((counts[type] ?? 0) <= 0) counts[type] = defaultCount(type)
+      } else {
+        counts[type] = 0
+      }
+    }
+    props.config.types = types
+    props.config.counts = counts
+    props.config.count = TYPE_ORDER.reduce((sum, type) => sum + (counts[type] ?? 0), 0)
+    emit('touch')
+  }
+  panelOpen.value = false
+}
+
+function toggleDraft(type: AppType) {
+  if (!availability.value[type]?.enabled) return
+  const next = new Set(draft.value)
+  if (next.has(type)) next.delete(type)
+  else next.add(type)
+  draft.value = next
+}
 </script>
 
 <template>
-  <div class="panel">
-    <section class="group">
-      <h2>年级</h2>
-      <label class="row">
-        <input type="radio" name="grade" checked disabled />
-        <span>三年级上册（成品范围）</span>
-      </label>
-      <p class="hint">三下及后续年级已暂停，本轮只做三上成品。</p>
-    </section>
-
-    <section class="group">
-      <h2>
-        单元
-        <button class="link" type="button" @click="toggleAll(!allSelected)">
-          {{ allSelected ? '清空' : '全选' }}
-        </button>
-      </h2>
-      <label v-for="unit in units" :key="unit.unitId" class="row unit">
-        <input
-          type="checkbox"
-          :checked="config.unitIds.includes(unit.unitId)"
-          @change="toggleUnit(unit.unitId, ($event.target as HTMLInputElement).checked)"
-        />
-        <span>{{ unit.unitName }}</span>
-        <em v-if="unit.unconfirmed" class="tag">推定</em>
-      </label>
-      <p v-if="config.unitIds.length === 0" class="hint">至少选择一个单元才能出题。</p>
-      <p v-else class="hint">只列三上能出题的 {{ units.length }} 个单元。</p>
-    </section>
-
-    <section class="group">
-      <h2>难度</h2>
-      <div class="levels">
-        <label v-for="item in LEVELS" :key="item.level" class="level">
-          <input
-            type="radio"
-            name="level"
-            :checked="config.level === item.level"
-            @change="setLevel(item.level)"
-          />
-          <span>{{ item.label }}</span>
-          <em>{{ item.hint }}</em>
-        </label>
-      </div>
-      <p class="hint">
-        计算类：L1 基础、L2 常规进位退位、L3 连续进位/末尾有 0/带括号三步。填空与应用题：L1 直接套用、L2 换算或两步、L3 反向求/多步判断。拓展题：L1=T1 拓展、L2=T2 提高、L3=T3 挑战。
-      </p>
-    </section>
-
-    <section class="group">
-      <h2>题型与题量</h2>
-      <template v-for="option in visibleOptions" :key="option.type">
-        <label class="row type-row">
-          <input
-            type="checkbox"
-            :checked="config.types.includes(option.type) && availability[option.type].enabled"
-            :disabled="!availability[option.type].enabled"
-            @change="toggleType(option.type, ($event.target as HTMLInputElement).checked)"
-          />
-          <span :class="{ muted: !availability[option.type].enabled }">{{ option.label }}</span>
-          <input
-            type="number"
-            class="count"
-            min="0"
-            :max="MAX_TYPE_COUNT"
-            step="1"
-            :value="countFor(option.type)"
-            :disabled="!config.types.includes(option.type) || !availability[option.type].enabled"
-            @input="setCount(option.type, ($event.target as HTMLInputElement).value)"
-          />
-          <em
-            v-if="sourceLabel(option.type)"
-            class="src"
-            :class="availability[option.type].source"
+  <div class="params">
+    <div class="params-scroll">
+      <section>
+        <h2 :class="{ 'head-collapsed': !sectionOpen.units }">
+          <button
+            class="sec-toggle"
+            :aria-expanded="sectionOpen.units"
+            aria-controls="unit-body"
+            @click="toggleSection('units')"
           >
-            {{ sourceLabel(option.type) }}
-          </em>
-        </label>
-        <p
-          v-if="availability[option.type].reason"
-          class="type-reason"
-          :class="{ off: !availability[option.type].enabled }"
-        >
-          {{ readableAvailabilityReason(availability[option.type].reason) }}
-        </p>
-        <p v-if="capacityMessage(option.type)" class="type-reason warn">
-          {{ capacityMessage(option.type) }}
-        </p>
-        <p v-if="option.type === 'geom' && availability[option.type].enabled" class="hint">
-          图形建议 30–50 题（约 5–9 页），单题型上限 {{ MAX_TYPE_COUNT }} 题。
-        </p>
-        <p v-if="option.type === 'advanced' && availability[option.type].enabled" class="hint">
-          拓展题建议 3–5 题（每题留 3–4 行空白写思路），单题型上限 {{ MAX_TYPE_COUNT }} 题。
-        </p>
-      </template>
-      <p v-if="countNotice" class="type-reason warn">{{ countNotice }}</p>
-      <p class="hint">勾选后填写题量；0 或留空表示不出该题型，单题型上限 {{ MAX_TYPE_COUNT }} 题。</p>
-    </section>
+            <span>单元选择</span>
+            <svg class="caret" :class="{ collapsed: !sectionOpen.units }" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M2.5 4.5 6 8 9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </button>
+        </h2>
+        <div v-show="sectionOpen.units" id="unit-body" class="unit-grid">
+          <button
+            v-for="unit in units"
+            :key="unit.unitId"
+            class="unit"
+            :aria-pressed="selectedIds.has(unit.unitId)"
+            @click="toggleUnit(unit.unitId)"
+          >
+            {{ unit.unitName }}
+          </button>
+        </div>
+      </section>
 
-    <section class="group">
-      <h2>数量与版面</h2>
-      <div class="row field readonly">
-        <span>总题数</span>
-        <strong>{{ totalCount }}</strong>
-        <em>按题型题量自动汇总</em>
-      </div>
-      <div class="row field readonly">
-        <span>预计页数</span>
-        <strong>{{ estimatedPages }}</strong>
-        <em>{{ (pageEstimate ?? 0) > 0 ? '已按排版结果回填' : '粗估，出卷后回填' }}</em>
-      </div>
-    </section>
+      <section>
+        <h2 :class="{ 'head-collapsed': !sectionOpen.types }">
+          <button
+            class="sec-toggle"
+            :aria-expanded="sectionOpen.types"
+            aria-controls="type-body"
+            @click="toggleSection('types')"
+          >
+            <span>题型设置</span>
+            <svg class="caret" :class="{ collapsed: !sectionOpen.types }" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M2.5 4.5 6 8 9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </button>
+        </h2>
+        <div v-show="sectionOpen.types" id="type-body">
+          <div class="seg">
+          <button
+            v-for="level in (['L1', 'L2', 'L3'] as PaperLevel[])"
+            :key="level"
+            :aria-pressed="config.level === level"
+            @click="setLevel(level)"
+          >
+            {{ LEVEL_LABELS[level] }}
+          </button>
+        </div>
+        <p class="hint">{{ LEVEL_HELP[config.level as PaperLevel] }}</p>
 
-    <section class="group">
-      <h2>排版引擎</h2>
-      <label class="stack">
-        <span class="label">typst 路径</span>
-        <input
-          type="text"
-          class="text"
-          :value="config.typstPath"
-          placeholder="留空自动探测 /opt/homebrew/bin/typst"
-          @input="config.typstPath = ($event.target as HTMLInputElement).value"
-        />
-      </label>
-      <div class="engine-row">
-        <button class="small" :disabled="checking" @click="emit('checkTypst')">
-          {{ checking ? '检测中…' : '检测' }}
-        </button>
-        <span v-if="typst" class="engine-ok">{{ typst.version }}</span>
-        <span v-else-if="typstError" class="engine-bad">未找到</span>
-      </div>
-      <p v-if="typstError" class="engine-error">{{ typstError }}</p>
-      <p v-else-if="typst" class="engine-path">{{ typst.path }}</p>
-    </section>
+        <div class="presets">
+          <button
+            v-for="preset in PRESETS"
+            :key="preset.id"
+            class="preset"
+            :aria-pressed="activePreset?.id === preset.id"
+            @click="applyPreset(preset)"
+          >
+            <b>{{ preset.name }}</b>
+            <span>{{ presetTotal(preset) }} 题</span>
+          </button>
+        </div>
+        <p class="preset-desc">{{ activeDesc }}</p>
+        <div v-if="!activePreset" class="custom-line">
+          <span>{{ customLabel }}</span>
+          <template v-if="fromPreset">
+            <span class="sep">·</span>
+            <span>改自{{ fromPreset.name }}</span>
+            <span class="sep">·</span>
+            <button class="text-btn" @click="restorePreset">恢复默认</button>
+          </template>
+        </div>
 
-    <section class="group">
-      <h2>设置备份</h2>
-      <p class="hint">设置会自动留三份备份，读不出来时自动换回最近一份；换电脑时可导出成文件，之后再导入。</p>
-      <div class="engine-row">
-        <button class="small" @click="emit('exportConfig')">导出设置</button>
-        <button class="small" @click="emit('importConfig')">导入设置</button>
-      </div>
-    </section>
+        <div v-if="selectedTypes.length > 0" class="type-list">
+          <div v-for="row in selectedTypes" :key="row.type" class="type-row">
+            <div class="type-line">
+              <span class="type-name">{{ row.label }}</span>
+              <div class="stepper">
+                <button :aria-label="`减少${row.label}题量`" :disabled="row.count <= 1" @click="changeCount(row.type, -1)">−</button>
+                <b>{{ row.count }}</b>
+                <button :aria-label="`增加${row.label}题量`" @click="changeCount(row.type, 1)">+</button>
+              </div>
+            </div>
+            <p v-if="!row.available" class="type-warn">{{ row.reason || '当前条件下出不了这类题' }}</p>
+          </div>
+        </div>
+        <p v-else class="empty-types">还没有选题型，先添加一项。</p>
 
-    <p class="footnote">参数会自动保存，下次启动仍然生效。</p>
+        <button class="add-main" @click="openAdd">＋ 添加题型</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">
+      <div class="summary">{{ total }} 题 · {{ minutes }} 分钟 · {{ pages }} 页</div>
+      <button class="generate" :disabled="total === 0" @click="emit('generate')">生成练习卷</button>
+    </div>
+
+    <Teleport to="body">
+      <div v-if="panelOpen" class="add-mask" @click.self="closeAdd(false)">
+        <div class="add-modal" role="dialog" aria-modal="true" aria-label="添加题型">
+          <div class="add-head">
+            <h2>添加题型</h2>
+            <button class="x" aria-label="关闭" @click="closeAdd(false)">×</button>
+          </div>
+          <div class="add-body">
+            <div v-for="group in GROUPS" :key="group.name" class="group">
+              <button class="group-head" @click="groupOpen[group.name] = !groupOpen[group.name]">
+                <span class="caret" :class="{ collapsed: !groupOpen[group.name] }">▾</span>
+                <h3>{{ group.name }}</h3>
+              </button>
+              <div v-show="groupOpen[group.name]" class="group-items">
+                <div
+                  v-for="type in group.types"
+                  :key="type"
+                  class="add-item"
+                  :class="{ disabled: !availability[type]?.enabled, on: draft.has(type) }"
+                  role="checkbox"
+                  :aria-checked="draft.has(type)"
+                  :aria-disabled="!availability[type]?.enabled"
+                  @click="toggleDraft(type)"
+                >
+                  <span class="check" :class="{ on: draft.has(type) }" />
+                  <span class="add-meta">
+                    <b>{{ typeLabel(type) }}</b>
+                  </span>
+                  <span v-if="!availability[type]?.enabled" class="reason">
+                    {{ readableAvailabilityReason(availability[type]?.reason ?? '') }}
+                  </span>
+                  <span v-else class="def">{{ itemCount(type) }} 题</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="add-foot">
+            <span>已选 {{ draft.size }} 项</span>
+            <span class="spacer" />
+            <button class="secondary" @click="closeAdd(false)">取消</button>
+            <button class="primary" @click="closeAdd(true)">完成</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
-.panel {
-  padding: 14px 16px 24px;
-  font-size: 14px;
-  color: #222;
+.params {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
-.group {
-  margin-bottom: 20px;
+.params-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px 8px;
+}
+section {
+  flex: none;
+}
+section + section {
+  margin-top: 28px;
 }
 h2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #000;
-  border-bottom: 1px solid #dcdcdc;
-  padding-bottom: 6px;
-}
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  cursor: pointer;
-}
-.row.unit span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-input[type='checkbox'],
-input[type='radio'] {
-  width: 15px;
-  height: 15px;
-  margin: 0;
-  accent-color: #000;
-}
-input:disabled {
-  cursor: not-allowed;
-}
-.muted {
-  color: #999;
-}
-.tag {
-  flex: none;
-  margin-left: auto;
-  font-size: 11px;
-  font-style: normal;
-  color: #888;
-  white-space: nowrap;
-}
-.type-reason {
-  margin: 0 0 6px 23px;
-  font-size: 11px;
-  line-height: 1.5;
-  color: #666;
-}
-.src {
-  margin-left: auto;
-  font-size: 10px;
-  font-style: normal;
-  padding: 1px 5px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  color: #555;
-  white-space: nowrap;
-}
-.src.skeleton {
-  border-color: #4a7a4a;
-  color: #2f5f2f;
-}
-.src.rule {
-  border-color: #4a6f8a;
-  color: #2f4f6a;
-}
-.src.legacy {
-  border-color: #b08230;
-  color: #7a5410;
-}
-.src.static {
-  border-color: #999;
-  color: #555;
-}
-.src.na {
-  border-color: #9a5a5a;
-  color: #8a3a3a;
-}
-.type-reason.off {
-  color: #8a4b00;
-}
-.type-reason.warn {
-  color: #8a3a3a;
-}
-.levels {
-  display: flex;
-  gap: 8px;
-}
-.level {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px 4px 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 13px;
-}
-.level em {
-  font-style: normal;
-  font-size: 11px;
-  color: #888;
-}
-.field {
-  justify-content: space-between;
-  cursor: default;
-}
-.field.readonly strong {
+  margin: 0 0 10px;
   font-size: 14px;
+  font-weight: 700;
+  color: #111;
 }
-.field.readonly em {
-  font-size: 11px;
-  font-style: normal;
-  color: #888;
+h2.head-collapsed {
+  margin-bottom: 0;
 }
-.type-row .count {
-  width: 58px;
-  margin-left: auto;
-  font: inherit;
-  font-size: 12px;
-  text-align: right;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-  padding: 2px 6px;
-  background: #fff;
-}
-.type-row .count:disabled {
-  background: #f4f4f4;
-  color: #aaa;
-}
-.field input[type='number'] {
-  width: 72px;
-  font: inherit;
-  font-size: 13px;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-  padding: 3px 6px;
-  background: #fff;
-}
-.hint {
-  margin: 6px 0 0;
-  font-size: 11px;
-  line-height: 1.6;
-  color: #888;
-}
-.link {
-  font: inherit;
-  font-size: 11px;
-  font-weight: 400;
+.sec-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
   border: none;
   background: none;
-  color: #777;
-  cursor: pointer;
-  padding: 0;
-}
-.link:hover {
-  color: #000;
-}
-.stack {
-  display: block;
-  margin-bottom: 8px;
-}
-.label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: #555;
-}
-.text {
-  width: 100%;
   font: inherit;
-  font-size: 12px;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-  padding: 5px 7px;
-  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  cursor: pointer;
+  text-align: left;
 }
-.engine-row {
-  display: flex;
-  align-items: center;
+.sec-toggle .caret {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: #555;
+  transform-origin: 50% 50%;
+  transition: transform 0.15s ease;
+}
+.sec-toggle:hover .caret {
+  color: #111;
+}
+.text-btn {
+  font: inherit;
+  font-size: 11px;
+  color: #777;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.text-btn:hover {
+  color: #111;
+}
+.unit-grid {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
-.small {
+.unit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font: inherit;
+  font-size: 13px;
+  width: 100%;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.unit[aria-pressed='true'] {
+  background: #fff;
+  border-color: #111;
+  border-radius: 8px;
+  color: #111;
+  font-weight: 600;
+}
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.seg button {
+  font: inherit;
+  font-size: 13px;
+  height: 32px;
+  border: none;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.seg button + button {
+  border-left: 1px solid #ccc;
+}
+.seg button[aria-pressed='true'] {
+  background: #111;
+  color: #fff;
+}
+.hint {
+  margin: 8px 0 0;
   font-size: 12px;
-  padding: 4px 12px;
-  border: 1px solid #999;
+  line-height: 1.5;
+  color: #666;
+  white-space: nowrap;
+}
+.presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.preset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 6px 4px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+.preset b {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.preset span {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #777;
+  white-space: nowrap;
+}
+.preset[aria-pressed='true'] {
+  border-color: #111;
+}
+.preset-desc {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: #777;
+  white-space: nowrap;
+}
+.custom-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #555;
+  white-space: nowrap;
+}
+.custom-line .sep {
+  color: #aaa;
+}
+.type-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.type-row {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.type-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.type-name {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.stepper button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #ddd;
   border-radius: 4px;
   background: #fff;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
   color: #111;
   cursor: pointer;
 }
-.small:hover:not(:disabled) {
-  background: #f0f0f0;
-}
-.small:disabled {
-  color: #999;
-  border-color: #ccc;
+.stepper button:disabled {
+  color: #bbb;
+  border-color: #eee;
   cursor: default;
 }
-.engine-ok {
-  font-size: 11px;
-  color: #333;
+.stepper b {
+  min-width: 28px;
+  text-align: center;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
-.engine-bad {
+.type-warn {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #a15c00;
+  white-space: normal;
+}
+.empty-types {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #888;
+}
+.add-main {
+  width: 100%;
+  height: 32px;
+  margin-top: 10px;
+  border: 1px dashed #bbb;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.add-main:hover {
+  border-color: #111;
+}
+.foot {
+  flex: none;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #e3e3e3;
+  background: #fff;
+}
+.summary {
+  text-align: center;
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
+}
+.generate {
+  width: 100%;
+  height: 36px;
+  margin-top: 8px;
+  border: 1px solid #111;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.generate:disabled {
+  background: #aaa;
+  border-color: #aaa;
+  cursor: default;
+}
+.add-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 16px;
+}
+.add-modal {
+  display: flex;
+  flex-direction: column;
+  width: 520px;
+  max-height: calc(100vh - 64px);
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+.add-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eee;
+}
+.add-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.add-head .x {
+  border: none;
+  background: none;
+  font-size: 18px;
+  color: #888;
+  cursor: pointer;
+}
+.add-body {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 16px 12px;
+}
+.group {
+  margin-top: 8px;
+}
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 2px;
+  border: none;
+  border-bottom: 1px solid #eee;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.group-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+}
+.caret {
   font-size: 11px;
   color: #777;
 }
-.engine-error {
-  margin: 6px 0 0;
-  font-size: 11px;
-  line-height: 1.6;
-  color: #333;
-  white-space: pre-wrap;
-  background: #f4f4f4;
-  border-left: 2px solid #666;
-  padding: 6px 8px;
-  max-height: 110px;
-  overflow: auto;
+.caret.collapsed {
+  transform: rotate(-90deg);
 }
-.engine-path {
-  margin: 6px 0 0;
-  font-size: 10px;
-  line-height: 1.5;
+.group-items {
+  padding: 4px 0;
+}
+.add-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.add-item:hover {
+  background: #f7f7f7;
+}
+.add-item.disabled {
+  cursor: default;
   color: #999;
-  word-break: break-all;
 }
-.footnote {
-  margin: 8px 0 0;
+.add-item.disabled:hover {
+  background: none;
+}
+.check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+.check.on {
+  background: #111;
+  border-color: #111;
+  position: relative;
+}
+.check.on::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.add-meta {
+  flex: 1;
+  min-width: 0;
+}
+.add-meta b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.reason {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
   font-size: 11px;
-  color: #aaa;
+  color: #a15c00;
+  white-space: normal;
+  line-height: 1.4;
+}
+.add-item.disabled .reason {
+  color: #a15c00;
+}
+.def {
+  flex: none;
+  margin-left: auto;
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+.add-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid #eee;
+  font-size: 12px;
+  color: #555;
+}
+.add-foot .spacer {
+  flex: 1;
+}
+.secondary,
+.primary {
+  font: inherit;
+  font-size: 13px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.secondary {
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #111;
+}
+.primary {
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
 }
 </style>
