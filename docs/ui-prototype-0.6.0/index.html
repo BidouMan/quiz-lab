@@ -56,8 +56,6 @@
       .block h2 .more { margin-left: auto; border: none; background: none; color: var(--ink-2); font-size: 12px; padding: 0; }
       .block h2 .more:hover { color: var(--ink); text-decoration: underline; }
 
-      .range-line { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--ink-2); margin-bottom: 8px; }
-      .range-line b { color: var(--ink); font-weight: 500; }
       .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
       .chip {
         height: 32px; padding: 0 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 6px;
@@ -78,6 +76,12 @@
       }
       .preset b { display: block; font-size: 13px; font-weight: 500; }
       .preset small { display: block; margin-top: 2px; font-size: 11px; color: var(--ink-3); }
+      .group-head {
+        display: flex; align-items: center; gap: 8px; width: 100%; margin: 18px 0 2px;
+        padding: 10px 0 2px; border: 0; border-top: 1px solid #ececec; background: none; text-align: left;
+      }
+      .group-head .arrow { font-size: 11px; color: var(--ink-3); width: 12px; }
+      .group-head .name { font-size: 14px; font-weight: 600; color: var(--ink); }
       .preset[aria-pressed='true'] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 
       .type { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #eee; }
@@ -133,8 +137,7 @@
       .add-body { padding: 4px 24px 20px; overflow-y: auto; }
       .add-search { width: 100%; height: 34px; margin-top: 8px; padding: 0 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
       .add-search::placeholder { color: #aaa; }
-      .group-title { margin: 16px 0 4px; font-size: 12px; color: var(--ink-3); }
-      .group-hint { color: #aaa; }
+
       .add-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px dashed #eee; }
       .add-item:last-child { border-bottom: 0; }
       .add-item.disabled { opacity: .5; }
@@ -172,7 +175,7 @@
       .primary.loading .bar { width: 64px; height: 3px; background: #555; margin: 0; border-radius: 2px; overflow: hidden; }
       .primary.loading .bar i { display: block; width: 40%; height: 100%; background: #fff; animation: slide 1s infinite ease-in-out; }
       @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
-      .save-hint { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); text-align: center; }
+
 
       /* ---------- 右栏 ---------- */
       .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
@@ -318,7 +321,6 @@
         <div class="side-scroll">
           <section class="block">
             <h2>① 单元选择</h2>
-            <div class="range-line"><span>范围：<b id="rangeSummary">全部 7 个单元</b></span><button class="linkbtn" id="toggleAll">全不选</button></div>
             <div class="chips" id="units"></div>
           </section>
 
@@ -329,7 +331,7 @@
               <button data-level="L2">标准</button>
               <button data-level="L3">挑战</button>
             </div>
-            <p class="help">标准：按课本当天进度；挑战：易错与多步。</p>
+            <p class="help" id="levelHelp">课本练习的难度，多数题要两步</p>
 
             <div class="presets" id="presets"></div>
 
@@ -342,10 +344,9 @@
           <div class="totals">
             <b id="total">28</b><span>题</span>
             <span>· 约 <b id="pages">2</b> 页 · 约 <b id="minutes">20</b> 分钟</span>
-            <span id="scopeNote">出卷后为准</span>
+            <span id="scopeNote"></span>
           </div>
           <button class="primary" id="buildBtn">出卷</button>
-          <p class="save-hint" id="saveHint">设置会自动记住</p>
         </div>
       </aside>
 
@@ -477,11 +478,7 @@
         { id: 'word', group: '综合应用', label: '应用题', desc: '读题、列式、写答句', def: 3, available: 60, cost: 0.08 },
         { id: 'advanced', group: '综合应用', label: '拓展题', desc: '多一步的思考题，每题留 3–4 行', def: 3, available: 20, cost: 0.2, needs: ['年、月、日的秘密', '马拉松的路线设计'], topic: '拓展题的内容' },
       ]
-      const GROUPS = [
-        { name: '计算题', hint: '写出得数' },
-        { name: '填一填、选一选', hint: '不写算式，只填或选' },
-        { name: '综合应用', hint: '先看懂题或图，再作答' },
-      ]
+      const GROUPS = ['计算题', '填一填、选一选', '综合应用']
       const SHORT_UNIT = {
         '两步四则运算与应用题': '两步四则',
         '用一位数乘': '乘法',
@@ -498,10 +495,15 @@
       TYPES.forEach((t) => (t.min = MIN_PER_Q[t.id] || 1))
 
       const PRESETS = [
-        { id: 'daily', name: '每日一练', hint: '约 2 页', values: { kousuan: 20, tiankong: 5, word: 3 } },
-        { id: 'quiz', name: '单元小测', hint: '约 2 页', values: { kousuan: 10, chushi: 6, tiankong: 4, word: 4 } },
-        { id: 'weekend', name: '周末加练', hint: '约 3–4 页', values: { kousuan: 30, chushi: 8, tuoshi: 6, tiankong: 8, word: 6 } },
+        { id: 'daily', name: '每日一练', values: { kousuan: 20, tiankong: 5, word: 3 } },
+        { id: 'quiz', name: '单元小测', values: { kousuan: 10, chushi: 6, tiankong: 4, word: 4 } },
+        { id: 'weekend', name: '周末加练', values: { kousuan: 30, chushi: 8, tuoshi: 6, tiankong: 8, word: 6 } },
       ]
+      const LEVEL_HELP = {
+        L1: '对准课本例题，一步算完',
+        L2: '课本练习的难度，多数题要两步',
+        L3: '需要多绕一步，用来查漏',
+      }
 
       const params = new URLSearchParams(location.search)
       const initialView = params.get('view') || 'main'
@@ -516,6 +518,7 @@
         panelOpen: false,
         draft: new Set(),
         search: '',
+        collapsed: new Set(),
         adjustId: null,
         built: false,
         loading: false,
@@ -574,15 +577,6 @@
           }
           unitsEl.appendChild(b)
         })
-        const all = state.units.size === UNITS.length
-        document.getElementById('rangeSummary').textContent = all
-          ? `全部 ${UNITS.length} 个单元`
-          : state.units.size === 0 ? '没有选单元' : `${state.units.size} 个单元`
-        document.getElementById('toggleAll').textContent = all ? '全不选' : '全选'
-        document.getElementById('toggleAll').onclick = () => {
-          state.units = all ? new Set() : new Set(UNITS)
-          render()
-        }
       }
 
       function stepper(id) {
@@ -736,7 +730,9 @@
           const b = document.createElement('button')
           b.className = 'preset'
           b.setAttribute('aria-pressed', state.preset === p.id ? 'true' : 'false')
-          b.innerHTML = `<b>${p.name}</b><small>${p.hint}</small>`
+          const count = Object.values(p.values).reduce((sum, n) => sum + n, 0)
+          const mins = Math.max(5, Math.ceil((count / 10 * 3) / 5) * 5)
+          b.innerHTML = `<b>${p.name}</b><small>${count} 题 · 约 ${mins} 分钟</small>`
           b.onclick = () => {
             applyPreset(p.id)
             state.built = false
@@ -748,6 +744,7 @@
       }
 
       function renderLevels() {
+        document.getElementById('levelHelp').textContent = LEVEL_HELP[state.level]
         document.querySelectorAll('#levels button, #settingsLevels button').forEach((b) => {
           b.setAttribute('aria-pressed', b.dataset.level === state.level ? 'true' : 'false')
           b.onclick = () => { state.level = b.dataset.level; state.built = false; render() }
@@ -758,6 +755,7 @@
         state.panelOpen = true
         state.draft = new Set(state.added)
         state.search = ''
+        state.collapsed = new Set()
         addPanel.classList.add('open')
         scrim.classList.add('open')
         renderAddPanel()
@@ -829,16 +827,20 @@
         }
         const q = state.search.trim()
         GROUPS.forEach((group) => {
-          const items = TYPES.filter((t) => t.group === group.name && (!q || t.label.includes(q) || t.desc.includes(q)))
+          const items = TYPES.filter((t) => t.group === group && (!q || t.label.includes(q) || t.desc.includes(q)))
           if (!items.length) return
-          const title = document.createElement('div')
-          title.className = 'group-title'
-          title.textContent = group.name
-          const hint = document.createElement('span')
-          hint.className = 'group-hint'
-          hint.textContent = ` · ${group.hint}`
-          title.appendChild(hint)
+          const folded = state.collapsed.has(group)
+          const title = document.createElement('button')
+          title.className = 'group-head'
+          title.setAttribute('aria-expanded', folded ? 'false' : 'true')
+          title.innerHTML = `<span class="arrow">${folded ? '▸' : '▾'}</span><span class="name">${group}</span>`
+          title.onclick = () => {
+            if (folded) state.collapsed.delete(group)
+            else state.collapsed.add(group)
+            renderAddPanel()
+          }
           body.appendChild(title)
+          if (folded) return
           items.forEach((t) => {
             const av = availability(t)
             const on = currentSel().has(t.id)
@@ -918,8 +920,8 @@
         document.getElementById('pages').textContent = state.built && state.result ? state.result.pages : roughPages()
         document.getElementById('minutes').textContent = state.built && state.result ? state.result.minutes : minutes()
         document.getElementById('scopeNote').textContent = !state.built
-          ? '出卷后为准'
-          : state.result && state.result.count !== total() ? `本卷实际 ${state.result.count} 题` : '实际页数'
+          ? ''
+          : state.result && state.result.count !== total() ? `本卷实际 ${state.result.count} 题` : ''
         buildBtn.disabled = state.units.size === 0 || total() === 0 || state.loading
         buildBtn.textContent = state.loading ? '正在排版…' : state.built ? '重新出卷' : '出卷'
         buildBtn.className = 'primary' + (state.loading ? ' loading' : '')
@@ -974,9 +976,9 @@
           <h3>先出一份今天的练习</h3>
           <p>左边已经准备好：全部单元 · 标准难度 · 每日一练。直接点“出卷”也可以。</p>
           <div class="empty-actions">
-            <button class="preset" data-preset="daily"><b>每日一练</b><small>28 题 · 约 2 页</small></button>
-            <button class="preset" data-preset="quiz"><b>单元小测</b><small>24 题 · 约 2 页</small></button>
-            <button class="preset" data-preset="weekend"><b>周末加练</b><small>58 题 · 约 3 页</small></button>
+            <button class="preset" data-preset="daily"><b>每日一练</b><small>28 题 · 约 10 分钟</small></button>
+            <button class="preset" data-preset="quiz"><b>单元小测</b><small>24 题 · 约 10 分钟</small></button>
+            <button class="preset" data-preset="weekend"><b>周末加练</b><small>58 题 · 约 20 分钟</small></button>
           </div>
         </div>`
         stage.querySelectorAll('[data-preset]').forEach((b) => {
