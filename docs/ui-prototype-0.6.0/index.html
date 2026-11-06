@@ -70,27 +70,22 @@
       .seg button[aria-pressed='true'] { background: var(--ink); color: #fff; }
       .help { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
 
-      .presets {
-        display: flex; flex-direction: column; margin-top: 12px;
-        border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #fff;
-      }
+      .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
       .preset {
         padding: 8px 6px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: left;
       }
       .preset b { display: block; font-size: 13px; font-weight: 500; }
       .preset small { display: block; margin-top: 2px; font-size: 11px; color: var(--ink-3); }
-      .presets .preset {
-        display: flex; align-items: center; gap: 10px; width: 100%;
-        padding: 10px 12px; border: 0; border-bottom: 1px solid #eee; border-radius: 0; background: #fff;
-      }
-      .presets .preset:last-child { border-bottom: 0; }
-      .presets .preset[aria-pressed='true'] { background: #f4f4f4; box-shadow: inset 3px 0 0 var(--ink); }
-      .presets .preset[aria-pressed='true'] b { font-weight: 600; }
-      .presets .preset .pdesc {
-        flex: 1; min-width: 0; font-size: 12px; color: var(--ink-3);
+      .preset-desc {
+        display: none; margin: 8px 0 0; font-size: 12px; color: var(--ink-3);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
-      .presets .preset .pcount { flex: none; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+      .preset-desc.show { display: block; }
+      .custom-state { display: none; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--ink-3); }
+      .custom-state.show { display: flex; }
+      .custom-state b { font-size: 12px; font-weight: 600; color: var(--ink); }
+      .from-wrap { display: none; }
+      .from-wrap.show { display: inline; }
       .group-head {
         display: flex; align-items: center; gap: 8px; width: 100%; margin: 18px 0 2px;
         padding: 10px 0 2px; border: 0; border-top: 1px solid #ececec; background: none; text-align: left;
@@ -349,6 +344,11 @@
             <p class="help" id="levelHelp">课本练习的难度，多数题要两步</p>
 
             <div class="presets" id="presets"></div>
+            <p class="preset-desc" id="presetDesc"></p>
+            <div class="custom-state" id="customState">
+              <b>自定义</b>
+              <span class="from-wrap" id="fromWrap"><span id="fromText"></span> · <button class="linkbtn" id="restoreBtn">恢复默认</button></span>
+            </div>
 
             <div id="types" style="margin-top: 14px"></div>
           </section>
@@ -510,9 +510,9 @@
       TYPES.forEach((t) => (t.min = MIN_PER_Q[t.id] || 1))
 
       const PRESETS = [
-        { id: 'daily', name: '每日一练', desc: '放学后练当天学的内容', values: { kousuan: 20, tiankong: 5, word: 3 } },
-        { id: 'quiz', name: '单元小测', desc: '学完一个单元检验一遍', values: { kousuan: 10, chushi: 6, tiankong: 4, word: 4 } },
-        { id: 'weekend', name: '周末加练', desc: '周末加量，挑难一点的', values: { kousuan: 30, chushi: 8, tuoshi: 6, tiankong: 8, word: 6 } },
+        { id: 'daily', name: '每日一练', desc: '放学后练当天学的内容', level: 'L2', values: { kousuan: 20, tiankong: 5, word: 3 } },
+        { id: 'quiz', name: '单元小测', desc: '学完一个单元检验一遍', level: 'L2', values: { kousuan: 10, chushi: 6, tiankong: 4, word: 4 } },
+        { id: 'weekend', name: '周末加练', desc: '周末加量，挑难一点的', level: 'L3', values: { kousuan: 30, chushi: 8, tuoshi: 6, tiankong: 8, word: 6 } },
       ]
       const LEVEL_HELP = {
         L1: '对准课本例题，一步算完',
@@ -527,6 +527,7 @@
         units: new Set(UNITS),
         level: 'L2',
         preset: 'daily',
+        fromPreset: null,
         counts: {},
         added: new Set(),
         mode: 'A',
@@ -552,7 +553,16 @@
         TYPES.forEach((t) => (state.counts[t.id] = 0))
         Object.entries(preset.values).forEach(([k, v]) => (state.counts[k] = v))
         state.added = new Set(Object.keys(preset.values))
+        state.level = preset.level
         state.preset = id
+        state.fromPreset = null
+      }
+
+      function markCustom() {
+        if (state.preset) {
+          state.fromPreset = state.preset
+          state.preset = null
+        }
       }
 
       function countOn(id) { return state.added.has(id) }
@@ -620,7 +630,7 @@
         state.counts[id] = clamped
         if (clamped === 0) state.added.delete(id)
         else state.added.add(id)
-        state.preset = null
+        markCustom()
         state.built = false
         state.result = null
         render()
@@ -642,7 +652,7 @@
         state.counts[id] = 0
         state.added.delete(id)
         if (state.adjustId === id) state.adjustId = null
-        state.preset = null
+        markCustom()
         state.built = false
         state.result = null
         render()
@@ -746,7 +756,7 @@
           b.className = 'preset'
           b.setAttribute('aria-pressed', state.preset === p.id ? 'true' : 'false')
           const count = Object.values(p.values).reduce((sum, n) => sum + n, 0)
-          b.innerHTML = `<b>${p.name}</b><span class="pdesc">${p.desc}</span><span class="pcount">${count} 题</span>`
+          b.innerHTML = `<b>${p.name}</b><small>${count} 题</small>`
           b.onclick = () => {
             applyPreset(p.id)
             state.built = false
@@ -755,6 +765,17 @@
           }
           box.appendChild(b)
         })
+
+        const shown = PRESETS.find((p) => p.id === state.preset) || PRESETS.find((p) => p.id === state.fromPreset)
+        const desc = document.getElementById('presetDesc')
+        desc.textContent = shown ? shown.desc : ''
+        desc.classList.toggle('show', !!shown)
+
+        document.getElementById('customState').classList.toggle('show', state.preset === null)
+        const from = document.getElementById('fromWrap')
+        const fromPreset = PRESETS.find((p) => p.id === state.fromPreset)
+        from.classList.toggle('show', state.preset === null && !!fromPreset)
+        if (fromPreset) document.getElementById('fromText').textContent = `改自${fromPreset.name}`
       }
 
       function renderLevels() {
@@ -785,8 +806,9 @@
             if (!wasOn && nowOn) state.counts[t.id] = t.def
             if (wasOn && !nowOn) state.counts[t.id] = 0
           })
+          const changed = TYPES.some((t) => state.added.has(t.id) !== state.draft.has(t.id))
           state.added = new Set(state.draft)
-          state.preset = null
+          if (changed) markCustom()
           state.built = false
           state.result = null
         }
@@ -814,7 +836,7 @@
             state.counts[t.id] = t.def
             state.added.add(t.id)
           }
-          state.preset = null
+          markCustom()
           state.built = false
           state.result = null
         }
@@ -990,9 +1012,9 @@
           <h3>先出一份今天的练习</h3>
           <p>左边已经准备好：全部单元 · 标准难度 · 每日一练。直接点“出卷”也可以。</p>
           <div class="empty-actions">
-            <button class="preset" data-preset="daily"><b>每日一练</b><small>28 题 · 约 10 分钟</small></button>
-            <button class="preset" data-preset="quiz"><b>单元小测</b><small>24 题 · 约 10 分钟</small></button>
-            <button class="preset" data-preset="weekend"><b>周末加练</b><small>58 题 · 约 20 分钟</small></button>
+            <button class="preset" data-preset="daily"><b>每日一练</b><small>28 题</small></button>
+            <button class="preset" data-preset="quiz"><b>单元小测</b><small>24 题</small></button>
+            <button class="preset" data-preset="weekend"><b>周末加练</b><small>58 题</small></button>
           </div>
         </div>`
         stage.querySelectorAll('[data-preset]').forEach((b) => {
@@ -1096,13 +1118,20 @@
       document.querySelectorAll('[data-close-drawer]').forEach((b) => (b.onclick = closeAll))
       document.querySelectorAll('[data-close-add]').forEach((b) => (b.onclick = () => closeAddPanel(false)))
 
+      document.getElementById('restoreBtn').onclick = () => {
+        if (!state.fromPreset) return
+        applyPreset(state.fromPreset)
+        state.built = false
+        state.result = null
+        render()
+      }
+
       document.querySelectorAll('#modeSwitch button').forEach((b) => {
         b.onclick = () => {
           if (state.mode === b.dataset.mode) return
           state.mode = b.dataset.mode
           state.adjustId = null
           if (state.panelOpen) closeAddPanel(false)
-          state.preset = null
           state.built = false
           state.result = null
           render()
@@ -1186,6 +1215,10 @@
           state.mode = 'B'
           state.units = new Set(['两步四则运算与应用题', '用一位数乘'])
           state.panelOpen = true
+        } else if (initialView === 'custom') {
+          state.counts.kousuan = 30
+          state.preset = null
+          state.fromPreset = 'daily'
         } else if (initialView === 'shortage') {
           state.counts.kousuan = 50
           state.counts.tiankong = 5
