@@ -70,12 +70,27 @@
       .seg button[aria-pressed='true'] { background: var(--ink); color: #fff; }
       .help { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
 
-      .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+      .presets {
+        display: flex; flex-direction: column; margin-top: 12px;
+        border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #fff;
+      }
       .preset {
         padding: 8px 6px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: left;
       }
       .preset b { display: block; font-size: 13px; font-weight: 500; }
       .preset small { display: block; margin-top: 2px; font-size: 11px; color: var(--ink-3); }
+      .presets .preset {
+        display: flex; align-items: center; gap: 10px; width: 100%;
+        padding: 10px 12px; border: 0; border-bottom: 1px solid #eee; border-radius: 0; background: #fff;
+      }
+      .presets .preset:last-child { border-bottom: 0; }
+      .presets .preset[aria-pressed='true'] { background: #f4f4f4; box-shadow: inset 3px 0 0 var(--ink); }
+      .presets .preset[aria-pressed='true'] b { font-weight: 600; }
+      .presets .preset .pdesc {
+        flex: 1; min-width: 0; font-size: 12px; color: var(--ink-3);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .presets .preset .pcount { flex: none; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
       .group-head {
         display: flex; align-items: center; gap: 8px; width: 100%; margin: 18px 0 2px;
         padding: 10px 0 2px; border: 0; border-top: 1px solid #ececec; background: none; text-align: left;
@@ -320,12 +335,12 @@
       <aside class="side">
         <div class="side-scroll">
           <section class="block">
-            <h2>① 单元选择</h2>
+            <h2>单元选择</h2>
             <div class="chips" id="units"></div>
           </section>
 
           <section class="block">
-            <h2>② 题型设置</h2>
+            <h2>题型设置</h2>
             <div class="seg" id="levels">
               <button data-level="L1">基础</button>
               <button data-level="L2">标准</button>
@@ -495,9 +510,9 @@
       TYPES.forEach((t) => (t.min = MIN_PER_Q[t.id] || 1))
 
       const PRESETS = [
-        { id: 'daily', name: '每日一练', values: { kousuan: 20, tiankong: 5, word: 3 } },
-        { id: 'quiz', name: '单元小测', values: { kousuan: 10, chushi: 6, tiankong: 4, word: 4 } },
-        { id: 'weekend', name: '周末加练', values: { kousuan: 30, chushi: 8, tuoshi: 6, tiankong: 8, word: 6 } },
+        { id: 'daily', name: '每日一练', desc: '放学后练当天学的内容', values: { kousuan: 20, tiankong: 5, word: 3 } },
+        { id: 'quiz', name: '单元小测', desc: '学完一个单元检验一遍', values: { kousuan: 10, chushi: 6, tiankong: 4, word: 4 } },
+        { id: 'weekend', name: '周末加练', desc: '周末加量，挑难一点的', values: { kousuan: 30, chushi: 8, tuoshi: 6, tiankong: 8, word: 6 } },
       ]
       const LEVEL_HELP = {
         L1: '对准课本例题，一步算完',
@@ -731,8 +746,7 @@
           b.className = 'preset'
           b.setAttribute('aria-pressed', state.preset === p.id ? 'true' : 'false')
           const count = Object.values(p.values).reduce((sum, n) => sum + n, 0)
-          const mins = Math.max(5, Math.ceil((count / 10 * 3) / 5) * 5)
-          b.innerHTML = `<b>${p.name}</b><small>${count} 题 · 约 ${mins} 分钟</small>`
+          b.innerHTML = `<b>${p.name}</b><span class="pdesc">${p.desc}</span><span class="pcount">${count} 题</span>`
           b.onclick = () => {
             applyPreset(p.id)
             state.built = false
