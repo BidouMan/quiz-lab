@@ -371,7 +371,7 @@
             <span>· 约 <b id="minutes">20</b> 分钟 · 约 <b id="pages">2</b> 页</span>
             <span id="scopeNote"></span>
           </div>
-          <button class="primary" id="buildBtn">出卷</button>
+          <button class="primary" id="buildBtn">生成练习卷</button>
         </div>
       </aside>
 
@@ -921,7 +921,7 @@
           ? ''
           : state.result && state.result.count !== total() ? `本卷实际 ${state.result.count} 题` : ''
         buildBtn.disabled = state.units.size === 0 || total() === 0 || state.loading
-        buildBtn.textContent = state.loading ? '正在排版…' : state.built ? '重新出卷' : '出卷'
+        buildBtn.textContent = state.loading ? '正在生成…' : state.built ? '重新生成' : '生成练习卷'
         buildBtn.className = 'primary' + (state.loading ? ' loading' : '')
 
         capacityHint.hidden = true
@@ -970,7 +970,7 @@
         }
         stage.innerHTML = `<div class="empty-card">
           <h3>先出一份今天的练习</h3>
-          <p>左边已经准备好：全部单元 · 标准难度 · 每日一练。直接点“出卷”也可以。</p>
+          <p>默认配置：全部单元 · 标准难度 · 每日一练。可直接生成，也可先调整。</p>
           <div class="empty-actions">
             <button class="preset" data-preset="daily"><b>每日一练</b><small>28 题</small></button>
             <button class="preset" data-preset="quiz"><b>单元小测</b><small>24 题</small></button>
@@ -1211,7 +1211,7 @@
               return
             }
             if (b.dataset.hAction === 'reprint') {
-              showToast(`已按「${h.title}」的配置重新出卷（原型示意）`)
+              showToast(`已按「${h.title}」的配置重新生成（原型示意）`)
               return
             }
             state.result = { count: h.count, pages: h.pages, minutes: h.count * 1, path: '文稿/数学练习/' + h.title + '.pdf', title: h.title }
@@ -1271,7 +1271,8 @@
         } else if (initialView === 'loading') {
           state.loading = true
         } else if (initialView === 'empty') {
-          state.units = new Set()
+          state.built = false
+          state.result = null
         }
       }
 
