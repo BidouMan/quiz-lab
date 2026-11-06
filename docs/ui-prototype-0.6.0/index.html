@@ -68,7 +68,8 @@
       .chip:hover { border-color: var(--ink); }
 
       .seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
-      .seg button { height: 32px; font-size: 13px; background: #fff; border: 0; border-right: 1px solid #e0e0e0; }
+      .seg button { height: 32px; font-size: 13px; background: #fff; border: 0; border-right: 1px solid #e0e0e0; text-align: center; }
+      #openModes { grid-template-columns: repeat(2, 1fr); }
       .seg button:last-child { border-right: 0; }
       .seg button[aria-pressed='true'] { background: var(--ink); color: #fff; }
       .help { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--ink-3); white-space: nowrap; }
@@ -204,6 +205,8 @@
       .figure small { font-size: 12px; color: var(--ink-3); }
       .rc-side { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 6px; }
       .path { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+      .path-line { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+      .path-line .linkbtn { font-size: 12px; }
       .row-actions { display: flex; gap: 8px; }
       .secondary {
         height: 34px; padding: 0 16px; font-size: 13px; border: 1px solid #bbb; border-radius: 6px; background: #fff;
@@ -212,7 +215,9 @@
       .print { height: 40px; padding: 0 24px; font-size: 15px; border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: #fff; }
       #saveBtn, .print { width: 104px; height: 34px; padding: 0 12px; font-size: 13px; }
       .detail-scrim { z-index: 40; }
-      .detail-modal { width: 380px; z-index: 42; }
+      .detail-modal { width: 460px; z-index: 42; }
+      .detail-path { padding: 9px 0; border-top: 1px solid #efefef; font-size: 13px; }
+      .detail-path .path { margin-top: 4px; font-size: 11px; }
       .detail-line { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #efefef; font-size: 13px; }
       .detail-line:last-child { border-bottom: 0; }
       .detail-line span:last-child { margin-left: auto; color: var(--ink-2); }
@@ -395,7 +400,7 @@
             <div class="figure"><b id="rMinutes">20</b><small>分钟</small></div>
           </div>
           <div class="rc-side">
-            <div class="path" id="rPath">已保存到 文稿/数学练习/三上-每日一练-20261105.pdf</div>
+            <div class="path-line"><span class="path" id="rPath">已保存到 数学练习 / 三上-每日一练-20261105.pdf</span><button class="linkbtn" id="revealFolder">在文件夹中显示</button></div>
             <div class="row-actions">
               <button class="linkbtn" id="openPdf">打开 PDF</button>
               <button class="linkbtn" id="openFolder">打开文件夹</button>
@@ -446,9 +451,9 @@
         <section class="setting-group">
           <h3>打开 PDF 的方式</h3>
           <div class="field"><span class="label">方式</span><span class="spacer"></span>
-            <div class="seg" id="openModes" style="width: 250px"><button data-open="in">应用内预览</button><button data-open="system">用系统应用打开</button></div>
+            <div class="seg" id="openModes" style="width: 300px"><button data-open="in">应用内打开</button><button data-open="system">系统应用打开</button></div>
           </div>
-          <p class="detail">应用内预览会在右侧显示 PDF，带页码、缩放和适应宽度。</p>
+          <p class="detail">应用内打开会在右侧显示 PDF，带页码、缩放和适应宽度。</p>
         </section>
 
         <section class="setting-group">
@@ -491,6 +496,7 @@
       <div class="modal-body">
         <p class="detail" style="margin-top:0">本卷题型与题量</p>
         <div id="detailBody"></div>
+        <div class="detail-path"><span>完整路径</span><div class="path" id="detailPath"></div></div>
       </div>
     </div>
 
@@ -1001,6 +1007,8 @@
         document.getElementById('rCount').textContent = state.result.count
         document.getElementById('rPages').textContent = state.result.pages
         document.getElementById('rMinutes').textContent = state.result.minutes
+        const parts = state.result.path.split('/')
+        document.getElementById('rPath').textContent = `已保存到 ${parts[parts.length - 2]} / ${parts[parts.length - 1]}`
         document.getElementById('pageLabel').textContent = `第 1 / ${state.result.pages} 页`
       }
 
@@ -1149,6 +1157,7 @@
         render()
       }
       document.getElementById('openPdf').onclick = openPdfView
+      document.getElementById('revealFolder').onclick = () => showToast('已在文件夹中高亮这份 PDF（原型示意）')
       document.getElementById('zoomIn').onclick = () => { state.zoom = Math.min(1.4, Math.round((state.zoom + 0.1) * 10) / 10); render() }
       document.getElementById('zoomOut').onclick = () => { state.zoom = Math.max(0.6, Math.round((state.zoom - 0.1) * 10) / 10); render() }
       document.getElementById('fitBtn').onclick = () => { state.zoom = 1; render() }
@@ -1162,6 +1171,7 @@
       function openDetail() {
         const body = document.getElementById('detailBody')
         body.innerHTML = TYPES.filter((t) => countOn(t.id)).map((t) => `<div class="detail-line"><span>${t.label}</span><span>${state.counts[t.id]} 题</span></div>`).join('')
+        document.getElementById('detailPath').textContent = state.result ? state.result.path : ''
         document.getElementById('detailModal').classList.add('open')
         document.getElementById('detailScrim').classList.add('open')
       }
