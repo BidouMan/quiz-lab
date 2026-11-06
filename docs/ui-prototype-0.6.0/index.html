@@ -210,7 +210,12 @@
       }
       .secondary:hover { background: #f6f6f6; }
       .print { height: 40px; padding: 0 24px; font-size: 15px; border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: #fff; }
-      #saveBtn, .print { width: 132px; height: 40px; padding: 0; font-size: 14px; }
+      #saveBtn, .print { width: 104px; height: 34px; padding: 0 12px; font-size: 13px; }
+      .detail-scrim { z-index: 40; }
+      .detail-modal { width: 380px; z-index: 42; }
+      .detail-line { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #efefef; font-size: 13px; }
+      .detail-line:last-child { border-bottom: 0; }
+      .detail-line span:last-child { margin-left: auto; color: var(--ink-2); }
       .pdf-view { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 20px; }
       .pdf-note { margin: 0; font-size: 12px; color: var(--ink-3); }
       .pdf-page { transform-origin: top center; }
@@ -477,6 +482,15 @@
           <h3>关于</h3>
           <div class="field"><span class="label">版本号</span><span class="spacer"></span><span class="readonly">0.5.0-beta.3</span></div>
         </section>
+      </div>
+    </div>
+
+    <div class="scrim detail-scrim" id="detailScrim"></div>
+    <div class="modal detail-modal" id="detailModal" role="dialog" aria-modal="true">
+      <div class="modal-head"><h2>显示明细</h2><button class="x" data-close-detail>关闭</button></div>
+      <div class="modal-body">
+        <p class="detail" style="margin-top:0">本卷题型与题量</p>
+        <div id="detailBody"></div>
       </div>
     </div>
 
@@ -1044,6 +1058,10 @@
           closePicker()
           return
         }
+        if (document.getElementById('detailModal').classList.contains('open')) {
+          closeDetail()
+          return
+        }
         settingsModal.classList.remove('open')
         historyDrawer.classList.remove('open')
         scrim.classList.remove('open')
@@ -1141,10 +1159,19 @@
       document.getElementById('exportBtn').onclick = () => showToast('设置已导出到 文稿/QuizLab-设置.json')
       document.getElementById('importBtn').onclick = () => showToast('设置已导入并生效')
       document.getElementById('clearMemory').onclick = () => showToast('出题记录已清空（原型示意）')
-      document.getElementById('detailToggle').onclick = () => {
-        const parts = TYPES.filter((t) => countOn(t.id)).map((t) => `${t.label} ${state.counts[t.id]}`).join('、')
-        showToast('本卷：' + parts + '（原型示意）')
+      function openDetail() {
+        const body = document.getElementById('detailBody')
+        body.innerHTML = TYPES.filter((t) => countOn(t.id)).map((t) => `<div class="detail-line"><span>${t.label}</span><span>${state.counts[t.id]} 题</span></div>`).join('')
+        document.getElementById('detailModal').classList.add('open')
+        document.getElementById('detailScrim').classList.add('open')
       }
+      function closeDetail() {
+        document.getElementById('detailModal').classList.remove('open')
+        document.getElementById('detailScrim').classList.remove('open')
+      }
+      document.getElementById('detailToggle').onclick = openDetail
+      document.getElementById('detailScrim').onclick = closeDetail
+      document.querySelectorAll('[data-close-detail]').forEach((b) => (b.onclick = closeDetail))
       document.getElementById('copiesMinus').onclick = () => { state.copies = Math.max(1, state.copies - 1); document.getElementById('copies').value = state.copies }
       document.getElementById('copiesPlus').onclick = () => { state.copies = Math.min(9, state.copies + 1); document.getElementById('copies').value = state.copies }
 
@@ -1193,6 +1220,7 @@
         if (initialLevel && LEVEL_HELP[initialLevel]) state.level = initialLevel
         if (initialView === 'result') {
           state.built = true
+          if (params.get('detail') === '1') setTimeout(openDetail, 0)
           state.result = { count: total(), pages: roughPages(), minutes: minutes(), path: '文稿/数学练习/三上-每日一练-20261105.pdf', title: '全部单元 · 每日一练' }
           state.history = [{ title: '全部单元 · 每日一练', time: '刚刚', count: total(), pages: roughPages() }]
         } else if (initialView === 'settings') {
