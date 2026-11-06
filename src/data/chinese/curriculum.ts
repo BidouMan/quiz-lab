@@ -335,7 +335,7 @@ const stub = (
   note,
 })
 
-const STUB_NOTE = '字表、词语表尚未核对，本课暂不出题。'
+const STUB_NOTE = '无可靠来源（教材字表未核到），本课留空。'
 
 const U3: ChineseUnit = {
   unitId: '3A-U3',
@@ -349,7 +349,7 @@ const U3: ChineseUnit = {
   availableTypes: [...WORD_TYPES],
   writing: { label: '习作（篇目待核）', status: 'pending', sources: [SRC_CURRICULUM] },
   oral: { label: '口语交际：名字里的故事', status: 'verified' },
-  note: '阅读策略单元，路线 A 只取字词题。',
+  note: '阅读策略单元，路线 A 只取字词题；本单元暂无有据字词。',
 }
 
 const U4: ChineseUnit = {
@@ -364,6 +364,7 @@ const U4: ChineseUnit = {
   availableTypes: [...WORD_TYPES],
   writing: { label: '习作（篇目待核）', status: 'pending', sources: [SRC_CURRICULUM] },
   extra: { label: '快乐读书吧：在那奇妙的王国里', status: 'verified' },
+  note: '童话单元；本单元暂无有据字词。',
 }
 
 const U5: ChineseUnit = {
