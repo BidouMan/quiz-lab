@@ -196,17 +196,17 @@
       .status .act { border: none; background: none; font-size: 12px; color: var(--ink); text-decoration: underline; padding: 0; }
 
       .result-card {
-        flex: none; display: flex; align-items: stretch; gap: 16px;
+        flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 10px;
         margin: 16px 20px 0; padding: 16px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
       }
       .result-card[hidden] { display: none; }
+      .rc-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
       .figures { display: flex; gap: 24px; }
       .figure b { display: block; font-size: 24px; font-weight: 600; line-height: 1.1; }
       .figure small { font-size: 12px; color: var(--ink-3); }
-      .rc-side { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 6px; }
       .path { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
-      .path-line { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-      .path-line .linkbtn { font-size: 12px; }
+      .rc-actions { gap: 24px; justify-content: flex-start; align-items: baseline; }
+      .rc-actions .linkbtn { font-size: 12px; padding: 0; }
       .row-actions { display: flex; gap: 8px; }
       .secondary {
         height: 34px; padding: 0 16px; font-size: 13px; border: 1px solid #bbb; border-radius: 6px; background: #fff;
@@ -394,22 +394,22 @@
         </div>
 
         <div class="result-card" id="result" hidden>
-          <div class="figures">
-            <div class="figure"><b id="rCount">28</b><small>道题</small></div>
-            <div class="figure"><b id="rPages">2</b><small>页纸</small></div>
-            <div class="figure"><b id="rMinutes">20</b><small>分钟</small></div>
-          </div>
-          <div class="rc-side">
-            <div class="path-line"><span class="path" id="rPath">已保存到 数学练习 / 三上-每日一练-20261105.pdf</span><button class="linkbtn" id="revealFolder">在文件夹中显示</button></div>
-            <div class="row-actions">
-              <button class="linkbtn" id="openPdf">打开 PDF</button>
-              <button class="linkbtn" id="openFolder">打开文件夹</button>
-              <button class="linkbtn" id="detailToggle">题型明细</button>
+          <div class="rc-top">
+            <div class="figures">
+              <div class="figure"><b id="rCount">28</b><small>道题</small></div>
+              <div class="figure"><b id="rPages">2</b><small>页纸</small></div>
+              <div class="figure"><b id="rMinutes">20</b><small>分钟</small></div>
             </div>
             <div class="row-actions">
               <button class="secondary" id="saveBtn">保存 PDF</button>
               <button class="print" id="printBtn">打印</button>
             </div>
+          </div>
+          <div class="path" id="rPath">已保存到 数学练习 / 三上-每日一练-20261105.pdf</div>
+          <div class="row-actions rc-actions">
+            <button class="linkbtn" id="openPdf">打开 PDF</button>
+            <button class="linkbtn" id="openFolder">打开文件夹</button>
+            <button class="linkbtn" id="detailToggle">题型明细</button>
           </div>
         </div>
 
@@ -1157,7 +1157,6 @@
         render()
       }
       document.getElementById('openPdf').onclick = openPdfView
-      document.getElementById('revealFolder').onclick = () => showToast('已在文件夹中高亮这份 PDF（原型示意）')
       document.getElementById('zoomIn').onclick = () => { state.zoom = Math.min(1.4, Math.round((state.zoom + 0.1) * 10) / 10); render() }
       document.getElementById('zoomOut').onclick = () => { state.zoom = Math.max(0.6, Math.round((state.zoom - 0.1) * 10) / 10); render() }
       document.getElementById('fitBtn').onclick = () => { state.zoom = 1; render() }
