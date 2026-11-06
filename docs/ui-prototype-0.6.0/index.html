@@ -26,7 +26,7 @@
         -webkit-font-smoothing: antialiased;
       }
       button, input, select { font-family: inherit; color: inherit; }
-      button, .chip, .tool, .ghost, .type-chip, .preset, .seg button, .mode-switch button {
+      button, .chip, .tool, .ghost, .preset, .seg button {
         white-space: nowrap; flex-shrink: 0;
       }
       button { cursor: pointer; }
@@ -129,26 +129,8 @@
       }
       .add-main:hover { border-color: var(--ink); color: var(--ink); }
       .type-empty { padding: 8px 0 4px; font-size: 12px; color: var(--ink-3); }
-      .type-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-      .type-chip {
-        display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
-        border: 1px solid #ccc; border-radius: 16px; background: #fff; font-size: 13px;
-      }
-      .type-chip b { font-weight: 600; }
-      .type-chip[aria-pressed='true'] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-      .chip-adjust {
-        display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 10px;
-        border: 1px solid var(--line); border-radius: 6px; background: #fafafa; font-size: 12px;
-      }
-      .chip-adjust .spacer { flex: 1; }
-      .mode-switch { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-      .mode-switch button { height: 26px; padding: 0 10px; border: 0; border-right: 1px solid var(--line); background: #fff; font-size: 11px; color: var(--ink-3); }
-      .mode-switch button:last-child { border-right: 0; }
-      .mode-switch button[aria-pressed='true'] { background: #f1f1f1; color: var(--ink); }
       .modal.add-modal { width: 520px; max-height: calc(100vh - 56px); }
       .add-body { padding: 4px 24px 20px; overflow-y: auto; }
-      .add-search { width: 100%; height: 34px; margin-top: 8px; padding: 0 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
-      .add-search::placeholder { color: #aaa; }
 
       .add-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px dashed #eee; }
       .add-item:last-child { border-bottom: 0; }
@@ -228,6 +210,10 @@
       }
       .secondary:hover { background: #f6f6f6; }
       .print { height: 40px; padding: 0 24px; font-size: 15px; border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: #fff; }
+      #saveBtn, .print { width: 132px; height: 40px; padding: 0; font-size: 14px; }
+      .pdf-view { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 20px; }
+      .pdf-note { margin: 0; font-size: 12px; color: var(--ink-3); }
+      .pdf-page { transform-origin: top center; }
       .linkbtn { border: none; background: none; font-size: 12px; color: var(--ink-2); padding: 0; text-decoration: underline; }
 
       .sheet {
@@ -297,7 +283,18 @@
       .history-item { padding: 12px 0; border-bottom: 1px solid #efefef; }
       .history-item b { display: block; font-size: 13px; font-weight: 500; }
       .history-item small { display: block; margin-top: 3px; font-size: 12px; color: var(--ink-3); }
-      .history-item .row-actions { margin-top: 8px; }
+      .history-item .row-actions { margin-top: 8px; gap: 6px; }
+      .history-item .row-actions .secondary { height: 30px; padding: 0 12px; font-size: 12px; }
+      .picker-scrim { z-index: 40; }
+      .picker-modal { width: 380px; z-index: 41; }
+      .picker-list { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+      .picker-item {
+        display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+        border: 1px solid var(--line); border-radius: 6px; background: #fff; text-align: left;
+      }
+      .picker-item:hover { background: #f7f7f7; }
+      .picker-item b { font-size: 13px; font-weight: 500; }
+      .picker-item small { margin-left: auto; font-size: 12px; color: var(--ink-3); }
       .drawer-empty { margin-top: 80px; text-align: center; font-size: 13px; color: var(--ink-3); line-height: 1.7; }
       .tag-pending { font-size: 11px; padding: 1px 6px; border: 1px solid #d8c58a; border-radius: 3px; color: #7a5410; background: #fffbf0; }
 
@@ -325,11 +322,6 @@
         <div class="brand"><b>数学每日一练</b><span>QuizLab 0.6.0 原型</span></div>
         <div class="grade">三年级上册 · 沪教版</div>
         <span class="spacer"></span>
-        <span class="readonly" style="font-size: 11px">题型交互对比</span>
-        <div class="mode-switch" id="modeSwitch">
-          <button data-mode="A">方案 A</button>
-          <button data-mode="B">方案 B</button>
-        </div>
         <button class="ghost" id="historyBtn">历史卷</button>
         <button class="ghost" id="settingsBtn">设置</button>
       </header>
@@ -378,7 +370,10 @@
           <span id="pageLabel">第 1 / 1 页</span>
           <button class="tool" id="nextPage" disabled>下一页</button>
           <span class="spacer"></span>
+          <button class="tool" id="zoomOut" hidden>缩小</button>
+          <button class="tool" id="zoomIn" hidden>放大</button>
           <button class="tool" id="fitBtn">适应宽度</button>
+          <button class="tool" id="exitPdf" hidden>退出预览</button>
         </div>
 
         <div class="status" id="status" hidden>
@@ -397,6 +392,7 @@
           <div class="rc-side">
             <div class="path" id="rPath">已保存到 文稿/数学练习/三上-每日一练-20261105.pdf</div>
             <div class="row-actions">
+              <button class="linkbtn" id="openPdf">打开 PDF</button>
               <button class="linkbtn" id="openFolder">打开文件夹</button>
               <button class="linkbtn" id="detailToggle">题型明细</button>
             </div>
@@ -435,46 +431,71 @@
         </section>
 
         <section class="setting-group">
-          <h3>出卷偏好</h3>
-          <div class="field"><span class="label">默认难度</span><span class="spacer"></span>
-            <div class="seg" id="settingsLevels" style="width: 210px"><button data-level="L1">基础</button><button data-level="L2">标准</button><button data-level="L3">挑战</button></div>
+          <h3>保存位置</h3>
+          <div class="field"><span class="label">当前目录</span><span class="spacer"></span><span class="readonly" id="saveDirLabel">下载文件夹（~/Downloads）</span>
+            <button class="secondary" id="changeDir">更改</button>
           </div>
-          <div class="field"><span class="label">默认题量</span><span class="spacer"></span><span class="readonly">每日一练</span></div>
-          <div class="field"><span class="label">避开以前出过的题</span><span class="note">同一份卷子里绝不重复</span><span class="spacer"></span>
-            <button class="switch" aria-pressed="true"></button>
+          <p class="detail">原型示意：点“更改”只演示目录选择器，不会写入真实目录。Windows 上默认显示为 Downloads。</p>
+        </section>
+
+        <section class="setting-group">
+          <h3>打开 PDF 的方式</h3>
+          <div class="field"><span class="label">方式</span><span class="spacer"></span>
+            <div class="seg" id="openModes" style="width: 250px"><button data-open="in">应用内预览</button><button data-open="system">用系统应用打开</button></div>
+          </div>
+          <p class="detail">应用内预览会在右侧显示 PDF，带页码、缩放和适应宽度。</p>
+        </section>
+
+        <section class="setting-group">
+          <h3>历史卷</h3>
+          <div class="field"><span class="label">保留最近</span><span class="spacer"></span>
+            <div class="seg" id="keepHistory" style="width: 210px"><button data-keep="10">10 份</button><button data-keep="30">30 份</button><button data-keep="0">不限</button></div>
           </div>
         </section>
 
         <section class="setting-group">
-          <h3>题库</h3>
-          <div class="field"><span class="label">已记录卷子</span><span class="spacer"></span><span class="readonly">12 份</span></div>
-          <div class="field"><span class="label">口算可用量</span><span class="spacer"></span><span class="readonly">约 120 道不重复</span></div>
-          <div class="field"><span class="label">清空出题记录</span><span class="note">清空后新卷可能和旧卷重复</span><span class="spacer"></span>
-            <button class="danger" id="clearMemory">清空</button>
+          <h3>默认设置</h3>
+          <div class="field"><span class="label">默认套餐</span><span class="spacer"></span>
+            <div class="seg" id="defaultPresets" style="width: 270px"><button data-preset="daily">每日一练</button><button data-preset="quiz">单元小测</button><button data-preset="weekend">周末加练</button></div>
+          </div>
+          <div class="field"><span class="label">默认难度</span><span class="spacer"></span>
+            <div class="seg" id="settingsLevels" style="width: 210px"><button data-level="L1">基础</button><button data-level="L2">标准</button><button data-level="L3">挑战</button></div>
           </div>
         </section>
 
         <section class="setting-group">
           <h3>数据</h3>
-          <div class="field"><span class="label">设置备份</span><span class="spacer"></span><span class="readonly">自动留 3 份</span></div>
-          <div class="field"><span class="label">换电脑时</span><span class="spacer"></span>
-            <div class="row-actions"><button class="secondary" id="exportBtn">导出设置</button><button class="secondary" id="importBtn">导入设置</button></div>
+          <div class="field"><span class="label">备份</span><span class="note">导出为 JSON，换电脑可导入</span><span class="spacer"></span>
+            <div class="row-actions"><button class="secondary" id="exportBtn">导出备份</button><button class="secondary" id="importBtn">导入备份</button></div>
+          </div>
+          <div class="field"><span class="label">清空出题记忆</span><span class="note">清空后新卷可能和旧卷重复</span><span class="spacer"></span>
+            <button class="danger" id="clearMemory">清空</button>
           </div>
         </section>
 
         <section class="setting-group">
-          <details class="detail">
-            <summary>高级：排版组件</summary>
-            <div class="field"><span class="label">组件位置</span><span class="spacer"></span><span class="readonly">自动找到</span></div>
-            <div class="field"><span class="label">上次出卷</span><span class="spacer"></span><span class="readonly">排版 1.9 秒 · 52.4 KB</span></div>
-            <p class="detail">一般不用改。找不到组件时，出卷按钮上方会提示。</p>
-          </details>
+          <h3>关于</h3>
+          <div class="field"><span class="label">版本号</span><span class="spacer"></span><span class="readonly">0.5.0-beta.3</span></div>
         </section>
       </div>
     </div>
 
+    <div class="scrim picker-scrim" id="pickerScrim"></div>
+    <div class="modal picker-modal" id="pickerModal" role="dialog" aria-modal="true">
+      <div class="modal-head"><h2>选择保存位置</h2><button class="x" data-close-picker>关闭</button></div>
+      <div class="modal-body">
+        <p class="detail" style="margin-top:0">示意窗口：只演示目录选择，不会读取或修改真实文件夹。</p>
+        <div class="picker-list">
+          <button class="picker-item" data-dir="下载文件夹（~/Downloads）"><b>下载文件夹</b><small>~/Downloads</small></button>
+          <button class="picker-item" data-dir="桌面（~/Desktop）"><b>桌面</b><small>~/Desktop</small></button>
+          <button class="picker-item" data-dir="文稿（~/Documents）"><b>文稿</b><small>~/Documents</small></button>
+        </div>
+        <p class="detail">Windows 上目录名显示为 Downloads / Desktop / Documents。</p>
+      </div>
+    </div>
+
     <div class="drawer" id="historyDrawer">
-      <div class="drawer-head"><h2>历史卷 <span class="tag-pending">待拍板</span></h2><button class="x" data-close-drawer>关闭</button></div>
+      <div class="drawer-head"><h2>历史卷</h2><button class="linkbtn" id="cleanHistory" style="margin-left:16px">清理旧卷</button><button class="x" data-close-drawer>关闭</button></div>
       <div class="drawer-body" id="historyBody"></div>
     </div>
 
@@ -541,19 +562,22 @@
         fromPreset: null,
         counts: {},
         added: new Set(),
-        mode: 'A',
         panelOpen: false,
         draft: new Set(),
-        search: '',
         collapsed: new Set(),
-        adjustId: null,
         built: false,
         loading: false,
         result: null,
         status: null,
-        zoomFit: true,
+        zoom: 1,
         copies: 1,
         history: [],
+        pdfOpen: false,
+        openMode: 'in',
+        saveDir: '下载文件夹（~/Downloads）',
+        historyKeep: 30,
+        defaultPreset: 'daily',
+        defaultLevel: 'L2',
       }
       TYPES.forEach((t) => (state.counts[t.id] = 0))
       applyPreset('daily')
@@ -692,49 +716,13 @@
       function renderTypes() {
         typesEl.innerHTML = ''
         const selected = TYPES.filter((t) => countOn(t.id))
-        if (state.mode === 'A') {
-          if (!selected.length) {
-            const tip = document.createElement('div')
-            tip.className = 'type-empty'
-            tip.textContent = '还没有选题型。点下面“添加题型”，勾选后点完成。'
-            typesEl.appendChild(tip)
-          }
-          selected.forEach((t) => typesEl.appendChild(selectedRow(t)))
-          typesEl.appendChild(addButton())
-          return
-        }
-
-        const chips = document.createElement('div')
-        chips.className = 'type-chips'
         if (!selected.length) {
           const tip = document.createElement('div')
           tip.className = 'type-empty'
-          tip.textContent = '还没有选题型。点下面“添加题型”，点一项就加入。'
+          tip.textContent = '还没有选题型。点下面“添加题型”，勾选后点完成。'
           typesEl.appendChild(tip)
         }
-        selected.forEach((t) => {
-          const chip = document.createElement('button')
-          chip.className = 'type-chip'
-          chip.setAttribute('aria-pressed', state.adjustId === t.id ? 'true' : 'false')
-          chip.innerHTML = `${t.label} <b>${state.counts[t.id]}</b>`
-          chip.onclick = () => { state.adjustId = state.adjustId === t.id ? null : t.id; render() }
-          chips.appendChild(chip)
-        })
-        typesEl.appendChild(chips)
-
-        if (state.adjustId) {
-          const t = TYPES.find((x) => x.id === state.adjustId)
-          if (!t || !countOn(t.id)) {
-            state.adjustId = null
-          } else {
-            const box = document.createElement('div')
-            box.className = 'chip-adjust'
-            const label = document.createElement('span')
-            label.textContent = `「${t.label}」每份`
-            box.append(label, stepper(t.id))
-            typesEl.appendChild(box)
-          }
-        }
+        selected.forEach((t) => typesEl.appendChild(selectedRow(t)))
         typesEl.appendChild(addButton())
       }
 
@@ -770,26 +758,39 @@
 
       function renderLevels() {
         document.getElementById('levelHelp').textContent = LEVEL_HELP[state.level]
-        document.querySelectorAll('#levels button, #settingsLevels button').forEach((b) => {
+        document.querySelectorAll('#levels button').forEach((b) => {
           b.setAttribute('aria-pressed', b.dataset.level === state.level ? 'true' : 'false')
           b.onclick = () => { state.level = b.dataset.level; state.built = false; render() }
+        })
+      }
+
+      function renderSettingsChoices() {
+        document.getElementById('saveDirLabel').textContent = state.saveDir
+        document.querySelectorAll('#openModes button').forEach((b) => {
+          b.setAttribute('aria-pressed', b.dataset.open === state.openMode ? 'true' : 'false')
+        })
+        document.querySelectorAll('#keepHistory button').forEach((b) => {
+          b.setAttribute('aria-pressed', Number(b.dataset.keep) === state.historyKeep ? 'true' : 'false')
+        })
+        document.querySelectorAll('#defaultPresets button').forEach((b) => {
+          b.setAttribute('aria-pressed', b.dataset.preset === state.defaultPreset ? 'true' : 'false')
+        })
+        document.querySelectorAll('#settingsLevels button').forEach((b) => {
+          b.setAttribute('aria-pressed', b.dataset.level === state.defaultLevel ? 'true' : 'false')
         })
       }
 
       function openAddPanel() {
         state.panelOpen = true
         state.draft = new Set(state.added)
-        state.search = ''
         state.collapsed = new Set()
         addPanel.classList.add('open')
         scrim.classList.add('open')
         renderAddPanel()
-        const input = addPanel.querySelector('.add-search')
-        if (input) input.focus()
       }
 
       function closeAddPanel(commit) {
-        if (commit && state.mode === 'A') {
+        if (commit) {
           TYPES.forEach((t) => {
             const wasOn = state.added.has(t.id)
             const nowOn = state.draft.has(t.id)
@@ -809,27 +810,12 @@
       }
 
       function currentSel() {
-        return state.mode === 'A' ? state.draft : state.added
+        return state.draft
       }
 
       function toggleDraft(t) {
-        if (state.mode === 'A') {
-          if (state.draft.has(t.id)) state.draft.delete(t.id)
-          else state.draft.add(t.id)
-        } else {
-          if (!availability(t).ok) return
-          if (countOn(t.id)) {
-            state.counts[t.id] = 0
-            state.added.delete(t.id)
-            if (state.adjustId === t.id) state.adjustId = null
-          } else {
-            state.counts[t.id] = t.def
-            state.added.add(t.id)
-          }
-          markCustom()
-          state.built = false
-          state.result = null
-        }
+        if (state.draft.has(t.id)) state.draft.delete(t.id)
+        else state.draft.add(t.id)
         render()
       }
 
@@ -838,22 +824,8 @@
         const foot = document.getElementById('addPanelFoot')
         document.getElementById('addPanelTitle').textContent = '添加题型'
         body.innerHTML = ''
-        if (state.mode === 'B') {
-          const input = document.createElement('input')
-          input.className = 'add-search'
-          input.placeholder = '搜索题型，比如“竖式”'
-          input.value = state.search
-          input.oninput = () => {
-            state.search = input.value
-            renderAddPanel()
-            const again = addPanel.querySelector('.add-search')
-            if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length) }
-          }
-          body.appendChild(input)
-        }
-        const q = state.search.trim()
         GROUPS.forEach((group) => {
-          const items = TYPES.filter((t) => t.group === group && (!q || t.label.includes(q) || t.desc.includes(q)))
+          const items = TYPES.filter((t) => t.group === group)
           if (!items.length) return
           const folded = state.collapsed.has(group)
           const title = document.createElement('button')
@@ -901,13 +873,6 @@
             body.appendChild(row)
           })
         })
-        if (!body.querySelector('.add-item')) {
-          const empty = document.createElement('div')
-          empty.className = 'type-empty'
-          empty.textContent = '没有找到这个题型，换个词试试。'
-          body.appendChild(empty)
-        }
-
         foot.innerHTML = ''
         const count = document.createElement('span')
         count.className = 'count'
@@ -916,29 +881,15 @@
         const spacer = document.createElement('span')
         spacer.className = 'spacer'
         foot.appendChild(spacer)
-        if (state.mode === 'A') {
-          const cancel = document.createElement('button')
-          cancel.className = 'secondary'
-          cancel.textContent = '取消'
-          cancel.onclick = () => closeAddPanel(false)
-          const done = document.createElement('button')
-          done.className = 'primary'
-          done.textContent = '完成'
-          done.onclick = () => closeAddPanel(true)
-          foot.append(cancel, done)
-        } else {
-          const note = document.createElement('span')
-          note.className = 'readonly'
-          note.textContent = '点一项立即加入，点空白处关闭'
-          foot.appendChild(note)
-          const close = document.createElement('button')
-          close.className = 'secondary'
-          close.textContent = '关闭'
-          close.onclick = () => closeAddPanel(false)
-          foot.appendChild(close)
-        }
-        const input = addPanel.querySelector('.add-search')
-        if (input && document.activeElement !== input) input.focus()
+        const cancel = document.createElement('button')
+        cancel.className = 'secondary'
+        cancel.textContent = '取消'
+        cancel.onclick = () => closeAddPanel(false)
+        const done = document.createElement('button')
+        done.className = 'primary'
+        done.textContent = '完成'
+        done.onclick = () => closeAddPanel(true)
+        foot.append(cancel, done)
       }
 
       function renderSummary() {
@@ -952,16 +903,7 @@
         buildBtn.textContent = state.loading ? '正在排版…' : state.built ? '重新出卷' : '出卷'
         buildBtn.className = 'primary' + (state.loading ? ' loading' : '')
 
-        // 超量提示：A 已在已选行下方就近提示，这里只服务 B 的标签态
-        const over = TYPES.filter((t) => countOn(t.id) && state.counts[t.id] > t.available)
-        if (over.length && state.mode !== 'A') {
-          const t = over[0]
-          const expected = Math.max(1, Math.round((state.counts[t.id] / t.available - 1) * state.counts[t.id] * 0.5))
-          capacityHint.textContent = `${t.label}：目前大约能出不重复的 ${t.available} 道，设到 ${state.counts[t.id]} 道时，后一卷约有 ${expected} 道会和以前的卷子重复`
-          capacityHint.hidden = false
-        } else {
-          capacityHint.hidden = true
-        }
+        capacityHint.hidden = true
       }
 
       const PAPER = {
@@ -995,7 +937,14 @@
           return
         }
         if (state.built) {
-          stage.innerHTML = paperHTML()
+          if (state.pdfOpen) {
+            stage.innerHTML = `<div class="pdf-view">
+              <p class="pdf-note">PDF 预览（示意）· 静态占位</p>
+              <div class="pdf-page" style="transform:scale(${state.zoom})">${paperHTML()}</div>
+            </div>`
+          } else {
+            stage.innerHTML = paperHTML()
+          }
           return
         }
         stage.innerHTML = `<div class="empty-card">
@@ -1026,6 +975,9 @@
       }
 
       function renderResult() {
+        document.getElementById('zoomOut').hidden = !state.pdfOpen
+        document.getElementById('zoomIn').hidden = !state.pdfOpen
+        document.getElementById('exitPdf').hidden = !state.pdfOpen
         if (!state.built || !state.result) {
           resultEl.hidden = true
           document.getElementById('pageLabel').textContent = '还没有卷子'
@@ -1038,14 +990,7 @@
         document.getElementById('pageLabel').textContent = `第 1 / ${state.result.pages} 页`
       }
 
-      function renderMode() {
-        document.querySelectorAll('#modeSwitch button').forEach((b) => {
-          b.setAttribute('aria-pressed', b.dataset.mode === state.mode ? 'true' : 'false')
-        })
-      }
-
       function render() {
-        renderMode()
         renderUnits(); renderLevels(); renderPresets(); renderTypes(); renderSummary(); renderStage(); renderStatus(); renderResult()
         if (state.panelOpen) renderAddPanel()
       }
@@ -1055,6 +1000,7 @@
         if (state.loading) return
         state.loading = true
         state.status = null
+        state.pdfOpen = false
         render()
         const wait = total() > 60 ? 2400 : 1200
         setTimeout(() => {
@@ -1077,6 +1023,7 @@
             state.status = { kind: 'err', text: '这次没出成：还没有选单元。', action: '全选单元', onAction: () => { state.units = new Set(UNITS); state.status = null; render() } }
           }
           state.history.unshift({ title: state.result.title, time: '刚刚', count: state.result.count, pages: state.result.pages })
+          if (state.historyKeep > 0) state.history = state.history.slice(0, state.historyKeep)
           render()
         }, wait)
       }
@@ -1093,12 +1040,53 @@
           closeAddPanel(false)
           return
         }
+        if (document.getElementById('pickerModal').classList.contains('open')) {
+          closePicker()
+          return
+        }
         settingsModal.classList.remove('open')
         historyDrawer.classList.remove('open')
         scrim.classList.remove('open')
       }
       document.getElementById('settingsBtn').onclick = () => {
+        renderSettingsChoices()
         settingsModal.classList.add('open'); scrim.classList.add('open')
+      }
+      function openPicker() {
+        document.getElementById('pickerModal').classList.add('open')
+        document.getElementById('pickerScrim').classList.add('open')
+      }
+      function closePicker() {
+        document.getElementById('pickerModal').classList.remove('open')
+        document.getElementById('pickerScrim').classList.remove('open')
+      }
+      document.getElementById('changeDir').onclick = openPicker
+      document.getElementById('pickerScrim').onclick = closePicker
+      document.querySelectorAll('[data-close-picker]').forEach((b) => (b.onclick = closePicker))
+      document.querySelectorAll('.picker-item').forEach((b) => {
+        b.onclick = () => {
+          state.saveDir = b.dataset.dir
+          closePicker()
+          renderSettingsChoices()
+          showToast(`保存位置已改为${state.saveDir}（原型示意，不写入真实目录）`)
+        }
+      })
+      document.querySelectorAll('#openModes button').forEach((b) => {
+        b.onclick = () => { state.openMode = b.dataset.open; renderSettingsChoices(); showToast(state.openMode === 'in' ? '以后在应用内预览 PDF' : '以后用系统应用打开 PDF') }
+      })
+      document.querySelectorAll('#keepHistory button').forEach((b) => {
+        b.onclick = () => { state.historyKeep = Number(b.dataset.keep); renderSettingsChoices() }
+      })
+      document.querySelectorAll('#defaultPresets button').forEach((b) => {
+        b.onclick = () => { state.defaultPreset = b.dataset.preset; renderSettingsChoices() }
+      })
+      document.querySelectorAll('#settingsLevels button').forEach((b) => {
+        b.onclick = () => { state.defaultLevel = b.dataset.level; renderSettingsChoices() }
+      })
+      document.getElementById('cleanHistory').onclick = () => {
+        state.history = []
+        renderHistory()
+        showToast('历史卷已清理（原型示意）')
       }
       document.getElementById('historyBtn').onclick = () => {
         renderHistory(); historyDrawer.classList.add('open'); scrim.classList.add('open')
@@ -1116,18 +1104,6 @@
         render()
       }
 
-      document.querySelectorAll('#modeSwitch button').forEach((b) => {
-        b.onclick = () => {
-          if (state.mode === b.dataset.mode) return
-          state.mode = b.dataset.mode
-          state.adjustId = null
-          if (state.panelOpen) closeAddPanel(false)
-          state.built = false
-          state.result = null
-          render()
-        }
-      })
-
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           if (state.panelOpen) closeAddPanel(false)
@@ -1144,6 +1120,21 @@
         toastTimer = setTimeout(() => toast.classList.remove('show'), 2600)
       }
 
+      function openPdfView() {
+        if (!state.result) return
+        if (state.openMode === 'system') {
+          showToast('已用系统应用打开 PDF（原型示意，不做真实跳转）')
+          return
+        }
+        state.pdfOpen = true
+        state.zoom = 1
+        render()
+      }
+      document.getElementById('openPdf').onclick = openPdfView
+      document.getElementById('zoomIn').onclick = () => { state.zoom = Math.min(1.4, Math.round((state.zoom + 0.1) * 10) / 10); render() }
+      document.getElementById('zoomOut').onclick = () => { state.zoom = Math.max(0.6, Math.round((state.zoom - 0.1) * 10) / 10); render() }
+      document.getElementById('fitBtn').onclick = () => { state.zoom = 1; render() }
+      document.getElementById('exitPdf').onclick = () => { state.pdfOpen = false; render() }
       document.getElementById('printBtn').onclick = () => showToast('会打开系统打印窗口，选打印机和份数后点“打印”。（原型示意）')
       document.getElementById('saveBtn').onclick = () => showToast('已保存：' + state.result.path)
       document.getElementById('openFolder').onclick = () => showToast('会在访达中打开“文稿/数学练习”。（原型示意）')
@@ -1163,10 +1154,37 @@
           body.innerHTML = `<div class="drawer-empty">还没有保存过卷子。<br />每出一次会自动记在这里。</div>`
           return
         }
-        body.innerHTML = state.history.map((h) => `<div class="history-item">
+        body.innerHTML = state.history.map((h, i) => `<div class="history-item">
           <b>${h.title}</b><small>${h.time} · ${h.count} 题 · ${h.pages} 页</small>
-          <div class="row-actions"><button class="secondary">再印一份</button><button class="linkbtn">打开 PDF</button></div>
+          <div class="row-actions">
+            <button class="secondary" data-h-action="open" data-i="${i}">打开</button>
+            <button class="secondary" data-h-action="reprint" data-i="${i}">再印一份</button>
+            <button class="linkbtn" data-h-action="del" data-i="${i}" style="color:#a33">删除</button>
+          </div>
         </div>`).join('')
+
+        body.querySelectorAll('[data-h-action]').forEach((b) => {
+          b.onclick = () => {
+            const i = Number(b.dataset.i)
+            const h = state.history[i]
+            if (b.dataset.hAction === 'del') {
+              state.history.splice(i, 1)
+              renderHistory()
+              showToast(`已删除「${h.title}」`)
+              return
+            }
+            if (b.dataset.hAction === 'reprint') {
+              showToast(`已按「${h.title}」的配置重新出卷（原型示意）`)
+              return
+            }
+            state.result = { count: h.count, pages: h.pages, minutes: h.count * 1, path: '文稿/数学练习/' + h.title + '.pdf', title: h.title }
+            state.built = true
+            historyDrawer.classList.remove('open')
+            scrim.classList.remove('open')
+            if (state.openMode === 'system') showToast('已用系统应用打开 PDF（原型示意）')
+            else { state.pdfOpen = true; state.zoom = 1; render() }
+          }
+        })
       }
 
       // ---------------- 初始视图（供截图与演示） ----------------
@@ -1178,6 +1196,7 @@
           state.result = { count: total(), pages: roughPages(), minutes: minutes(), path: '文稿/数学练习/三上-每日一练-20261105.pdf', title: '全部单元 · 每日一练' }
           state.history = [{ title: '全部单元 · 每日一练', time: '刚刚', count: total(), pages: roughPages() }]
         } else if (initialView === 'settings') {
+          renderSettingsChoices()
           settingsModal.classList.add('open'); scrim.classList.add('open')
         } else if (initialView === 'history') {
           state.history = [
@@ -1191,22 +1210,13 @@
           state.added.add('kousuan')
           state.preset = null
         } else if (initialView === 'addA-open') {
-          state.mode = 'A'
           state.units = new Set(['两步四则运算与应用题', '用一位数乘'])
           state.draft = new Set(state.added)
           state.panelOpen = true
         } else if (initialView === 'addA-collapsed') {
-          state.mode = 'A'
           state.counts.kousuan = 130
           state.added.add('kousuan')
           state.preset = null
-        } else if (initialView === 'addB-chips') {
-          state.mode = 'B'
-          state.adjustId = null
-        } else if (initialView === 'addB-panel') {
-          state.mode = 'B'
-          state.units = new Set(['两步四则运算与应用题', '用一位数乘'])
-          state.panelOpen = true
         } else if (initialView === 'custom') {
           state.counts.kousuan = 30
           state.preset = null
