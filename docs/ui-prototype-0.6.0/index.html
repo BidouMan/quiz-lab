@@ -76,7 +76,7 @@
 
       .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
       .preset {
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;
         min-height: 52px; padding: 8px 6px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: center;
       }
       .preset b { display: block; font-size: 13px; font-weight: 500; }
@@ -97,7 +97,13 @@
       }
       .group-head .arrow { font-size: 11px; color: var(--ink-3); width: 12px; }
       .group-head .name { font-size: 14px; font-weight: 600; color: var(--ink); }
-      .preset[aria-pressed='true'] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+      .preset[aria-pressed='true'] {
+        border: 2px solid var(--ink); background: #f2f2f2; box-shadow: inset 0 0 0 1px var(--ink);
+      }
+      .preset[aria-pressed='true']::before {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+        background: var(--ink); border-radius: 6px 0 0 6px;
+      }
 
       .type { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #eee; }
       .type:last-child { border-bottom: 0; }
@@ -475,6 +481,9 @@
           <div class="field"><span class="label">默认难度</span><span class="spacer"></span>
             <div class="seg" id="settingsLevels" style="width: 210px"><button data-level="L1">基础</button><button data-level="L2">标准</button><button data-level="L3">挑战</button></div>
           </div>
+          <div class="field"><span class="label">上次套餐</span><span class="note">决定重开后高亮哪张卡</span><span class="spacer"></span>
+            <b id="lastPresetLabel" style="font-size: 13px">每日一练</b>
+          </div>
         </section>
 
         <section class="setting-group">
@@ -484,6 +493,9 @@
           </div>
           <div class="field"><span class="label">清空出题记忆</span><span class="note">清空后新卷可能和旧卷重复</span><span class="spacer"></span>
             <button class="danger" id="clearMemory">清空</button>
+          </div>
+          <div class="field"><span class="label">恢复默认设置</span><span class="note">回到首次进入的状态</span><span class="spacer"></span>
+            <button class="secondary" id="restoreDefaults">恢复</button>
           </div>
         </section>
 
@@ -584,6 +596,7 @@
         level: 'L2',
         preset: 'daily',
         fromPreset: null,
+        lastPreset: null,
         restored: false,
         counts: {},
         added: new Set(),
@@ -616,6 +629,7 @@
         state.level = preset.level
         state.preset = id
         state.fromPreset = null
+        state.lastPreset = id
         state.restored = false
       }
 
@@ -624,6 +638,7 @@
           state.fromPreset = state.preset
           state.preset = null
         }
+        state.lastPreset = null
         state.restored = false
       }
 
@@ -805,6 +820,8 @@
         document.querySelectorAll('#settingsLevels button').forEach((b) => {
           b.setAttribute('aria-pressed', b.dataset.level === state.defaultLevel ? 'true' : 'false')
         })
+        const last = PRESETS.find((p) => p.id === state.lastPreset)
+        document.getElementById('lastPresetLabel').textContent = last ? last.name : '自定义'
       }
 
       function openAddPanel() {
@@ -1124,6 +1141,18 @@
       document.querySelectorAll('#settingsLevels button').forEach((b) => {
         b.onclick = () => { state.defaultLevel = b.dataset.level; renderSettingsChoices() }
       })
+      document.getElementById('restoreDefaults').onclick = () => {
+        state.units = new Set(UNITS)
+        applyPreset('daily')
+        state.built = false
+        state.result = null
+        state.status = null
+        state.pdfOpen = false
+        state.history = []
+        closeAll()
+        render()
+        showToast('已恢复默认设置')
+      }
       document.getElementById('cleanHistory').onclick = () => {
         state.history = []
         renderHistory()
@@ -1242,7 +1271,7 @@
       function applyInitialView() {
         const initialLevel = params.get('level')
         if (initialLevel && LEVEL_HELP[initialLevel]) state.level = initialLevel
-        if (initialView === 'main') {
+        if (initialView === 'main' || initialView === 'restart') {
           state.units = new Set(UNITS.slice(0, 5))
           applyPreset('weekend')
           state.restored = true
@@ -1277,6 +1306,7 @@
           state.counts.kousuan = 30
           state.preset = null
           state.fromPreset = 'daily'
+          state.lastPreset = null
         } else if (initialView === 'shortage') {
           state.counts.kousuan = 50
           state.counts.tiankong = 5
