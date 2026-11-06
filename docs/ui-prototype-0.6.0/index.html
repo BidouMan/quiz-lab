@@ -76,7 +76,7 @@
 
       .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
       .preset {
-        position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
         min-height: 52px; padding: 8px 6px; border: 1px solid #ddd; border-radius: 8px; background: #fff; text-align: center;
       }
       .preset b { display: block; font-size: 13px; font-weight: 500; }
@@ -97,13 +97,7 @@
       }
       .group-head .arrow { font-size: 11px; color: var(--ink-3); width: 12px; }
       .group-head .name { font-size: 14px; font-weight: 600; color: var(--ink); }
-      .preset[aria-pressed='true'] {
-        border: 2px solid var(--ink); background: #f2f2f2; box-shadow: inset 0 0 0 1px var(--ink);
-      }
-      .preset[aria-pressed='true']::before {
-        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-        background: var(--ink); border-radius: 6px 0 0 6px;
-      }
+      .preset[aria-pressed='true'] { border-color: var(--ink); }
 
       .type { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #eee; }
       .type:last-child { border-bottom: 0; }
