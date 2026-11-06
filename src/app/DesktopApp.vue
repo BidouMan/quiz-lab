@@ -44,7 +44,7 @@ import {
 import { readableNotes, shortageNote } from './wording'
 
 const MEMORY_KEY = 'quizlab:quiz-memory.v1'
-const APP_VERSION = '0.7.0-beta.1'
+const APP_VERSION = '0.7.0-beta.2'
 
 function loadMemory(): { store: MemoryStore; notice: string } {
   let raw: string | null = null

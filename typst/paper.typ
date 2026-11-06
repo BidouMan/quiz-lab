@@ -60,7 +60,11 @@
   },
 )
 
-#set text(font: ("Noto Serif CJK SC", "New Computer Modern"), size: body-size, lang: "zh", region: "cn")
+// 回退链：西文 → Noto Serif（带调拼音/拉丁扩展）→ Noto Serif CJK SC（汉字）→ New Computer Modern（兜底）。
+// 随包 CJK 子集缺全部 56 个带调码位与 ü/ê；若把它放第一位，同一串拼音会出现
+// “shu” 来自 CJK、“ǐ” 来自 Noto Serif 的混排（两字体拉丁宽度差 2–5%）。
+// 西文在前可让拼音整串同字体，汉字仍全部由 Noto Serif CJK SC 渲染，中文正文不变。
+#set text(font: ("Noto Serif", "Noto Serif CJK SC", "New Computer Modern"), size: body-size, lang: "zh", region: "cn")
 #set par(leading: line-gap, justify: true, spacing: par-space)
 
 // 块级公式左对齐、去掉上下默认间距；行内公式保持原位
