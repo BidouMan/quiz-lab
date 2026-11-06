@@ -989,7 +989,7 @@
         const levelText = { L1: '基础', L2: '标准', L3: '挑战' }[state.level]
         const active = PRESETS.find((p) => p.id === state.preset)
         const subtitle = active
-          ? `${state.restored ? '上次配置已恢复' : '默认配置'}：${unitText} · ${levelText}难度 · ${active.name}。可直接生成，也可先调整。`
+          ? `${state.restored ? '当前配置' : '默认配置'}：${unitText} · ${levelText}难度 · ${active.name}。可直接生成，也可先调整。`
           : `当前配置：${unitText} · ${levelText}难度 · 自定义 ${total()} 题。可直接生成，也可先调整。`
         stage.innerHTML = `<div class="empty-card">
           <h3>先出一份今天的练习</h3>
