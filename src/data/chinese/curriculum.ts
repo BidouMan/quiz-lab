@@ -38,13 +38,6 @@ const SRC_TABLE_CLEAN: SourceRef = {
   locator: '第 1–4 课·写字表/识字表（表格原文）',
 }
 
-/** 全册三表预览的 OCR 文本，有噪声，只用于交叉核对 */
-const SRC_TABLE_OCR: SourceRef = {
-  label: '学科网《识字表+写字表+词语表》2026-2027 统编版三上（预览 OCR）',
-  url: 'https://www.zxxk.com/soft/59411636.html',
-  locator: '识字表/写字表逐课条目',
-}
-
 /** 教师用书同步练习（基础达标·看拼音写词语等），用于核对课文词语 */
 const SRC_WORKBOOK: SourceRef = {
   label: '人教社教师用书配套练习（2026-09）逐课「基础达标」',
@@ -64,14 +57,6 @@ const v = (char: string, pinyin: string, table: 'renzi' | 'xiezi', sources: Sour
   status: 'verified',
   sources,
 })
-
-const p = (
-  char: string,
-  pinyin: string,
-  table: 'renzi' | 'xiezi',
-  sources: SourceRef[],
-  note: string,
-): ChineseChar => ({ char, pinyin, table, status: 'pending', sources, note })
 
 const wv = (word: string, sources: SourceRef[]): ChineseWord => ({
   word,
@@ -209,9 +194,6 @@ const U2_L4: ChineseLesson = {
     v('落', 'luò', 'xiezi', [SRC_TABLE_CLEAN]),
   ],
   renzi: [
-    p('磨', 'mò', 'renzi', [SRC_TABLE_OCR], '教辅 OCR 记为识字表；未与教材字表逐条核对'),
-    p('萧', 'xiāo', 'renzi', [SRC_TABLE_OCR], '教辅 OCR 记为识字表；未与教材字表逐条核对'),
-    p('促', 'cù', 'renzi', [SRC_TABLE_OCR], '教辅 OCR 记为识字表；未与教材字表逐条核对'),
   ],
   words: [],
   poems: [
@@ -252,7 +234,7 @@ const U2_L4: ChineseLesson = {
       ],
     ),
   ],
-  note: '教材把三首古诗编为第 4 课；诗题与作者按教材，正文按通行本。',
+  note: '教材把三首古诗编为第 4 课；诗题与作者按教材，正文按通行本。识字表 3 字无可靠来源，已撤出。',
 }
 
 const U2_L5: ChineseLesson = {
@@ -261,28 +243,11 @@ const U2_L5: ChineseLesson = {
   title: '铺满金色巴掌的水泥道',
   kind: '精读',
   xiezi: [
-    p('朗', 'lǎng', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('晶', 'jīng', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('珠', 'zhū', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('粘', 'zhān', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('印', 'yìn', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('案', 'àn', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('展', 'zhǎn', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('规', 'guī', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('则', 'zé', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('凌', 'líng', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('乱', 'luàn', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
   ],
   renzi: [
-    p('洼', 'wā', 'renzi', [SRC_TEXTBOOK_TEXT, SRC_TABLE_OCR], '教材正文有注音；字表条目未核对'),
-    p('毯', 'tǎn', 'renzi', [SRC_TEXTBOOK_TEXT], '教材正文有注音；字表条目未核对'),
-    p('熨', 'yù', 'renzi', [SRC_TEXTBOOK_TEXT], '教材正文有注音；字表条目未核对'),
-    p('增', 'zēng', 'renzi', [SRC_TEXTBOOK_TEXT, SRC_TABLE_OCR], '教材正文有注音；字表条目未核对'),
-    p('棕', 'zōng', 'renzi', [SRC_TEXTBOOK_TEXT, SRC_TABLE_OCR], '教材正文有注音；字表条目未核对'),
-    p('靴', 'xuē', 'renzi', [SRC_TEXTBOOK_TEXT, SRC_TABLE_OCR], '教材正文有注音；字表条目未核对'),
   ],
   words: [],
-  note: '识字表候选含「粘/印/凌」，与写字表重叠，需教材原书确认归属。',
+  note: '无可靠来源：字表条目只来自教辅 OCR 且有重叠，本课暂不出题。',
 }
 
 const U2_L6: ChineseLesson = {
@@ -291,27 +256,11 @@ const U2_L6: ChineseLesson = {
   title: '秋天的雨',
   kind: '精读',
   xiezi: [
-    p('凉', 'liáng', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('杏', 'xìng', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('枚', 'méi', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('邮', 'yóu', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('爽', 'shuǎng', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('挤', 'jǐ', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('争', 'zhēng', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('菊', 'jú', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('频', 'pín', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('勾', 'gōu', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
-    p('挖', 'wā', 'xiezi', [SRC_TABLE_OCR], '写字表 OCR 有噪声，未与教材核对'),
   ],
   renzi: [
-    p('钥', 'yào', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('匙', 'shi', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('缤', 'bīn', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('橘', 'jú', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('梨', 'lí', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
   ],
   words: [wv('钥匙', [SRC_TEXTBOOK_TEXT])],
-  note: '「枚/邮/爽/频」在识字表与写字表 OCR 中重复出现，归属待核。',
+  note: '无可靠来源：字表条目只来自教辅 OCR 且识字/写字归属冲突，本课暂不出题。',
 }
 
 const U2_L7: ChineseLesson = {
@@ -321,18 +270,9 @@ const U2_L7: ChineseLesson = {
   kind: '略读',
   xiezi: [],
   renzi: [
-    p('抖', 'dǒu', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('蟋', 'xī', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('蟀', 'shuài', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('振', 'zhèn', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('韵', 'yùn', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('掠', 'lüè', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('吟', 'yín', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('辽', 'liáo', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
-    p('阔', 'kuò', 'renzi', [SRC_TABLE_OCR], '识字表 OCR 有噪声，未与教材核对'),
   ],
   words: [],
-  note: '略读课只有识字表。',
+  note: '无可靠来源；略读课只有识字表。本课暂不出题。',
 }
 
 const U1: ChineseUnit = {

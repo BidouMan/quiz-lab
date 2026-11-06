@@ -29,20 +29,22 @@ test('语文三上：略读课不出写字表', () => {
   }
 })
 
-test('语文三上：每条已核实字词都有来源与拼音', () => {
+test('语文三上：可出题数据集只允许 verified，且每条都有来源与拼音', () => {
   for (const unit of chineseUnits) {
     for (const lesson of unit.lessons) {
       for (const c of [...lesson.renzi, ...lesson.xiezi]) {
         assert.ok(c.char.length === 1, `${lesson.lessonId} 单字异常：${c.char}`)
+        assert.equal(c.status, 'verified', `${lesson.lessonId} ${c.char} 仍为 pending`)
         assert.ok(c.sources.length > 0, `${lesson.lessonId} ${c.char} 缺来源`)
-        if (c.status === 'verified') {
-          assert.ok(c.pinyin.length > 0, `${lesson.lessonId} ${c.char} 已核实但没有拼音`)
-        } else {
-          assert.ok(c.note, `${lesson.lessonId} ${c.char} 待核实但没写原因`)
-        }
+        assert.ok(c.pinyin.length > 0, `${lesson.lessonId} ${c.char} 缺拼音`)
       }
       for (const w of lesson.words) {
+        assert.equal(w.status, 'verified', `${lesson.lessonId} ${w.word} 仍为 pending`)
         assert.ok(w.sources.length > 0, `${lesson.lessonId} ${w.word} 缺来源`)
+      }
+      for (const poem of lesson.poems ?? []) {
+        assert.equal(poem.status, 'verified', `${lesson.lessonId} ${poem.title} 仍为 pending`)
+        assert.ok(poem.sources.length > 0, `${lesson.lessonId} ${poem.title} 缺来源`)
       }
     }
   }
@@ -72,6 +74,7 @@ test('语文三上：第 1–2 单元已核实素材可出题', () => {
   assert.equal(u1.renzi, 15)
   assert.ok(u1.words >= 12)
   assert.equal(u2.xiezi, 11)
-  assert.ok(u2.words >= 3)
+  // 1 条词语（钥匙）+ 3 首古诗
+  assert.equal(u2.words, 4)
   assert.equal(CHINESE_CURRICULUM_3A.units[1].lessons[0].poems?.length, 3)
 })
