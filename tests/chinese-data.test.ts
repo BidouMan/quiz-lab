@@ -67,6 +67,21 @@ test('语文三上：题型元数据覆盖 A/B/C 三档', () => {
   }
 })
 
+test('语文三上：第 20 课三首古诗有据且可默写', () => {
+  const u7 = chineseUnits[6]
+  const l20 = u7.lessons[0]
+  assert.equal(l20.no, 20)
+  assert.equal(l20.poems?.length, 3)
+  assert.deepEqual(
+    l20.poems?.map((p) => p.title),
+    ['望天门山', '饮湖上初晴后雨', '鹿柴'],
+  )
+  for (const poem of l20.poems ?? []) {
+    assert.equal(poem.status, 'verified')
+    assert.equal(poem.lines.length, 2)
+  }
+})
+
 test('语文三上：第 1–2 单元已核实素材可出题', () => {
   const u1 = countVerified(chineseUnits[0])
   const u2 = countVerified(chineseUnits[1])

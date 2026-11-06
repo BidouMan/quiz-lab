@@ -395,18 +395,58 @@ const U6: ChineseUnit = {
   extra: { label: '快乐读书吧：格林童话', status: 'pending' },
 }
 
+const U7_L20: ChineseLesson = {
+  lessonId: '3A-U7-L20',
+  no: 20,
+  title: '古诗三首',
+  kind: '精读',
+  xiezi: [],
+  renzi: [],
+  words: [],
+  poems: [
+    pv(
+      {
+        title: '望天门山',
+        author: '李白',
+        dynasty: '唐',
+        lines: ['天门中断楚江开，碧水东流至此回。', '两岸青山相对出，孤帆一片日边来。'],
+      },
+      [{ label: '教师用书·第 20 课「发展提升」阅读古诗（一）（二）', locator: '题干引用与原文' }],
+    ),
+    pv(
+      {
+        title: '饮湖上初晴后雨',
+        author: '苏轼',
+        dynasty: '宋',
+        lines: ['水光潋滟晴方好，山色空蒙雨亦奇。', '欲把西湖比西子，淡妆浓抹总相宜。'],
+      },
+      [{ label: '教师用书·第 20 课「发展提升」阅读古诗（三）', locator: '原文完整给出' }],
+    ),
+    pv(
+      {
+        title: '鹿柴',
+        author: '王维',
+        dynasty: '唐',
+        lines: ['空山不见人，但闻人语响。', '返景入深林，复照青苔上。'],
+      },
+      [{ label: '教师用书·第 20 课「发展提升」阅读古诗（一）', locator: '原文完整给出' }],
+    ),
+  ],
+  note: '三首篇目由教师用书原文确认；写字表无可靠来源，本课只出古诗默写。',
+}
+
 const U7: ChineseUnit = {
   unitId: '3A-U7',
   unitName: '第七单元',
   theme: '走近自然',
   lessons: [
-    stub('3A-U7', 20, '古诗三首', '精读', STUB_NOTE),
+    U7_L20,
     stub('3A-U7', 21, '大自然的声音', '精读', STUB_NOTE),
     stub('3A-U7', 22, '读不完的大书', '精读', STUB_NOTE),
   ],
   availableTypes: [...WORD_TYPES, 'gushi'],
   writing: { label: '习作（篇目待核）', status: 'pending', sources: [SRC_CURRICULUM] },
-  note: '第 20 课三首古诗篇目待核（望天门山、饮湖上初晴后雨已见教师用书，第三首未定）。',
+  note: '第 20 课三首古诗（望天门山/饮湖上初晴后雨/鹿柴）已由教师用书原文确认，可出默写；其余两课无可靠字词来源。',
 }
 
 const U8: ChineseUnit = {
