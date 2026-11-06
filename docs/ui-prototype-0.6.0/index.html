@@ -239,11 +239,14 @@
       .sheet .grid1 { font-size: 14px; }
       .sheet .blank { color: #777; }
       .sheet .line { height: 26px; border-bottom: 1px solid #ddd; }
-      .empty-card { width: 560px; min-height: 420px; background: #fff; border: 1px dashed #ccc; border-radius: 10px; padding: 48px 40px; text-align: center; align-self: center; }
+      .empty-card { width: 600px; min-height: 420px; background: #fff; border: 1px dashed #ccc; border-radius: 10px; padding: 48px 40px; text-align: center; align-self: center; }
       .empty-card h3 { margin: 0 0 8px; font-size: 20px; font-weight: 600; }
-      .empty-card p { margin: 0 0 24px; font-size: 13px; color: var(--ink-3); }
+      .empty-card p { margin: 0 0 24px; font-size: 13px; color: var(--ink-3); white-space: nowrap; }
       .empty-actions { display: flex; gap: 10px; justify-content: center; }
-      .empty-actions .preset { text-align: center; min-width: 118px; }
+      .empty-actions .preset { text-align: center; min-width: 132px; }
+      .preset em { display: block; margin-top: 3px; font-size: 10px; font-style: normal; color: #999; }
+      .empty-summary { margin-top: 14px; font-size: 12px; color: var(--ink-2); }
+      .empty-summary.custom { color: var(--ink-3); }
       .skeleton { width: 560px; min-height: 792px; background: #fff; box-shadow: 0 2px 16px rgba(0,0,0,.10); padding: 42px 46px; }
       .skeleton .s { height: 12px; background: #efefef; border-radius: 3px; margin-bottom: 12px; }
       .skeleton .s.short { width: 40%; }
@@ -581,6 +584,7 @@
         level: 'L2',
         preset: 'daily',
         fromPreset: null,
+        restored: false,
         counts: {},
         added: new Set(),
         panelOpen: false,
@@ -612,6 +616,7 @@
         state.level = preset.level
         state.preset = id
         state.fromPreset = null
+        state.restored = false
       }
 
       function markCustom() {
@@ -619,6 +624,7 @@
           state.fromPreset = state.preset
           state.preset = null
         }
+        state.restored = false
       }
 
       function countOn(id) { return state.added.has(id) }
@@ -781,7 +787,7 @@
         document.getElementById('levelHelp').textContent = LEVEL_HELP[state.level]
         document.querySelectorAll('#levels button').forEach((b) => {
           b.setAttribute('aria-pressed', b.dataset.level === state.level ? 'true' : 'false')
-          b.onclick = () => { state.level = b.dataset.level; state.built = false; render() }
+          b.onclick = () => { state.level = b.dataset.level; state.restored = false; state.built = false; render() }
         })
       }
 
@@ -968,17 +974,25 @@
           }
           return
         }
+        const unitText = state.units.size === UNITS.length ? '全部单元' : `${state.units.size} 个单元`
+        const levelText = { L1: '基础', L2: '标准', L3: '挑战' }[state.level]
+        const active = PRESETS.find((p) => p.id === state.preset)
+        const subtitle = active
+          ? `${state.restored ? '上次配置已恢复' : '默认配置'}：${unitText} · ${levelText}难度 · ${active.name}。可直接生成，也可先调整。`
+          : `当前配置：${unitText} · ${levelText}难度 · 自定义 ${total()} 题。可直接生成，也可先调整。`
         stage.innerHTML = `<div class="empty-card">
           <h3>先出一份今天的练习</h3>
-          <p>默认配置：全部单元 · 标准难度 · 每日一练。可直接生成，也可先调整。</p>
+          <p>${subtitle}</p>
           <div class="empty-actions">
-            <button class="preset" data-preset="daily"><b>每日一练</b><small>28 题</small></button>
-            <button class="preset" data-preset="quiz"><b>单元小测</b><small>24 题</small></button>
-            <button class="preset" data-preset="weekend"><b>周末加练</b><small>58 题</small></button>
+            ${PRESETS.map((p) => {
+              const count = Object.values(p.values).reduce((sum, n) => sum + n, 0)
+              return `<button class="preset" data-preset="${p.id}" aria-pressed="${state.preset === p.id}"><b>${p.name}</b><small>${count} 题</small><em>点击直接生成</em></button>`
+            }).join('')}
           </div>
+          <div class="empty-summary${active ? '' : ' custom'}">${active ? `${active.name} · ${total()} 题 · ${levelText}难度` : `自定义 · ${total()} 题`}</div>
         </div>`
         stage.querySelectorAll('[data-preset]').forEach((b) => {
-          b.onclick = () => { applyPreset(b.dataset.preset); render() }
+          b.onclick = () => { applyPreset(b.dataset.preset); build() }
         })
       }
 
@@ -1228,7 +1242,11 @@
       function applyInitialView() {
         const initialLevel = params.get('level')
         if (initialLevel && LEVEL_HELP[initialLevel]) state.level = initialLevel
-        if (initialView === 'result') {
+        if (initialView === 'main') {
+          state.units = new Set(UNITS.slice(0, 5))
+          applyPreset('weekend')
+          state.restored = true
+        } else if (initialView === 'result') {
           state.built = true
           if (params.get('detail') === '1') setTimeout(openDetail, 0)
           state.result = { count: total(), pages: roughPages(), minutes: minutes(), path: '文稿/数学练习/三上-每日一练-20261105.pdf', title: '全部单元 · 每日一练' }
@@ -1273,6 +1291,9 @@
         } else if (initialView === 'empty') {
           state.built = false
           state.result = null
+          state.units = new Set(UNITS)
+          state.restored = false
+          applyPreset('daily')
         }
       }
 
