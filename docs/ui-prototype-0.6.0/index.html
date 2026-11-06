@@ -26,6 +26,9 @@
         -webkit-font-smoothing: antialiased;
       }
       button, input, select { font-family: inherit; color: inherit; }
+      button, .chip, .tool, .ghost, .type-chip, .preset, .seg button, .mode-switch button {
+        white-space: nowrap; flex-shrink: 0;
+      }
       button { cursor: pointer; }
 
       .app { height: 100vh; display: grid; grid-template-rows: 56px 1fr; grid-template-columns: 348px 1fr; }
@@ -33,14 +36,14 @@
       /* ---------- 顶部 ---------- */
       .top {
         grid-column: 1 / -1;
-        display: flex; align-items: center; gap: 16px;
-        padding: 0 20px; background: var(--bg); border-bottom: 1px solid var(--line);
+        display: flex; flex-wrap: nowrap; align-items: center; gap: 16px;
+        padding: 0 20px; background: var(--bg); border-bottom: 1px solid var(--line); white-space: nowrap;
       }
-      .brand { display: flex; align-items: baseline; gap: 10px; }
-      .brand b { font-size: 17px; letter-spacing: .02em; }
-      .brand span { font-size: 12px; color: var(--ink-3); }
-      .grade { font-size: 12px; color: var(--ink-2); padding-left: 16px; border-left: 1px solid var(--line); }
-      .top .spacer { flex: 1; }
+      .brand { display: flex; align-items: baseline; gap: 10px; flex: none; white-space: nowrap; }
+      .brand b { font-size: 17px; letter-spacing: .02em; white-space: nowrap; }
+      .brand span { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+      .grade { font-size: 12px; color: var(--ink-2); padding-left: 16px; border-left: 1px solid var(--line); flex: none; white-space: nowrap; }
+      .top .spacer { flex: 1; min-width: 0; }
       .ghost {
         height: 32px; padding: 0 12px; font-size: 13px; border: 1px solid var(--line);
         background: #fff; border-radius: 6px; color: var(--ink);
@@ -59,7 +62,7 @@
       .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
       .chip {
         height: 32px; padding: 0 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 6px;
-        background: #fff; color: var(--ink); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        background: #fff; color: var(--ink); text-align: left;
       }
       .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: #fff; }
       .chip:hover { border-color: var(--ink); }
@@ -126,8 +129,6 @@
       }
       .add-main:hover { border-color: var(--ink); color: var(--ink); }
       .type-empty { padding: 8px 0 4px; font-size: 12px; color: var(--ink-3); }
-      .remove { width: 24px; height: 24px; border: 0; border-radius: 4px; background: none; color: #999; font-size: 15px; line-height: 1; }
-      .remove:hover { background: #f2f2f2; color: var(--err); }
       .type-chips { display: flex; flex-wrap: wrap; gap: 8px; }
       .type-chip {
         display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
@@ -191,10 +192,11 @@
       /* ---------- 右栏 ---------- */
       .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
       .preview-bar {
-        flex: none; height: 44px; display: flex; align-items: center; gap: 10px;
+        flex: none; height: 44px; display: flex; flex-wrap: nowrap; align-items: center; gap: 10px;
         padding: 0 20px; font-size: 12px; color: var(--ink-2); background: #fafafa; border-bottom: 1px solid var(--line);
       }
-      .preview-bar .spacer { flex: 1; }
+      .preview-bar .spacer { flex: 1; min-width: 0; }
+      #pageLabel { white-space: nowrap; flex: none; }
       .tool { height: 26px; padding: 0 10px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
       .tool:disabled { color: #bbb; border-color: #eee; cursor: default; }
       .stage { flex: 1; overflow: auto; padding: 24px; display: flex; align-items: flex-start; justify-content: center; }
@@ -219,7 +221,7 @@
       .figure b { display: block; font-size: 24px; font-weight: 600; line-height: 1.1; }
       .figure small { font-size: 12px; color: var(--ink-3); }
       .rc-side { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 6px; }
-      .path { font-size: 12px; color: var(--ink-3); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .path { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
       .row-actions { display: flex; gap: 8px; }
       .secondary {
         height: 34px; padding: 0 16px; font-size: 13px; border: 1px solid #bbb; border-radius: 6px; background: #fff;
@@ -306,6 +308,10 @@
       }
       .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+      @media (max-width: 1120px) {
+        .brand span, .grade, .top .readonly { display: none; }
+        .top { gap: 10px; padding: 0 14px; }
+      }
       @media (max-width: 1040px) {
         .app { grid-template-columns: 320px 1fr; }
         .figures { gap: 16px; }
@@ -479,6 +485,10 @@
         '两步四则运算与应用题', '用一位数乘', '三角形与四边形',
         '用一位数除', '年、月、日的秘密', '周长', '马拉松的路线设计',
       ]
+      const UNIT_LABEL = {
+        '两步四则运算与应用题': '两步应用题',
+        '马拉松的路线设计': '马拉松路线',
+      }
 
       const TYPES = [
         { id: 'kousuan', group: '计算题', label: '口算', desc: '看算式直接写得数', def: 20, available: 120, cost: 0.02 },
@@ -594,7 +604,8 @@
         UNITS.forEach((name) => {
           const b = document.createElement('button')
           b.className = 'chip'
-          b.textContent = name
+          b.textContent = UNIT_LABEL[name] || name
+          b.title = name
           b.setAttribute('aria-pressed', state.units.has(name) ? 'true' : 'false')
           b.onclick = () => {
             if (state.units.has(name)) state.units.delete(name)
@@ -649,16 +660,6 @@
         return { ok: true, note: '' }
       }
 
-      function removeType(id) {
-        state.counts[id] = 0
-        state.added.delete(id)
-        if (state.adjustId === id) state.adjustId = null
-        markCustom()
-        state.built = false
-        state.result = null
-        render()
-      }
-
       function selectedRow(t) {
         const wrap = document.createElement('div')
         wrap.className = 'type-wrap'
@@ -669,12 +670,7 @@
         name.textContent = t.label
         const spacer = document.createElement('span')
         spacer.className = 'spacer'
-        const rm = document.createElement('button')
-        rm.className = 'remove'
-        rm.textContent = '×'
-        rm.title = `移除${t.label}`
-        rm.onclick = () => removeType(t.id)
-        row.append(name, spacer, stepper(t.id), rm)
+        row.append(name, spacer, stepper(t.id))
         wrap.appendChild(row)
         if (state.counts[t.id] > t.available) {
           const hint = document.createElement('div')
@@ -735,14 +731,7 @@
             box.className = 'chip-adjust'
             const label = document.createElement('span')
             label.textContent = `「${t.label}」每份`
-            const spacer = document.createElement('span')
-            spacer.className = 'spacer'
-            const rm = document.createElement('button')
-            rm.className = 'remove'
-            rm.textContent = '×'
-            rm.title = `移除${t.label}`
-            rm.onclick = () => removeType(t.id)
-            box.append(label, stepper(t.id), spacer, rm)
+            box.append(label, stepper(t.id))
             typesEl.appendChild(box)
           }
         }
