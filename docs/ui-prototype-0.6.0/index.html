@@ -134,6 +134,7 @@
       .add-search { width: 100%; height: 34px; margin-top: 8px; padding: 0 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
       .add-search::placeholder { color: #aaa; }
       .group-title { margin: 16px 0 4px; font-size: 12px; color: var(--ink-3); }
+      .group-hint { color: #aaa; }
       .add-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px dashed #eee; }
       .add-item:last-child { border-bottom: 0; }
       .add-item.disabled { opacity: .5; }
@@ -316,13 +317,13 @@
       <aside class="side">
         <div class="side-scroll">
           <section class="block">
-            <h2>① 练什么</h2>
+            <h2>① 单元选择</h2>
             <div class="range-line"><span>范围：<b id="rangeSummary">全部 7 个单元</b></span><button class="linkbtn" id="toggleAll">全不选</button></div>
             <div class="chips" id="units"></div>
           </section>
 
           <section class="block">
-            <h2>② 怎么练</h2>
+            <h2>② 题型设置</h2>
             <div class="seg" id="levels">
               <button data-level="L1">基础</button>
               <button data-level="L2">标准</button>
@@ -463,20 +464,24 @@
       ]
 
       const TYPES = [
-        { id: 'kousuan', group: '计算类', label: '口算', desc: '看算式直接写得数', def: 20, available: 120, cost: 0.02 },
-        { id: 'chushi', group: '计算类', label: '竖式计算', desc: '列竖式算乘除法', def: 6, available: 150, cost: 0.06, needs: ['用一位数乘', '用一位数除'], topic: '竖式计算的内容' },
-        { id: 'tuoshi', group: '计算类', label: '递等式计算', desc: '按顺序一步步算', def: 6, available: 120, cost: 0.06, needs: ['两步四则运算与应用题'], topic: '两步计算的内容' },
-        { id: 'jianbian', group: '计算类', label: '简便运算', desc: '找规律，把算式算得更快', def: 4, available: 80, cost: 0.06, needs: ['两步四则运算与应用题'], topic: '简便运算的内容' },
-        { id: 'tiankong', group: '概念类', label: '填空', desc: '补上缺的数字或单位', def: 5, available: 90, cost: 0.06 },
-        { id: 'judge', group: '概念类', label: '判断题', desc: '判断对错，并说明理由', def: 4, available: 50, cost: 0.06 },
-        { id: 'choice', group: '概念类', label: '选择题', desc: '从几个答案里选一个', def: 4, available: 50, cost: 0.08 },
-        { id: 'compare', group: '概念类', label: '比大小', desc: '在方框里填 >、< 或 =', def: 4, available: 40, cost: 0.06, needs: ['用一位数乘', '用一位数除'], topic: '比大小的内容' },
-        { id: 'geom', group: '图形与综合', label: '图形与周长', desc: '数图形，算周长', def: 4, available: 30, cost: 0.2, needs: ['三角形与四边形', '周长'], topic: '图形或周长的内容' },
-        { id: 'lieshi', group: '图形与综合', label: '列式计算', desc: '根据文字列算式', def: 4, available: 40, cost: 0.12, needs: ['两步四则运算与应用题', '用一位数乘', '用一位数除'], topic: '列式计算的内容' },
-        { id: 'advanced', group: '图形与综合', label: '拓展题', desc: '多一步的思考题，每题留 3–4 行', def: 3, available: 20, cost: 0.2, needs: ['年、月、日的秘密', '马拉松的路线设计'], topic: '拓展题的内容' },
-        { id: 'word', group: '应用', label: '应用题', desc: '读题、列式、写答句', def: 3, available: 60, cost: 0.08 },
+        { id: 'kousuan', group: '计算题', label: '口算', desc: '看算式直接写得数', def: 20, available: 120, cost: 0.02 },
+        { id: 'chushi', group: '计算题', label: '竖式', desc: '列竖式算乘除法', def: 6, available: 150, cost: 0.06, needs: ['用一位数乘', '用一位数除'], topic: '竖式计算的内容' },
+        { id: 'tuoshi', group: '计算题', label: '递等式', desc: '按顺序一步步算', def: 6, available: 120, cost: 0.06, needs: ['两步四则运算与应用题'], topic: '两步计算的内容' },
+        { id: 'jianbian', group: '计算题', label: '简便运算', desc: '找规律，把算式算得更快', def: 4, available: 80, cost: 0.06, needs: ['两步四则运算与应用题'], topic: '简便运算的内容' },
+        { id: 'tiankong', group: '填一填、选一选', label: '填空', desc: '补上缺的数字或单位', def: 5, available: 90, cost: 0.06 },
+        { id: 'compare', group: '填一填、选一选', label: '比大小', desc: '在方框里填 >、< 或 =', def: 4, available: 40, cost: 0.06, needs: ['用一位数乘', '用一位数除'], topic: '比大小的内容' },
+        { id: 'judge', group: '填一填、选一选', label: '判断题', desc: '判断对错，并说明理由', def: 4, available: 50, cost: 0.06 },
+        { id: 'choice', group: '填一填、选一选', label: '选择题', desc: '从几个答案里选一个', def: 4, available: 50, cost: 0.08 },
+        { id: 'geom', group: '综合应用', label: '图形与周长', desc: '数图形，算周长', def: 4, available: 30, cost: 0.2, needs: ['三角形与四边形', '周长'], topic: '图形或周长的内容' },
+        { id: 'lieshi', group: '综合应用', label: '列式计算', desc: '根据文字列算式', def: 4, available: 40, cost: 0.12, needs: ['两步四则运算与应用题', '用一位数乘', '用一位数除'], topic: '列式计算的内容' },
+        { id: 'word', group: '综合应用', label: '应用题', desc: '读题、列式、写答句', def: 3, available: 60, cost: 0.08 },
+        { id: 'advanced', group: '综合应用', label: '拓展题', desc: '多一步的思考题，每题留 3–4 行', def: 3, available: 20, cost: 0.2, needs: ['年、月、日的秘密', '马拉松的路线设计'], topic: '拓展题的内容' },
       ]
-      const GROUPS = ['计算类', '概念类', '图形与综合', '应用']
+      const GROUPS = [
+        { name: '计算题', hint: '写出得数' },
+        { name: '填一填、选一选', hint: '不写算式，只填或选' },
+        { name: '综合应用', hint: '先看懂题或图，再作答' },
+      ]
       const SHORT_UNIT = {
         '两步四则运算与应用题': '两步四则',
         '用一位数乘': '乘法',
@@ -824,11 +829,15 @@
         }
         const q = state.search.trim()
         GROUPS.forEach((group) => {
-          const items = TYPES.filter((t) => t.group === group && (!q || t.label.includes(q) || t.desc.includes(q)))
+          const items = TYPES.filter((t) => t.group === group.name && (!q || t.label.includes(q) || t.desc.includes(q)))
           if (!items.length) return
           const title = document.createElement('div')
           title.className = 'group-title'
-          title.textContent = group
+          title.textContent = group.name
+          const hint = document.createElement('span')
+          hint.className = 'group-hint'
+          hint.textContent = ` · ${group.hint}`
+          title.appendChild(hint)
           body.appendChild(title)
           items.forEach((t) => {
             const av = availability(t)
