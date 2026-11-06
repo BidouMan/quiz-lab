@@ -2345,7 +2345,7 @@ dependencies = [
 
 [[package]]
 name = "quizlab"
-version = "0.6.0-beta.1"
+version = "0.7.0-beta.1"
 dependencies = [
  "base64 0.22.1",
  "serde",

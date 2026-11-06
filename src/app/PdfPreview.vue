@@ -5,7 +5,9 @@ import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
 
-const props = defineProps<{ data: Uint8Array | null }>()
+const props = withDefaults(defineProps<{ data: Uint8Array | null; emptyText?: string }>(), {
+  emptyText: '尚未生成试卷',
+})
 const emit = defineEmits<{ loaded: [pages: number] }>()
 
 const stageEl = ref<HTMLElement | null>(null)
@@ -94,7 +96,9 @@ async function loadPdf() {
 
   loading.value = true
   try {
-    const document = await pdfjs.getDocument({ data: props.data }).promise
+    // pdf.js 会把 data 的底层 ArrayBuffer transfer 给 worker；这里传副本，
+    // 保证组件卸载后重新挂载（如切换科目）仍能用同一份 props.data 再次加载
+    const document = await pdfjs.getDocument({ data: new Uint8Array(props.data) }).promise
     doc.value = document
     totalPages.value = document.numPages
     updateFitScale()
@@ -168,7 +172,7 @@ onBeforeUnmount(() => {
       <div v-if="data && !error" class="sheet">
         <canvas ref="canvasEl"></canvas>
       </div>
-      <div v-if="!data" class="empty">尚未生成试卷</div>
+      <div v-if="!data" class="empty">{{ props.emptyText }}</div>
       <div v-if="loading" class="float">正在加载 PDF…</div>
       <div v-if="error" class="error">
         <p class="error-title">预览失败</p>

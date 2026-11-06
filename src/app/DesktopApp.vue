@@ -16,6 +16,7 @@ import {
   savePdfAs,
 } from './api'
 import ParamsPanel from './ParamsPanel.vue'
+import ChinesePanel from './ChinesePanel.vue'
 import PdfPreview from './PdfPreview.vue'
 import { buildPaper, defaultUnitIds, migrateCounts, migrateLegacyCounts, panelUnits, typeVisibleInGrade } from './paperBuilder'
 import {
@@ -28,6 +29,7 @@ import {
   type Preset,
 } from './presets'
 import { TYPE_OPTIONS, TYPE_ORDER } from './typstData'
+import { PLACEHOLDER_TEXT, SUBJECTS, type SubjectId } from './subjects'
 import {
   clampTypeCount,
   DEFAULT_CONFIG,
@@ -42,7 +44,7 @@ import {
 import { readableNotes, shortageNote } from './wording'
 
 const MEMORY_KEY = 'quizlab:quiz-memory.v1'
-const APP_VERSION = '0.6.0-beta.1'
+const APP_VERSION = '0.7.0-beta.1'
 
 function loadMemory(): { store: MemoryStore; notice: string } {
   let raw: string | null = null
@@ -117,6 +119,24 @@ const restored = ref(false)
 const settingsOpen = ref(false)
 const detailOpen = ref(false)
 const historyOpen = ref(false)
+
+/** 科目切换只在本次运行内保留；数学配置与已生成的卷子都留在原位，不受切换影响 */
+const subject = ref<SubjectId>('math')
+const chineseNotice = ref('')
+const subjectMeta = computed(() => SUBJECTS.find((item) => item.id === subject.value) ?? SUBJECTS[0])
+const chinesePreviewText = computed(() =>
+  chineseNotice.value ? '占位 · 语文练习卷尚未接入' : PLACEHOLDER_TEXT,
+)
+
+function switchSubject(id: SubjectId) {
+  if (id === subject.value) return
+  subject.value = id
+  if (id === 'chinese') chineseNotice.value = ''
+}
+
+function onChineseGenerate() {
+  chineseNotice.value = '占位提示：语文出卷尚未接入，本版本不会调用排版程序，也不会生成 PDF。'
+}
 
 interface HistoryItem {
   title: string
@@ -482,8 +502,18 @@ onBeforeUnmount(() => {
   <div class="app">
     <header class="top">
       <div class="brand">
-        <b>数学每日一练</b>
-        <span class="grade">三年级上册 · 沪教版</span>
+        <b>每日一练</b>
+        <span class="grade">{{ subjectMeta.subtitle }}</span>
+      </div>
+      <div class="subjects" role="group" aria-label="科目">
+        <button
+          v-for="item in SUBJECTS"
+          :key="item.id"
+          :aria-pressed="subject === item.id"
+          @click="switchSubject(item.id)"
+        >
+          {{ item.label }}
+        </button>
       </div>
       <span class="spacer" />
       <button class="ghost" @click="historyOpen = true; settingsOpen = false">历史卷</button>
@@ -492,15 +522,18 @@ onBeforeUnmount(() => {
 
     <aside class="side">
       <ParamsPanel
+        v-if="subject === 'math'"
         :config="config"
         :template="template"
         :page-estimate="actualPages"
         @generate="generate"
         @touch="markTouched"
       />
+      <ChinesePanel v-else @generate="onChineseGenerate" />
     </aside>
 
     <main class="main">
+      <template v-if="subject === 'math'">
       <div v-if="combinedNotice" class="status">
         <i class="dot" />
         <span class="status-text">{{ combinedNotice }}</span>
@@ -581,6 +614,19 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
+      </template>
+
+      <template v-else>
+        <section class="ph-panel">
+          <span class="ph-badge">{{ PLACEHOLDER_TEXT }}</span>
+          <h3>语文练习卷尚未接入</h3>
+          <p>单元、题型与预设已按数学页面的结构留位，接入教材后即可替换。</p>
+          <p v-if="chineseNotice" class="ph-tip">{{ chineseNotice }}</p>
+        </section>
+        <div class="preview-wrap">
+          <PdfPreview :data="null" :empty-text="chinesePreviewText" />
+        </div>
+      </template>
     </main>
 
     <Teleport to="body">
@@ -715,6 +761,30 @@ onBeforeUnmount(() => {
   padding-left: 12px;
   border-left: 1px solid #e3e3e3;
   flex: none;
+}
+.subjects {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+.subjects button {
+  font: inherit;
+  font-size: 13px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.subjects button:hover {
+  border-color: #999;
+}
+.subjects button[aria-pressed='true'] {
+  border-color: #111;
+  font-weight: 600;
 }
 .top .spacer {
   flex: 1;
@@ -955,6 +1025,38 @@ onBeforeUnmount(() => {
   min-height: 0;
   min-width: 0;
   display: flex;
+}
+.ph-panel {
+  flex: none;
+  margin: 20px;
+  padding: 16px 20px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  background: #fff;
+}
+.ph-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  font-size: 11px;
+  color: #777;
+}
+.ph-panel h3 {
+  margin: 10px 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+}
+.ph-panel p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #666;
+}
+.ph-panel .ph-tip {
+  margin-top: 8px;
+  color: #111;
 }
 .empty-stage {
   flex: 1;
