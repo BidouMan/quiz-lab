@@ -50,7 +50,7 @@ const isValidPair = (relation: GuanlianRelation, combo: string[]): boolean => {
       )
     case '并列递进':
       return (
-        (a === '既' && b === '又') ||
+        (a === '既' && (b === '又' || b === '也')) ||
         ((a === '不但' || a === '不仅') && (b === '而且' || b === '还')) ||
         (a === '不是' && b === '而是')
       )
