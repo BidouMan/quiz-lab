@@ -174,7 +174,7 @@ export function typeVisibleInGrade(grade: Grade, type: AppType): boolean {
     return LEVELS.some((level) => lieSupports(grade, unitIds, level))
   }
 
-  // 拓展题按知识点映射到 U1–U6，U7 为项目式单元、暂无拓展结构
+  // 拓展题按知识点映射到 U1–U7（U7 已有路线长度），U3 改用图形题
   if (type === 'advanced') {
     const unitIds = units.map((unit) => unit.unitId)
     return LEVELS.some((level) => advancedSupports(grade, unitIds, level))
@@ -428,7 +428,7 @@ export function typeAvailability(
         reason:
           levels.length > 0
             ? `所选单元在 ${config.level} 没有拓展题结构，可切到 ${levels.join('/')}`
-            : `不适用：本单元没有拓展题结构（按知识点映射：U1/U2/U4 四则推理、U5 时间与日期、U6 周长；U3 请改用图形题中的数三角形/数长方形；U7 为项目式单元，暂不出拓展题）`,
+            : `不适用：本单元没有拓展题结构（按知识点映射：U1/U2/U4 四则推理、U5 时间与日期、U6 周长、U7 路线长度；U3 请改用图形题中的数三角形/数长方形）`,
         source: levels.length > 0 ? undefined : 'na',
       }
       continue

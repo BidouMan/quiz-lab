@@ -10,6 +10,7 @@ import {
   advancedStyleIssue,
   advancedSupports,
   generateAdvanced,
+  isSupplementCategory,
   levelForTier,
   validateAdvancedPaper,
   verifyAdvancedRecord,
@@ -22,7 +23,7 @@ import { buildPaper, typeAvailability } from '../src/app/paperBuilder.ts'
 import { DEFAULT_CONFIG, type AppConfig, type TemplateInfo } from '../src/app/types.ts'
 import { verifyItemStructure } from '../src/app/runtimeCheck.ts'
 
-const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6']
+const UNITS_3A = ['3A-U1', '3A-U2', '3A-U3', '3A-U4', '3A-U5', '3A-U6', '3A-U7']
 const TEMPLATE: TemplateInfo = { path: 'typst/paper.typ', exists: true, word: true, compare: true, geom: true }
 
 const recordOf = (question: {
@@ -55,13 +56,13 @@ const recordOf = (question: {
   key: question.key,
 })
 
-test('拓展题：17 类可做，每类每一步都只挂三上知识点', () => {
-  assert.equal(ADV_CATEGORIES.length, 17, `可做类别应为 17，实际 ${ADV_CATEGORIES.length}`)
+test('拓展题：22 类可做，每类每一步都只挂三上知识点', () => {
+  assert.equal(ADV_CATEGORIES.length, 22, `可做类别应为 22，实际 ${ADV_CATEGORIES.length}`)
   const tierCounts = ADV_CATEGORIES.reduce<Record<string, number>>((acc, category) => {
     acc[category.tier] = (acc[category.tier] ?? 0) + 1
     return acc
   }, {})
-  assert.deepEqual(tierCounts, { T1: 7, T2: 7, T3: 3 }, `分档计数 ${JSON.stringify(tierCounts)}`)
+  assert.deepEqual(tierCounts, { T1: 7, T2: 12, T3: 3 }, `分档计数 ${JSON.stringify(tierCounts)}`)
   for (const category of ADV_CATEGORIES) {
     for (const kp of category.kpKeys) {
       assert.ok(ADV_3A_KP[kp], `${category.id} 的 ${kp} 不在三上允许集合`)
@@ -71,18 +72,28 @@ test('拓展题：17 类可做，每类每一步都只挂三上知识点', () =>
   }
 })
 
-test('拓展题：三档平均步骤数实测严格递增（解绑后 L2 含 T1 补充题）', () => {
+test('拓展题：三档主力题平均步骤数实测严格递增（低档题只补缺口）', () => {
   const averages: number[] = []
+  const primaryAverages: number[] = []
   for (const level of ['L1', 'L2', 'L3'] as const) {
     const result = generateAdvanced({ grade: '3A', unitIds: UNITS_3A, level, count: 6, seed: 20261105 })
     assert.equal(result.questions.length, 6, `${level} 实出 ${result.questions.length}`)
     const average =
       result.questions.reduce((sum, question) => sum + question.steps.length, 0) / result.questions.length
     averages.push(average)
+    // 主力档位 = 该档本身 tier 的题，不含“低档补缺口”的题
+    const primary = result.questions.filter(
+      (question) => !isSupplementCategory(advancedCategory(question.categoryId)!, level),
+    )
+    primaryAverages.push(
+      primary.reduce((sum, question) => sum + question.steps.length, 0) / Math.max(primary.length, 1),
+    )
     assert.deepEqual(validateAdvancedPaper(result.questions), [], `${level} 双路径复核失败`)
   }
-  assert.ok(averages[0]! < averages[1]!, `L1 ${averages[0]} 不小于 L2 ${averages[1]}`)
-  assert.ok(averages[1]! < averages[2]!, `L2 ${averages[1]} 不小于 L3 ${averages[2]}`)
+  assert.ok(primaryAverages[0]! < primaryAverages[1]!, `主力 L1 ${primaryAverages[0]} 不小于 L2 ${primaryAverages[1]}`)
+  assert.ok(primaryAverages[1]! < primaryAverages[2]!, `主力 L2 ${primaryAverages[1]} 不小于 L3 ${primaryAverages[2]}`)
+  // 整卷平均：L3 只会被低档补充题拉低，不能被拉低到比 L2 还轻松
+  assert.ok(averages[1]! <= averages[2]!, `L2 平均 ${averages[1]} 高于 L3 ${averages[2]}`)
   assert.ok(averages[0]! >= 2 && averages[0]! < 3, `L1 平均 ${averages[0]} 不在 [2,3)`)
   assert.ok(averages[1]! >= 2.4 && averages[1]! < 3.7, `L2 平均 ${averages[1]} 不在 [2.4,3.7)`)
   assert.ok(averages[2]! >= 3.4 && averages[2]! < 5, `L3 平均 ${averages[2]} 不在 [3.4,5)`)
@@ -97,14 +108,15 @@ test('拓展题：同卷按“结构 + 知识点”去重，不按题干字符�
   assert.ok(byStem.size <= keys.size, '题干去重不应比结构去重更严格')
 })
 
-test('拓展题：250 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
+test('拓展题：350 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
   let total = 0
   let failures = 0
   let duplicates = 0
   const keys: string[] = []
   const memory = new MemoryStore()
-  // P1 第一批后每档可用结构数：L1=7、L2=23（T1 7 + T2 16）、L3=20（T2 16 + T3 4）
-  const perPaper = { L1: 7, L2: 23, L3: 20 } as const
+  // P1 第二批后每档可用结构数：L2=33（T1 7 + T2 28，算式谜/抽屉每卷最多 1 道），
+  // L3=30（T2 28 + T3 4，同样扣掉这两类的每卷上限）
+  const perPaper = { L1: 7, L2: 33, L3: 30 } as const
   for (const level of ['L1', 'L2', 'L3'] as const) {
     for (let paper = 0; paper < 5; paper++) {
       memory.beginPaper()
@@ -128,7 +140,7 @@ test('拓展题：250 题审计（复核失败 0、结构-解法一致性失败 
       total += result.questions.length
     }
   }
-  assert.equal(total, 250)
+  assert.equal(total, 350)
   assert.equal(failures, 0, `复核失败 ${failures}`)
   assert.equal(duplicates, 0, `同卷重复 ${duplicates}`)
   const crossDuplicate = keys.length - new Set(keys).size
@@ -198,9 +210,11 @@ test('反例：超纲词（面积/方程等）必须被拒', () => {
   assert.ok(issues.some((issue) => issue.includes('超纲词')), `应拒绝超纲词：${issues.join('；')}`)
 })
 
-test('方案 A 单元归属：U7 项目式单元不出拓展题，U3 转图形题；解绑后 U2/U5 各档可用', () => {
-  assert.equal(advancedSupports('3A', ['3A-U7'], 'L2'), false)
-  assert.deepEqual(advancedLevelsFor('3A', ['3A-U7']), [])
+test('方案 A 单元归属：U7 出路线长度、U3 转图形题；解绑后 U2/U5 各档可用', () => {
+  assert.equal(advancedSupports('3A', ['3A-U7'], 'L2'), true)
+  assert.equal(advancedSupports('3A', ['3A-U7'], 'L3'), true)
+  assert.equal(advancedSupports('3A', ['3A-U7'], 'L1'), false)
+  assert.deepEqual(advancedLevelsFor('3A', ['3A-U7']), ['L2', 'L3'])
   assert.equal(advancedSupports('3A', ['3A-U3'], 'L2'), false)
   assert.equal(advancedSupports('3A', ['3A-U3'], 'L1'), false)
   assert.equal(advancedSupports('3A', ['3A-U2'], 'L2'), true)
@@ -210,8 +224,8 @@ test('方案 A 单元归属：U7 项目式单元不出拓展题，U3 转图形�
   assert.equal(advancedSupports('3A', ['3A-U5'], 'L3'), true)
 })
 
-test('单题型上限：P1 第一批后 L2=23 种结构、L3=20 种结构，同卷不重复', () => {
-  const expected = { L2: 23, L3: 20 } as const
+test('单题型上限：P1 第二批后（不含 U7）L2=30 种结构、L3=27 种结构，同卷不重复', () => {
+  const expected = { L2: 30, L3: 27 } as const
   for (const level of ['L2', 'L3'] as const) {
     const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6'], level, count: 200, seed: 8100 })
     assert.equal(result.questions.length, expected[level], `${level} 实出 ${result.questions.length}`)
@@ -246,14 +260,19 @@ test('接入 buildPaper：默认 3 题、按类别留白、运行时复核 0 丢
   }
 })
 
-test('接入 typeAvailability：U7 标不适用，U3 转图形题，U5/L3 解绑后可用', () => {
+test('接入 typeAvailability：U7 出路线长度，U3 转图形题，U5/L3 解绑后可用', () => {
   const availability = (unitIds: string[], level: 'L1' | 'L2' | 'L3') =>
     typeAvailability(
       { ...DEFAULT_CONFIG, grade: '3A', unitIds, level, types: ['advanced'], counts: { advanced: 3 }, count: 3 },
       TEMPLATE,
     ).advanced
-  assert.equal(availability(['3A-U7'], 'L2').enabled, false)
-  assert.equal(availability(['3A-U7'], 'L2').source, 'na')
+  assert.equal(availability(['3A-U7'], 'L2').enabled, true)
+  // U7 已能出路线长度，L1 只是档位不匹配，不再标“不适用”
+  const u7L1 = availability(['3A-U7'], 'L1')
+  assert.equal(u7L1.enabled, false)
+  assert.equal(u7L1.source, undefined)
+  assert.ok(u7L1.reason.includes('可切到 L2/L3'), u7L1.reason)
+  assert.equal(availability(['3A-U3'], 'L2').source, 'na')
   assert.equal(availability(['3A-U3'], 'L2').enabled, false)
   assert.equal(availability(['3A-U5'], 'L3').enabled, true)
   assert.equal(availability(['3A-U2'], 'L2').enabled, true)
@@ -432,6 +451,11 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
     'adv-calendar-card': 4,
     'adv-misread': 4,
     'adv-digit-count': 4,
+    'adv-multiple': 4,
+    'adv-pigeonhole': 4,
+    'adv-cryptarithm': 4,
+    'adv-time-reverse': 4,
+    'adv-route': 4,
   })
 })
 
@@ -656,7 +680,7 @@ test('P0-2 出不满时：提示写清“只有 N 类”和缺哪几类题型', 
   assert.ok(note!.includes('拼图形后的周长') && note!.includes('剪拼后的周长') && note!.includes('改围图形'), note)
   assert.ok(note!.includes('没有映射到本单元'), note)
   // 缺的题型必须点名（只列同档题型，L3 专有的拼大长方形/摆长方形不算 L2 缺口）
-  assert.ok(note!.includes('本档另有 11 类'), note)
+  assert.ok(note!.includes('本档另有 16 类'), note)
   for (const label of ['逆向推理', '周期排列', '归一问题', '等量代换', '月历牌推理', '错中求解']) {
     assert.ok(note!.includes(label), `缺的题型没点名 ${label}：${note}`)
   }
@@ -707,6 +731,95 @@ test('P1 第一批新增 4 类：双路径一致、变体齐全、数域守卫�
     }
     assert.ok(scanned >= 1900, `${check.id} 扫描量只有 ${scanned}`)
     assert.deepEqual([...seen].sort(), [...check.variants].sort(), `${check.id} 变体未出全`)
+  }
+})
+
+test('P1 第二批新增 5 类：双路径一致、变体齐全、数域守卫、每卷最多 1 道', () => {
+  const checks = [
+    { id: 'adv-multiple', variants: ['sum', 'diff'] },
+    { id: 'adv-pigeonhole', variants: ['forward', 'backward'] },
+    { id: 'adv-cryptarithm', variants: ['add-carry', 'sub-borrow'] },
+    { id: 'adv-time-reverse', variants: ['start-reverse', 'duration-with-break', 'break-length'] },
+    { id: 'adv-route', variants: ['round-trip', 'two-legs-round', 'one-way-reverse'] },
+  ] as const
+
+  // beta 阶段：算式谜与抽屉原理每卷最多 1 道
+  assert.equal(advancedCategory('adv-pigeonhole')!.maxPerPaper, 1)
+  assert.equal(advancedCategory('adv-cryptarithm')!.maxPerPaper, 1)
+  for (const id of ['adv-multiple', 'adv-time-reverse', 'adv-route']) {
+    assert.equal(advancedCategory(id)!.maxPerPaper, undefined, `${id} 不该限制每卷题数`)
+  }
+
+  for (const check of checks) {
+    const category = advancedCategory(check.id)
+    assert.ok(category, check.id)
+    assert.equal(category.variantCount, check.variants.length, `${check.id} 变体数`)
+    const rng = createRng(20261121)
+    const seen = new Set<string>()
+    let scanned = 0
+    for (let index = 0; index < 2000; index++) {
+      const params = category.draw(rng)
+      if (params == null) continue
+      scanned++
+      const variant = String(params.variant)
+      seen.add(variant)
+      const built = category.build(params)
+      assert.equal(String(category.recompute(params)), built.answer, `${check.id}/${variant} 两条路径不一致`)
+      assert.equal(category.invariant(params), null, `${check.id}/${variant} 约束不通过`)
+      const texts = [category.stem(params), ...built.steps.map((step) => step.text), built.answer]
+      for (const text of texts) {
+        assert.ok(
+          !/面积|平方厘米|平方米|分数|小数|方程|未知数/.test(text),
+          `${check.id} 出现三上以外的内容：${text}`,
+        )
+        // 除法只能除以一位数（2–9）
+        for (const match of text.matchAll(/÷(\d+)/g)) {
+          assert.ok(match[1]!.length === 1, `${check.id} 出现两位数除法：${text}`)
+        }
+      }
+      assert.equal(category.stem(params).includes('？'), true, `${check.id} 题干缺少问句`)
+
+      // 路线长度：凡写“来回”，来回总长必须是单程的 2 倍；反求单程时答案就是总长的一半
+      if (check.id === 'adv-route') {
+        const oneWay = variant === 'one-way-reverse' ? Number(params.total) / 2 : variant === 'round-trip' ? Number(params.d) : Number(params.a) + Number(params.b)
+        const expected = variant === 'one-way-reverse' ? `${oneWay}米` : `${2 * oneWay}米`
+        assert.ok(built.answer.includes(expected), `${check.id}/${variant} 路线口径不对：${built.answer}`)
+        if (variant !== 'one-way-reverse') {
+          assert.ok(category.stem(params).includes('原路'), `${check.id}/${variant} 未写明沿原路：${category.stem(params)}`)
+        }
+      }
+
+      // 抽屉原理：答案必须是最少保证数，且不是简单的一次除法结果
+      if (check.id === 'adv-pigeonhole' && variant === 'forward') {
+        const m = Number(params.m)
+        const n = Number(params.n)
+        const atLeast = Math.ceil(n / m)
+        assert.equal(built.answer, `${atLeast}支`, `${check.id} 至少数不是向上取整：${built.answer}`)
+        assert.ok(Number(params.r) >= 1, `${check.id} 不正推有余数的情形：${JSON.stringify(params)}`)
+      }
+
+      // 算式谜：只有一组图形取值
+      if (check.id === 'adv-cryptarithm') {
+        assert.ok(/^□=\d，△=\d$/.test(built.answer), `${check.id} 答案格式不对：${built.answer}`)
+      }
+    }
+    assert.ok(scanned >= 1900, `${check.id} 扫描量只有 ${scanned}`)
+    assert.deepEqual([...seen].sort(), [...check.variants].sort(), `${check.id} 变体未出全`)
+  }
+
+  // 每卷最多 1 道：全单元 L2 连出 5 卷，算式谜/抽屉原理各自不超过 1
+  for (let paper = 0; paper < 5; paper++) {
+    const result = generateAdvanced({
+      grade: '3A',
+      unitIds: UNITS_3A,
+      level: 'L2',
+      count: 40,
+      seed: 8800 + paper,
+    })
+    for (const id of ['adv-pigeonhole', 'adv-cryptarithm']) {
+      const used = result.questions.filter((question) => question.categoryId === id).length
+      assert.ok(used <= 1, `第 ${paper + 1} 卷 ${id} 出了 ${used} 道，超过每卷 1 道上限`)
+    }
   }
 })
 

@@ -57,6 +57,8 @@ export interface AdvancedCategory {
   levels?: Level[]
   /** 同类别下的结构变体数（缺省 1），用于如实提示“有几类、几种结构” */
   variantCount?: number
+  /** 同类别每卷上限：算式谜、抽屉原理在 beta 阶段每卷最多 1 道 */
+  maxPerPaper?: number
   /** 方案 A 单元归属：只从所选单元出题 */
   units: string[]
   /** 跨卷/同卷去重用的主知识点键 */
@@ -203,7 +205,7 @@ export function evalArithmetic(source: string): number {
   return value
 }
 
-// ---------- 12 类拓展题 ----------
+// ---------- 22 类拓展题 ----------
 
 const dCycle = (rng: Rng): AdvParams | null =>
   retry(() => {
@@ -2248,6 +2250,874 @@ const digitCount: AdvancedCategory = {
   },
 }
 
+// ---------- P1 第二批：倍数问题 / 抽屉原理 / 算式谜 / 时刻反求 / 路线长度 ----------
+
+const clockText = (minutes: number): string => timeText(Math.floor(minutes / 60), minutes % 60)
+
+/**
+ * 倍数问题（和倍、差倍）：把小数看作 1 份，大数就是 k 份。
+ * 两条路径：公式（和÷(k+1)、差÷(k−1)）vs 从小到大枚举小数，确认解唯一。
+ */
+const dMultiple = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['sum', 'diff'] as const)
+    const k = randInt(rng, 2, 6)
+    const small = randInt(rng, 3, 20)
+    const big = small * k
+    if (big > 99) return null
+    if (variant === 'sum') {
+      const sum = small + big
+      if (sum > 100) return null
+      return { variant, k, small, big, sum }
+    }
+    // 2 倍时“差”正好等于小数本身，太薄；差倍只出 3–6 倍
+    if (k < 3) return null
+    const diff = big - small
+    if (diff > 80) return null
+    return { variant, k, small, big, diff }
+  })
+
+const multiple: AdvancedCategory = {
+  id: 'adv-multiple',
+  label: '倍数问题',
+  tier: 'T2',
+  units: ['3A-U4'],
+  primaryKp: '3A-MUL-1',
+  kpKeys: ['3A-MUL-1', '3A-DIV-1', '3A-TWO-STEP', '3A-ADD-SUB'],
+  sample: '小丽和妈妈一共折了24只纸鹤，妈妈折的只数是小丽的3倍。两人各折了多少只？',
+  pool: '2 个变体（和倍、差倍）× 倍数 2–6 × 小数 3–20',
+  workLines: 4,
+  variantCount: 2,
+  draw: dMultiple,
+  stem: (p) =>
+    str(p, 'variant') === 'sum'
+      ? `小丽和妈妈一共折了${num(p, 'sum')}只纸鹤，妈妈折的只数是小丽的${num(p, 'k')}倍。小丽折了多少只？妈妈折了多少只？`
+      : `妈妈折的纸鹤比小丽多${num(p, 'diff')}只，妈妈折的只数是小丽的${num(p, 'k')}倍。小丽折了多少只？妈妈折了多少只？`,
+  build: (p) => {
+    const variant = str(p, 'variant')
+    const k = num(p, 'k')
+    const small = num(p, 'small')
+    const big = num(p, 'big')
+    if (variant === 'sum') {
+      const sum = num(p, 'sum')
+      return {
+        known: [`两人一共${sum}只`, `妈妈是小丽的${k}倍`],
+        unknown: '两人各折了多少只',
+        steps: [
+          {
+            text: `把小丽折的只数看作1份，妈妈就是${k}份，合起来${k}+1=${k + 1}份`,
+            kp: '3A-TWO-STEP',
+            expr: `${k}+1`,
+            result: k + 1,
+          },
+          {
+            text: `1份是：${sum}÷(${k}+1)=${small}（只），就是小丽折的只数`,
+            kp: '3A-DIV-1',
+            expr: `${sum}/(${k}+1)`,
+            result: small,
+          },
+          {
+            text: `妈妈折的只数：${small}×${k}=${big}（只）`,
+            kp: '3A-MUL-1',
+            expr: `${small}*${k}`,
+            result: big,
+          },
+          {
+            text: `验算：${small}+${big}=${sum}（只），正好是两人一共折的只数`,
+            kp: '3A-ADD-SUB',
+            expr: `${small}+${big}`,
+            result: sum,
+          },
+        ],
+        answer: `小丽${small}只，妈妈${big}只`,
+      }
+    }
+    const diff = num(p, 'diff')
+    return {
+      known: [`妈妈比小丽多${diff}只`, `妈妈是小丽的${k}倍`],
+      unknown: '两人各折了多少只',
+      steps: [
+        {
+          text: `把小丽折的只数看作1份，妈妈就是${k}份，比小丽多${k}-1=${k - 1}份`,
+          kp: '3A-TWO-STEP',
+          expr: `${k}-1`,
+          result: k - 1,
+        },
+        {
+          text: `这${k - 1}份就是多出来的${diff}只，1份是：${diff}÷(${k}-1)=${small}（只）`,
+          kp: '3A-DIV-1',
+          expr: `${diff}/(${k}-1)`,
+          result: small,
+        },
+        {
+          text: `妈妈折的只数：${small}×${k}=${big}（只）`,
+          kp: '3A-MUL-1',
+          expr: `${small}*${k}`,
+          result: big,
+        },
+        {
+          text: `验算：${big}-${small}=${diff}（只），正好是妈妈比小丽多的只数`,
+          kp: '3A-ADD-SUB',
+          expr: `${big}-${small}`,
+          result: diff,
+        },
+      ],
+      answer: `小丽${small}只，妈妈${big}只`,
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    const k = num(p, 'k')
+    const target = num(p, variant === 'sum' ? 'sum' : 'diff')
+    // 独立路径：不套公式，从小到大枚举小丽的只数，看能有几组满足条件
+    const hits: number[] = []
+    for (let small = 1; small <= 99; small++) {
+      const big = small * k
+      const ok = variant === 'sum' ? small + big === target : big - small === target
+      if (ok) hits.push(small)
+    }
+    if (hits.length !== 1) throw new Error(`满足条件的只数不唯一：${hits.join('、')}`)
+    const small = hits[0]!
+    return `小丽${small}只，妈妈${small * k}只`
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    const k = num(p, 'k')
+    const small = num(p, 'small')
+    const big = num(p, 'big')
+    if (k < 2 || k > 6) return `倍数 ${k} 超出 2–6`
+    if (small < 3 || small > 20) return `小数 ${small} 超出 3–20`
+    if (big !== small * k) return '大数不是小数的整数倍'
+    if (big > 99) return '大数超过两位数'
+    if (variant === 'sum') {
+      const sum = num(p, 'sum')
+      if (sum !== small + big) return '一共的只数与两份之和不符'
+      if (sum > 100) return '一共的只数超过100'
+      return null
+    }
+    if (k < 3) return '差倍的倍数至少是3'
+    const diff = num(p, 'diff')
+    if (diff !== big - small) return '多出来的只数与两份之差不符'
+    if (diff > 80) return '多出来的只数超过80'
+    return null
+  },
+}
+
+/**
+ * 抽屉原理直观版：n 件东西放进 m 个抽屉，总有一个抽屉至少放 ceil(n/m) 件。
+ * 两条路径：有余数除法（q 余 r → q+1）vs 不等式搜索 / 最坏情况累加。
+ */
+const dPigeonhole = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['forward', 'backward'] as const)
+    if (variant === 'forward') {
+      const m = randInt(rng, 3, 6)
+      const q = randInt(rng, 2, 9)
+      const r = randInt(rng, 1, m - 1)
+      const n = m * q + r
+      if (n > 60) return null
+      return { variant, n, m, q, r, atLeast: q + 1 }
+    }
+    const k = randInt(rng, 2, 3)
+    const m = randInt(rng, 2, 6)
+    const need = m * (k - 1) + 1
+    if (need > 20) return null
+    return { variant, k, m, need }
+  })
+
+const pigeonhole: AdvancedCategory = {
+  id: 'adv-pigeonhole',
+  label: '抽屉原理',
+  tier: 'T2',
+  units: ['3A-U4'],
+  primaryKp: '3A-STRATEGY',
+  kpKeys: ['3A-STRATEGY', '3A-DIV-REMAINDER', '3A-MUL-1', '3A-ADD-SUB'],
+  sample: '把7支铅笔放进3个笔筒，不管怎么放，总有一个笔筒里至少放几支铅笔？',
+  pool: '2 个变体（正推至少几支、反推至少摸几只）× 抽屉 2–6 × 商 2–9',
+  workLines: 4,
+  variantCount: 2,
+  maxPerPaper: 1,
+  draw: dPigeonhole,
+  stem: (p) =>
+    str(p, 'variant') === 'forward'
+      ? `把${num(p, 'n')}支铅笔放进${num(p, 'm')}个笔筒里，不管怎么放，总有一个笔筒里至少放了几支铅笔？`
+      : `一个袋子里有${num(p, 'm')}种颜色的袜子，每种颜色的袜子都很多。闭上眼睛摸袜子，至少摸出几只，才能保证有${num(p, 'k')}只袜子颜色相同？`,
+  build: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'forward') {
+      const n = num(p, 'n')
+      const m = num(p, 'm')
+      const q = num(p, 'q')
+      const r = num(p, 'r')
+      const atLeast = num(p, 'atLeast')
+      return {
+        known: [`${n}支铅笔`, `${m}个笔筒`],
+        unknown: '总有一个笔筒至少放几支',
+        steps: [
+          {
+            text: `先让每个笔筒都放${q}支：${m}×${q}=${m * q}（支）`,
+            kp: '3A-MUL-1',
+            expr: `${m}*${q}`,
+            result: m * q,
+          },
+          {
+            text: `还剩${n}-${m * q}=${r}（支），这${r}支不管放进哪个笔筒，那个笔筒就有${q}+1=${atLeast}（支）`,
+            kp: '3A-DIV-REMAINDER',
+            expr: `${n}-${m * q}`,
+            result: r,
+          },
+          {
+            text: `所以总有一个笔筒至少放${atLeast}支，也就是${n}÷${m}=${q}……${r}，商加1`,
+            kp: '3A-STRATEGY',
+            expr: `${q}+1`,
+            result: atLeast,
+          },
+          {
+            text: `验算：如果每个笔筒都不超过${q}支，${m}个笔筒最多放${m}×${q}=${m * q}（支），装不下${n}支`,
+            kp: '3A-STRATEGY',
+            expr: `${m}*${q}`,
+            result: m * q,
+          },
+        ],
+        answer: `${atLeast}支`,
+      }
+    }
+    const k = num(p, 'k')
+    const m = num(p, 'm')
+    const need = num(p, 'need')
+    const worst = m * (k - 1)
+    return {
+      known: [`${m}种颜色`, `每种颜色都很多`],
+      unknown: `至少摸出几只，才能保证有${k}只同色`,
+      steps: [
+        {
+          text: `最不凑巧的情况：每种颜色都先摸到${k - 1}只，${m}种颜色一共${m}×(${k}-1)=${worst}（只）`,
+          kp: '3A-MUL-1',
+          expr: `${m}*(${k}-1)`,
+          result: worst,
+        },
+        {
+          text: `这时还凑不出${k}只同色，再多摸1只，一定有${k}只颜色相同：${worst}+1=${need}（只）`,
+          kp: '3A-ADD-SUB',
+          expr: `${worst}+1`,
+          result: need,
+        },
+        {
+          text: `所以至少摸${need}只`,
+          kp: '3A-STRATEGY',
+        },
+        {
+          text: `验算：摸${need - 1}只时，正好${m}种颜色各${k - 1}只，没有${k}只同色，说明${need - 1}只不够`,
+          kp: '3A-STRATEGY',
+          expr: `${m}*(${k}-1)`,
+          result: worst,
+        },
+      ],
+      answer: `${need}只`,
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'forward') {
+      const n = num(p, 'n')
+      const m = num(p, 'm')
+      // 独立路径：不用除法，从 1 往上找“每个抽屉最多 t 支就装得下”的最小 t
+      let t = 1
+      while (m * t < n) t++
+      return `${t}支`
+    }
+    const k = num(p, 'k')
+    const m = num(p, 'm')
+    // 独立路径：把最坏情况一份一份加上去，再多加 1 只
+    let worst = 0
+    for (let index = 0; index < m; index++) worst += k - 1
+    if (worst !== m * (k - 1)) throw new Error('最坏情况累加与乘法不符')
+    return `${worst + 1}只`
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'forward') {
+      const n = num(p, 'n')
+      const m = num(p, 'm')
+      const q = num(p, 'q')
+      const r = num(p, 'r')
+      if (m < 3 || m > 6) return `抽屉数 ${m} 超出 3–6`
+      if (q < 2 || q > 9) return `商 ${q} 超出 2–9`
+      if (r < 1 || r > m - 1) return `余数 ${r} 不在 1–${m - 1}`
+      if (n !== m * q + r) return '总数与商、余数不符'
+      if (n > 60) return '总数超过60，心算太累'
+      if (num(p, 'atLeast') !== q + 1) return '至少放的支数不是商加1'
+      return null
+    }
+    const k = num(p, 'k')
+    const m = num(p, 'm')
+    const need = num(p, 'need')
+    if (k < 2 || k > 3) return `同色只数 ${k} 超出 2–3`
+    if (m < 2 || m > 6) return `颜色数 ${m} 超出 2–6`
+    if (need !== m * (k - 1) + 1) return '保证摸出的只数不是 m×(k−1)+1'
+    if (need > 20) return '要摸的只数超过20'
+    return null
+  },
+}
+
+/**
+ * 算式谜（只做加减填数字）：把竖式里两个数字换成 □ 和 △，按进位/退位反求。
+ * 两条路径：按个位、十位逐位推理 vs 把两个图形从 0–9 全枚举，确认只有一组解。
+ */
+const dCryptarithm = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['add-carry', 'sub-borrow'] as const)
+    if (variant === 'add-carry') {
+      const b = randInt(rng, 1, 7)
+      const c = randInt(rng, b + 2, 9)
+      const a = randInt(rng, 2, 9)
+      const d = randInt(rng, 0, a - 1)
+      const box = c - b - 1
+      const tri = d + 10 - a
+      if (box < 1 || box > 9 || tri < 0 || tri > 9) return null
+      if (box === tri) return null
+      return { variant, a, b, c, d, box, tri }
+    }
+    const b = randInt(rng, 1, 7)
+    const c = randInt(rng, 1, 7)
+    const box = c + b + 1
+    if (box > 9) return null
+    const a = randInt(rng, 0, 8)
+    const d = randInt(rng, a + 1, 9)
+    const tri = a + 10 - d
+    if (tri < 1 || tri > 9) return null
+    if (box === tri) return null
+    return { variant, a, b, c, d, box, tri }
+  })
+
+const cryptarithm: AdvancedCategory = {
+  id: 'adv-cryptarithm',
+  label: '算式谜',
+  tier: 'T2',
+  units: ['3A-U2'],
+  primaryKp: '3A-ADD-SUB',
+  kpKeys: ['3A-ADD-SUB', '3A-STRATEGY'],
+  sample: '□7＋4△＝83，□和△各代表几？',
+  pool: '2 个变体（加法进位、减法退位）× 各位数字 0–9',
+  workLines: 4,
+  variantCount: 2,
+  maxPerPaper: 1,
+  draw: dCryptarithm,
+  stem: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    const b = num(p, 'b')
+    const c = num(p, 'c')
+    const d = num(p, 'd')
+    const sign = variant === 'add-carry' ? '＋' : '－'
+    return (
+      '下面的算式中，相同的图形代表相同的数字，不同的图形代表不同的数字，首位不能是0：' +
+      `□${a}${sign}${b}△＝${c}${d}。□和△各代表几？`
+    )
+  },
+  build: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    const b = num(p, 'b')
+    const c = num(p, 'c')
+    const d = num(p, 'd')
+    const box = num(p, 'box')
+    const tri = num(p, 'tri')
+    if (variant === 'add-carry') {
+      return {
+        known: [`□${a}＋${b}△＝${c}${d}`],
+        unknown: '□和△各代表几',
+        steps: [
+          {
+            text: `先看个位：${a}加△要写${d}，说明满10向十位进1，△=${d}+10-${a}=${tri}`,
+            kp: '3A-ADD-SUB',
+            expr: `${d}+10-${a}`,
+            result: tri,
+          },
+          {
+            text: `再看十位：□加${b}，再加上进位的1，得${c}，□=${c}-${b}-1=${box}`,
+            kp: '3A-ADD-SUB',
+            expr: `${c}-${b}-1`,
+            result: box,
+          },
+          {
+            text: `验算：把图形换回数字，${box}${a}＋${b}${tri}就是${box * 10 + a}＋${b * 10 + tri}=${c * 10 + d}`,
+            kp: '3A-ADD-SUB',
+            expr: `${box * 10 + a}+${b * 10 + tri}`,
+            result: c * 10 + d,
+          },
+          {
+            text: `换个数字试试：个位换成别的数就凑不出${d}，十位换成别的数也凑不出${c}，所以只有这一组`,
+            kp: '3A-STRATEGY',
+          },
+        ],
+        answer: `□=${box}，△=${tri}`,
+      }
+    }
+    return {
+      known: [`□${a}－${b}△＝${c}${d}`],
+      unknown: '□和△各代表几',
+      steps: [
+        {
+          text: `先看个位：${a}不够减△，要向十位借1，${a}+10-△=${d}，所以△=${a}+10-${d}=${tri}`,
+          kp: '3A-ADD-SUB',
+          expr: `${a}+10-${d}`,
+          result: tri,
+        },
+        {
+          text: `再看十位：□借走1后减去${b}得${c}，□=${c}+${b}+1=${box}`,
+          kp: '3A-ADD-SUB',
+          expr: `${c}+${b}+1`,
+          result: box,
+        },
+        {
+          text: `验算：把图形换回数字，${box}${a}－${b}${tri}就是${box * 10 + a}-${b * 10 + tri}=${c * 10 + d}`,
+          kp: '3A-ADD-SUB',
+          expr: `${box * 10 + a}-${b * 10 + tri}`,
+          result: c * 10 + d,
+        },
+        {
+          text: `换个数字试试：个位换成别的数就凑不出${d}，十位换成别的数也凑不出${c}，所以只有这一组`,
+          kp: '3A-STRATEGY',
+        },
+      ],
+      answer: `□=${box}，△=${tri}`,
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    const b = num(p, 'b')
+    const c = num(p, 'c')
+    const d = num(p, 'd')
+    // 独立路径：不按数位推理，把两个图形 0–9 全枚举，筛出满足算式的组合
+    const hits: string[] = []
+    for (let box = 1; box <= 9; box++) {
+      for (let tri = 0; tri <= 9; tri++) {
+        if (box === tri) continue
+        const left = box * 10 + a
+        const right = b * 10 + tri
+        const total = variant === 'add-carry' ? left + right : left - right
+        if (total === c * 10 + d) hits.push(`□=${box}，△=${tri}`)
+      }
+    }
+    if (hits.length !== 1) throw new Error(`算式谜解不唯一：${hits.join('；')}`)
+    return hits[0]!
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    const b = num(p, 'b')
+    const c = num(p, 'c')
+    const d = num(p, 'd')
+    const box = num(p, 'box')
+    const tri = num(p, 'tri')
+    for (const [name, value] of [['a', a], ['b', b], ['c', c], ['d', d]] as const) {
+      if (value < 0 || value > 9) return `${name}=${value} 不是一位数字`
+    }
+    if (b < 1) return '十位上的已知数字不能是0'
+    if (c < 1) return '结果的十位不能是0'
+    if (box < 1 || box > 9) return `□=${box} 不是首位上的有效数字`
+    if (tri < 0 || tri > 9) return `△=${tri} 不是一位数字`
+    if (box === tri) return '□和△代表不同的数字，不能相同'
+    if (variant === 'add-carry') {
+      if (a + tri < 10) return '加法个位没有进位，题目失去进位推理'
+      if (tri !== d + 10 - a) return '△不是由个位进位推出来的'
+      if (box !== c - b - 1) return '□不是由十位加进位推出来的'
+      if (box + b + 1 !== c) return '十位相加得不到结果的十位'
+      return null
+    }
+    if (a >= tri) return '减法个位没有退位，题目失去退位推理'
+    if (tri !== a + 10 - d) return '△不是由个位退位推出来的'
+    if (box !== c + b + 1) return '□不是由十位退位推出来的'
+    if (box - 1 - b !== c) return '十位相减得不到结果的十位'
+    return null
+  },
+}
+
+/**
+ * 时刻反求与中途休息：给两端时刻与其中一段，求另一段。
+ * 两条路径：时分拆分（借1小时=60分）vs 从某一刻起逐分钟走。
+ */
+const dTimeReverse = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['start-reverse', 'duration-with-break', 'break-length'] as const)
+    if (variant === 'start-reverse') {
+      const endMin = randInt(rng, 96, 168) * 5
+      const busyMin = randInt(rng, 6, 18) * 5
+      const startMin = endMin - busyMin
+      if (startMin < 7 * 60) return null
+      return { variant, startMin, endMin, busyMin, breakMin: 0 }
+    }
+    const startMin = randInt(rng, 84, 150) * 5
+    const busyMin = randInt(rng, 6, 18) * 5
+    const breakMin = randInt(rng, 2, 8) * 5
+    const endMin = startMin + busyMin + breakMin
+    if (endMin > 16 * 60) return null
+    return { variant, startMin, endMin, busyMin, breakMin }
+  })
+
+const timeReverse: AdvancedCategory = {
+  id: 'adv-time-reverse',
+  label: '时刻反求与中途休息',
+  tier: 'T2',
+  units: ['3A-U5'],
+  primaryKp: '3A-TIME-ELAPSED',
+  kpKeys: ['3A-TIME-ELAPSED', '3A-ADD-SUB'],
+  sample: '小华9时5分做完作业，做作业一共用了40分钟。他是什么时候开始做作业的？',
+  pool: '3 个变体（反求开始时刻、含休息求实际用时、含休息求休息时长）× 5 分钟步进',
+  workLines: 4,
+  variantCount: 3,
+  draw: dTimeReverse,
+  stem: (p) => {
+    const variant = str(p, 'variant')
+    const startText = clockText(num(p, 'startMin'))
+    const endText = clockText(num(p, 'endMin'))
+    const busyText = durationText(num(p, 'busyMin'))
+    if (variant === 'start-reverse') {
+      return `小华${endText}做完作业，做作业一共用了${busyText}。他是什么时候开始做作业的？`
+    }
+    if (variant === 'duration-with-break') {
+      return `小丽${startText}开始练琴，${endText}练完。中间休息了${durationText(num(p, 'breakMin'))}，她实际练了多长时间？`
+    }
+    return `小刚${startText}开始读书，${endText}读完，中间一共读了${busyText}，剩下的时间在休息。他休息了多长时间？`
+  },
+  build: (p) => {
+    const variant = str(p, 'variant')
+    const startMin = num(p, 'startMin')
+    const endMin = num(p, 'endMin')
+    const busyMin = num(p, 'busyMin')
+    const breakMin = num(p, 'breakMin')
+    const startText = clockText(startMin)
+    const endText = clockText(endMin)
+    if (variant === 'start-reverse') {
+      const eh = Math.floor(endMin / 60)
+      const em = endMin % 60
+      const busyHours = Math.floor(busyMin / 60)
+      const busyRest = busyMin % 60
+      const steps: AdvancedStep[] = []
+      if (busyRest > 0) {
+        const borrowed = em < busyRest
+        steps.push({
+          text: borrowed
+            ? `分钟不够退：${endText}向小时借1，${em}+60-${busyRest}=${em + 60 - busyRest}（分）`
+            : `先从${endText}往回退${busyRest}分钟，到${clockText(endMin - busyRest)}`,
+          kp: borrowed ? '3A-ADD-SUB' : '3A-TIME-ELAPSED',
+          expr: borrowed ? `${em}+60-${busyRest}` : `${em}-${busyRest}`,
+          result: borrowed ? em + 60 - busyRest : em - busyRest,
+        })
+      }
+      if (busyHours > 0) {
+        const borrowed = busyRest > 0 && em < busyRest ? 1 : 0
+        steps.push({
+          text: borrowed
+            ? `小时再往回退：${eh}时借走1小时，还要退${busyHours}小时，到${clockText(startMin)}`
+            : `再往回退${busyHours}小时，到${clockText(startMin)}`,
+          kp: '3A-TIME-ELAPSED',
+          expr: borrowed ? `${eh}-1-${busyHours}` : `${eh}-${busyHours}`,
+          result: Math.floor(startMin / 60),
+        })
+      }
+      steps.push({ text: `所以开始做作业的时刻是${startText}`, kp: '3A-TIME-ELAPSED' })
+      steps.push({
+        text: `验算：从${startText}到${endText}，正好经过${durationText(busyMin)}`,
+        kp: '3A-TIME-ELAPSED',
+        expr: `${endMin}-${startMin}`,
+        result: busyMin,
+      })
+      return {
+        known: [`${endText}做完`, `一共用了${durationText(busyMin)}`],
+        unknown: '开始做作业的时刻',
+        steps,
+        answer: startText,
+      }
+    }
+    const grossMin = endMin - startMin
+    const grossText = durationText(grossMin)
+    const busyText = durationText(busyMin)
+    const breakText = durationText(breakMin)
+    return {
+      known: [`${startText}开始`, `${endText}结束`],
+      unknown: variant === 'duration-with-break' ? '实际练习了多长时间' : '休息了多长时间',
+      steps: [
+        {
+          text: `从${startText}到${endText}，一共经过了${grossText}`,
+          kp: '3A-TIME-ELAPSED',
+          expr: `${endMin}-${startMin}`,
+          result: grossMin,
+        },
+        {
+          text:
+            variant === 'duration-with-break'
+              ? `休息的${breakText}不算，${grossText}减去${breakText}，实际练了${busyText}`
+              : `读书的${busyText}不算休息，${grossText}减去${busyText}，休息了${breakText}`,
+          kp: '3A-TIME-ELAPSED',
+          expr:
+            variant === 'duration-with-break'
+              ? `${grossMin}-${breakMin}`
+              : `${grossMin}-${busyMin}`,
+          result: variant === 'duration-with-break' ? busyMin : breakMin,
+        },
+        {
+          text: `验算：${busyText}加休息${breakText}，正好是${grossText}`,
+          kp: '3A-TIME-ELAPSED',
+          expr: `${busyMin}+${breakMin}`,
+          result: grossMin,
+        },
+      ],
+      answer: variant === 'duration-with-break' ? busyText : breakText,
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    const startMin = num(p, 'startMin')
+    const endMin = num(p, 'endMin')
+    if (variant === 'start-reverse') {
+      // 独立路径：从结束时刻一分钟一分钟往回走
+      let minute = endMin
+      let left = num(p, 'busyMin')
+      while (left > 0) {
+        minute--
+        left--
+      }
+      return clockText(minute)
+    }
+    // 独立路径：从开始时刻一分钟一分钟往前走到结束，再逐分钟扣掉休息/读书
+    let minute = startMin
+    let gross = 0
+    while (minute < endMin) {
+      minute++
+      gross++
+    }
+    let part = variant === 'duration-with-break' ? num(p, 'breakMin') : num(p, 'busyMin')
+    let rest = gross
+    while (part > 0) {
+      rest--
+      part--
+    }
+    return durationText(rest)
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    const startMin = num(p, 'startMin')
+    const endMin = num(p, 'endMin')
+    const busyMin = num(p, 'busyMin')
+    const breakMin = num(p, 'breakMin')
+    if (startMin % 5 !== 0 || endMin % 5 !== 0 || busyMin % 5 !== 0 || breakMin % 5 !== 0) {
+      return '时刻与时长必须是 5 分钟步进'
+    }
+    if (startMin < 7 * 60 || endMin > 16 * 60) return '时刻超出 7:00–16:00'
+    if (endMin <= startMin) return '结束时刻必须晚于开始时刻'
+    if (endMin - startMin > 180) return '经过时间超过 3 小时'
+    if (variant === 'start-reverse') {
+      if (breakMin !== 0) return '反求开始时刻不该有休息时长'
+      if (busyMin !== endMin - startMin) return '用时与两端时刻之差不符'
+      if (busyMin < 30) return '用时少于 30 分钟，题目太薄'
+      return null
+    }
+    if (busyMin + breakMin !== endMin - startMin) return '实际用时加休息不等于两端之差'
+    if (busyMin < 30) return '实际用时少于 30 分钟，题目太薄'
+    if (breakMin < 10) return '休息不到 10 分钟，题目太薄'
+    return null
+  },
+}
+
+/**
+ * 路线长度（U7 马拉松路线设计）：来回一律按 2 倍口径。
+ * 三个变体：同一条路来回求总长、两段路来回求总长、知来回总长求单程。
+ */
+const dRoute = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['round-trip', 'two-legs-round', 'one-way-reverse'] as const)
+    if (variant === 'round-trip') {
+      const d = randInt(rng, 2, 9) * 50
+      return { variant, d, total: 2 * d }
+    }
+    if (variant === 'two-legs-round') {
+      const a = randInt(rng, 2, 9) * 50
+      const b = randInt(rng, 1, 9) * 50
+      if (a === b) return null
+      if (a + b > 450) return null
+      return { variant, a, b, total: 2 * (a + b) }
+    }
+    const total = randInt(rng, 4, 18) * 50
+    return { variant, total, d: total / 2 }
+  })
+
+const route: AdvancedCategory = {
+  id: 'adv-route',
+  label: '路线长度',
+  tier: 'T2',
+  units: ['3A-U7'],
+  primaryKp: '3A-ADD-SUB',
+  kpKeys: ['3A-ADD-SUB', '3A-MUL-1', '3A-DIV-1', '3A-STRATEGY'],
+  sample: '小华家到学校有200米。他从家走到学校，放学后沿原路回家。这一天来回一共走了多少米？',
+  pool: '3 个变体（单段来回、两段来回、知来回求单程）× 每段 100–450 米',
+  workLines: 4,
+  variantCount: 3,
+  draw: dRoute,
+  stem: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'round-trip') {
+      return `小华家到学校有${num(p, 'd')}米。早晨他从家走到学校，放学后沿原路回家。他这一天来回一共走了多少米？`
+    }
+    if (variant === 'two-legs-round') {
+      return `从家到书店有${num(p, 'a')}米，从书店到学校有${num(p, 'b')}米。小丽早晨从家先到书店，再到学校；放学后沿原路回家。她这一天一共走了多少米？`
+    }
+    return `小刚从家到学校，来回都走同一条路，一共走了${num(p, 'total')}米。他家到学校有多少米？`
+  },
+  build: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'round-trip') {
+      const d = num(p, 'd')
+      const total = num(p, 'total')
+      return {
+        known: [`家到学校${d}米`, '来回沿同一条路'],
+        unknown: '来回一共走了多少米',
+        steps: [
+          {
+            text: `去一趟是${d}米，来回走的是同一条路，也就是2个${d}米`,
+            kp: '3A-STRATEGY',
+          },
+          {
+            text: `来回总长：${d}×2=${total}（米）`,
+            kp: '3A-MUL-1',
+            expr: `${d}*2`,
+            result: total,
+          },
+          {
+            text: `也可以把两趟加起来：${d}+${d}=${total}（米）`,
+            kp: '3A-ADD-SUB',
+            expr: `${d}+${d}`,
+            result: total,
+          },
+          {
+            text: `验算：${total}÷2=${d}（米），正好是家到学校的路程`,
+            kp: '3A-DIV-1',
+            expr: `${total}/2`,
+            result: d,
+          },
+        ],
+        answer: `${total}米`,
+      }
+    }
+    if (variant === 'two-legs-round') {
+      const a = num(p, 'a')
+      const b = num(p, 'b')
+      const oneWay = a + b
+      const total = num(p, 'total')
+      return {
+        known: [`家到书店${a}米`, `书店到学校${b}米`, '来回沿原路'],
+        unknown: '一天一共走了多少米',
+        steps: [
+          {
+            text: `先去书店再到学校，一趟是${a}+${b}=${oneWay}（米）`,
+            kp: '3A-ADD-SUB',
+            expr: `${a}+${b}`,
+            result: oneWay,
+          },
+          {
+            text: `沿原路回家又是一趟${oneWay}米，来回一共是2个${oneWay}米`,
+            kp: '3A-STRATEGY',
+          },
+          {
+            text: `来回总长：${oneWay}×2=${total}（米）`,
+            kp: '3A-MUL-1',
+            expr: `${oneWay}*2`,
+            result: total,
+          },
+          {
+            text: `验算：${total}÷2=${oneWay}（米），正好是一趟的路程`,
+            kp: '3A-DIV-1',
+            expr: `${total}/2`,
+            result: oneWay,
+          },
+        ],
+        answer: `${total}米`,
+      }
+    }
+    const total = num(p, 'total')
+    const d = num(p, 'd')
+    return {
+      known: [`来回一共${total}米`, '来回沿同一条路'],
+      unknown: '家到学校有多少米',
+      steps: [
+        {
+          text: `来回走的是同一条路，来回总长就是单程的2倍`,
+          kp: '3A-STRATEGY',
+        },
+        {
+          text: `单程：${total}÷2=${d}（米）`,
+          kp: '3A-DIV-1',
+          expr: `${total}/2`,
+          result: d,
+        },
+        {
+          text: `验算：${d}×2=${total}（米），正好是来回总长`,
+          kp: '3A-MUL-1',
+          expr: `${d}*2`,
+          result: total,
+        },
+      ],
+      answer: `${d}米`,
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'round-trip') {
+      const d = num(p, 'd')
+      const parts = [d, d]
+      let sum = 0
+      for (const part of parts) sum += part
+      return `${sum}米`
+    }
+    if (variant === 'two-legs-round') {
+      const a = num(p, 'a')
+      const b = num(p, 'b')
+      const parts = [a, b, b, a]
+      let sum = 0
+      for (const part of parts) sum += part
+      return `${sum}米`
+    }
+    const total = num(p, 'total')
+    // 独立路径：不用除法，从 1 往上找“单程×2 正好等于来回总长”
+    let oneWay = 1
+    while (oneWay * 2 < total) oneWay++
+    if (oneWay * 2 !== total) throw new Error('来回总长不是单程的2倍')
+    return `${oneWay}米`
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'round-trip') {
+      const d = num(p, 'd')
+      const total = num(p, 'total')
+      if (d < 100 || d > 450) return `单程 ${d} 米超出 100–450`
+      if (d % 50 !== 0) return '单程不是 50 米的整倍数'
+      if (total !== 2 * d) return '来回总长不是单程的2倍'
+      if (total > 900) return '来回总长超过900米'
+      return null
+    }
+    if (variant === 'two-legs-round') {
+      const a = num(p, 'a')
+      const b = num(p, 'b')
+      const total = num(p, 'total')
+      if (a < 100 || a > 450 || b < 50 || b > 450) return '单段路程超出范围'
+      if (a % 50 !== 0 || b % 50 !== 0) return '单段路程不是 50 米的整倍数'
+      if (a === b) return '两段一样长，退化成单段来回'
+      if (total !== 2 * (a + b)) return '来回总长不是一趟的2倍'
+      if (total > 900) return '来回总长超过900米'
+      return null
+    }
+    const total = num(p, 'total')
+    const d = num(p, 'd')
+    if (total < 200 || total > 900) return `来回总长 ${total} 米超出 200–900`
+    if (total % 2 !== 0) return '来回总长不是偶数，单程不是整米'
+    if (d !== total / 2) return '单程不是来回总长的一半'
+    if (d < 100 || d > 450) return `单程 ${d} 米超出 100–450`
+    return null
+  },
+}
+
 export const ADV_CATEGORIES: AdvancedCategory[] = [
   cycle,
   normalize,
@@ -2266,6 +3136,11 @@ export const ADV_CATEGORIES: AdvancedCategory[] = [
   calendarCard,
   misread,
   digitCount,
+  multiple,
+  pigeonhole,
+  cryptarithm,
+  timeReverse,
+  route,
 ]
 
 export const advancedCategory = (id: string): AdvancedCategory | undefined =>
@@ -2723,6 +3598,10 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
   const pickCategory = (category: AdvancedCategory, preferredUnit?: string): number => {
     const eligible = category.units.filter((unitId) => unitIds.includes(unitId))
     if (eligible.length === 0) return 0
+    // beta 阶段：算式谜、抽屉原理每卷最多 1 道
+    const limit = category.maxPerPaper ?? Number.POSITIVE_INFINITY
+    const used = questions.reduce((count, question) => count + (question.categoryId === category.id ? 1 : 0), 0)
+    if (used >= limit) return 0
     const budget = 1
     let added = 0
     let misses = 0
