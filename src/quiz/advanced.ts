@@ -53,6 +53,8 @@ export interface AdvancedCategory {
   id: string
   label: string
   tier: AdvancedTier
+  /** 可出现的难度层；缺省按基础档位推导（T1→L1/L2，T2→L2/L3，T3→L3） */
+  levels?: Level[]
   /** 方案 A 单元归属：只从所选单元出题 */
   units: string[]
   /** 跨卷/同卷去重用的主知识点键 */
@@ -1363,16 +1365,34 @@ export const advancedCategory = (id: string): AdvancedCategory | undefined =>
 
 const LEVEL_TIER: Record<Level, AdvancedTier> = { L1: 'T1', L2: 'T2', L3: 'T3' }
 
+/** 每个基础档位默认可出现的难度层：低档题可下探到上一档，避免单单元只剩一类 */
+const LEVELS_BY_TIER: Record<AdvancedTier, Level[]> = {
+  T1: ['L1', 'L2'],
+  T2: ['L2', 'L3'],
+  T3: ['L3'],
+}
+
+const TIER_RANK: Record<AdvancedTier, number> = { T1: 1, T2: 2, T3: 3 }
+
 export const tierForLevel = (level: Level): AdvancedTier => LEVEL_TIER[level]
 
 export const levelForTier = (tier: AdvancedTier): Level =>
   tier === 'T1' ? 'L1' : tier === 'T2' ? 'L2' : 'L3'
 
+/** 类别可出现的难度层；新增类别可用 levels 覆盖默认映射 */
+export const categoryLevels = (category: AdvancedCategory): Level[] =>
+  category.levels ?? LEVELS_BY_TIER[category.tier]
+
+/** 低一档的类别只作补充，不进主力 */
+export const isSupplementCategory = (category: AdvancedCategory, level: Level): boolean =>
+  TIER_RANK[category.tier] < TIER_RANK[LEVEL_TIER[level]]
+
 export function advancedCategoriesFor(level: Level, unitIds: string[]): AdvancedCategory[] {
-  const tier = tierForLevel(level)
   const selected = new Set(unitIds)
   return ADV_CATEGORIES.filter(
-    (category) => category.tier === tier && category.units.some((unitId) => selected.has(unitId)),
+    (category) =>
+      categoryLevels(category).includes(level) &&
+      category.units.some((unitId) => selected.has(unitId)),
   )
 }
 
@@ -1399,6 +1419,11 @@ export function advancedKey(categoryId: string, primaryKp: string, params: AdvPa
     .map((key) => `${key}=${String(params[key])}`)
     .join('|')
   return `advanced:${primaryKp}:${categoryId}:${structure}`
+}
+
+/** 同卷"同模板同变体"判定：同类别且同变体只允许出现 1 次，换数字不算新题 */
+export function advancedStructureKey(categoryId: string, params: AdvParams): string {
+  return `${categoryId}:${String(params.variant ?? '')}`
 }
 
 // ---------- 单题结构与双路径复核 ----------
@@ -1478,8 +1503,8 @@ export function verifyAdvancedRecord(record: AdvancedRecord): string[] {
   if (category.tier !== record.tier) {
     issues.push(`类别 ${category.id} 属于 ${category.tier}，记录写成 ${record.tier}`)
   }
-  if (levelForTier(category.tier) !== record.level) {
-    issues.push(`类别 ${category.id} 的难度档与 level ${record.level} 不一致`)
+  if (!categoryLevels(category).includes(record.level)) {
+    issues.push(`类别 ${category.id} 不支持 level ${record.level}`)
   }
   if (!category.units.includes(record.unitId)) {
     issues.push(`类别 ${category.id} 不属于单元 ${record.unitId}`)
@@ -1644,14 +1669,19 @@ interface Candidate {
   key: string
 }
 
-function makeCandidate(category: AdvancedCategory, params: AdvParams, unitId: string): Candidate | null {
+function makeCandidate(
+  category: AdvancedCategory,
+  params: AdvParams,
+  unitId: string,
+  level: Level,
+): Candidate | null {
   try {
     const built = category.build(params)
     const stem = category.stem(params)
     const record: AdvancedRecord = {
       categoryId: category.id,
       tier: category.tier,
-      level: levelForTier(category.tier),
+      level,
       unitId,
       kpKey: category.primaryKp,
       kpKeys: category.kpKeys,
@@ -1691,9 +1721,22 @@ const shuffle = <T,>(rng: Rng, list: T[]): T[] => {
   return copy
 }
 
+/** 单元指纹：同一 seed 下换单元必须换题；与单元顺序无关 */
+const unitFingerprint = (unitIds: string[]): number => {
+  let hash = 0
+  for (const unitId of unitIds) {
+    for (let index = 0; index < unitId.length; index++) {
+      hash = (hash * 31 + unitId.charCodeAt(index)) % 1000003
+    }
+  }
+  return hash
+}
+
 export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResult {
-  const { grade, unitIds, level, count } = options
-  const seed = options.seed ?? 20260101
+  const { grade, level, count } = options
+  // 统一排序：同一组单元不因传入顺序不同而换题
+  const unitIds = [...new Set(options.unitIds)].sort()
+  const seed = (options.seed ?? 20260101) + unitFingerprint(unitIds)
   const memory = options.memory
   const questions: AdvancedQuestion[] = []
   const notes: string[] = []
@@ -1704,11 +1747,13 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
 
   const categories = advancedCategoriesFor(level, unitIds)
   if (categories.length === 0) {
-    const tier = tierForLevel(level)
+    const levels = advancedLevelsFor(grade, unitIds)
     return {
       questions,
       notes: [
-        `拓展题：所选单元在 ${level}（${tier}）没有可用类别（T1 周期/归一/等量代换/时间/年龄差/拼周长/归总；T2 逆向/剪拼/星期几；T3 租船/拼成大长方形/固定周长摆长方形）`,
+        `拓展题：所选单元在 ${level}（${tierForLevel(level)}）没有可用类别${
+          levels.length > 0 ? `，可切到 ${levels.join('/')}` : ''
+        }（现有类别：${ADV_CATEGORIES.map((category) => `${category.tier} ${category.label}`).join('；')}）`,
       ],
       crossReused: 0,
     }
@@ -1716,6 +1761,8 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
 
   const rng = createRng(seed + 3313)
   const seen = new Set<string>()
+  const structureSeen = new Set<string>()
+  const unitCounts = new Map<string, number>()
   const stale: Candidate[] = []
   const staleKeys = new Set<string>()
   let crossReused = 0
@@ -1745,14 +1792,28 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
       ...(reused ? { reused: true } : {}),
     })
     seen.add(candidate.key)
+    structureSeen.add(advancedStructureKey(category.id, candidate.params))
+    unitCounts.set(candidate.unitId, (unitCounts.get(candidate.unitId) ?? 0) + 1)
     options.sourceUsed?.add(candidate.key)
     memory?.record(candidate.key)
     if (reused) crossReused++
   }
 
-  const pickCategory = (category: AdvancedCategory, budget: number): number => {
-    const units = category.units.filter((unitId) => unitIds.includes(unitId))
-    if (units.length === 0) return 0
+  /** 单元轮转：优先补零题单元，其余按已出题量最少者优先 */
+  const chooseUnit = (eligible: string[], preferredUnit?: string): string => {
+    if (preferredUnit != null && eligible.includes(preferredUnit)) return preferredUnit
+    const rotated = shuffle(rng, eligible)
+    return rotated.reduce(
+      (best, current) =>
+        (unitCounts.get(current) ?? 0) < (unitCounts.get(best) ?? 0) ? current : best,
+      rotated[0]!,
+    )
+  }
+
+  const pickCategory = (category: AdvancedCategory, preferredUnit?: string): number => {
+    const eligible = category.units.filter((unitId) => unitIds.includes(unitId))
+    if (eligible.length === 0) return 0
+    const budget = 1
     let added = 0
     let misses = 0
     for (let attempt = 0; attempt < 400 && added < budget && questions.length < count; attempt++) {
@@ -1762,7 +1823,13 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
         misses++
         continue
       }
-      const candidate = makeCandidate(category, params, units[0]!)
+      const structure = advancedStructureKey(category.id, params)
+      if (structureSeen.has(structure)) {
+        misses++
+        continue
+      }
+      const unitId = chooseUnit(eligible, preferredUnit)
+      const candidate = makeCandidate(category, params, unitId, level)
       if (!candidate) {
         misses++
         continue
@@ -1787,25 +1854,33 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     return added
   }
 
-  // 第一轮：每个类别至少出 1 题，保证同档内类别覆盖
-  for (const category of shuffle(rng, categories)) {
-    if (questions.length >= count) break
-    pickCategory(category, 1)
-  }
+  const primary = shuffle(rng, categories.filter((category) => !isSupplementCategory(category, level)))
+  const supplement = shuffle(rng, categories.filter((category) => isSupplementCategory(category, level)))
+  const ordered = [...primary, ...supplement]
 
-  // 第二轮：按类别均额填充，避免某一类占比过高
-  const perCategory = Math.max(1, Math.ceil(count / categories.length) - 1)
-  for (const category of shuffle(rng, categories)) {
+  // 第 0 轮：每个被选单元至少落 1 题（有可用类别时）
+  for (const unitId of unitIds) {
     if (questions.length >= count) break
-    pickCategory(category, perCategory)
-  }
-
-  // 第三轮：还有缺口时，让参数池未用尽的类别继续补足（如可用类别少于所需题量）
-  for (let round = 0; round < 40 && questions.length < count; round++) {
-    const before = questions.length
-    for (const category of shuffle(rng, categories)) {
+    if ((unitCounts.get(unitId) ?? 0) > 0) continue
+    for (const category of ordered) {
       if (questions.length >= count) break
-      pickCategory(category, Math.max(1, Math.ceil((count - questions.length) / categories.length)))
+      if (!category.units.includes(unitId)) continue
+      if (pickCategory(category, unitId) > 0) break
+    }
+  }
+
+  // 第一轮：主力档位每个类别先出 1 题；低档类别排在其后，只用来补缺口
+  for (const category of ordered) {
+    if (questions.length >= count) break
+    pickCategory(category)
+  }
+
+  // 第二轮：还有缺口时继续尝试（同类别同变体每卷只允许 1 次，换数字不算新题）
+  for (let round = 0; round < 20 && questions.length < count; round++) {
+    const before = questions.length
+    for (const category of shuffle(rng, ordered)) {
+      if (questions.length >= count) break
+      pickCategory(category)
     }
     if (questions.length === before) break
   }
@@ -1813,12 +1888,13 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
   for (const candidate of stale) {
     if (questions.length >= count) break
     if (seen.has(candidate.key)) continue
+    if (structureSeen.has(advancedStructureKey(candidate.category.id, candidate.params))) continue
     accept(candidate, true)
   }
 
   if (questions.length < count) {
     notes.push(
-      `拓展题：本档可用类别 ${categories.length} 种，参数池用尽后如实出 ${questions.length}/${count} 题（同结构不重复，不用重复题凑数）`,
+      `拓展题：本档共有 ${structureSeen.size} 种不同结构，按“同模板同变体不重复”如实出 ${questions.length}/${count} 题（不用换数字的重复题凑数）`,
     )
   }
   if (crossReused > 0) {

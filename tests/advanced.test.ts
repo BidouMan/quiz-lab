@@ -70,38 +70,40 @@ test('拓展题：13 类可做，每类每一步都只挂三上知识点', () =>
   }
 })
 
-test('拓展题：三档平均步骤数实测严格递增（T1 <3 / T2 =3 / T3 ≥4）', () => {
+test('拓展题：三档平均步骤数实测严格递增（解绑后 L2 含 T1 补充题）', () => {
   const averages: number[] = []
   for (const level of ['L1', 'L2', 'L3'] as const) {
-    const result = generateAdvanced({ grade: '3A', unitIds: UNITS_3A, level, count: 10, seed: 20261105 })
-    assert.equal(result.questions.length, 10, `${level} 实出 ${result.questions.length}`)
+    const result = generateAdvanced({ grade: '3A', unitIds: UNITS_3A, level, count: 6, seed: 20261105 })
+    assert.equal(result.questions.length, 6, `${level} 实出 ${result.questions.length}`)
     const average =
       result.questions.reduce((sum, question) => sum + question.steps.length, 0) / result.questions.length
     averages.push(average)
     assert.deepEqual(validateAdvancedPaper(result.questions), [], `${level} 双路径复核失败`)
   }
-  assert.ok(averages[0]! < averages[1]!, `T1 ${averages[0]} 不小于 T2 ${averages[1]}`)
-  assert.ok(averages[1]! < averages[2]!, `T2 ${averages[1]} 不小于 T3 ${averages[2]}`)
-  assert.ok(averages[0]! >= 2 && averages[0]! < 3, `T1 平均 ${averages[0]} 不在 [2,3)`)
-  assert.equal(averages[1], 3)
-  assert.ok(averages[2]! >= 4 && averages[2]! < 5, `T3 平均 ${averages[2]} 不在 [4,5)`)
+  assert.ok(averages[0]! < averages[1]!, `L1 ${averages[0]} 不小于 L2 ${averages[1]}`)
+  assert.ok(averages[1]! < averages[2]!, `L2 ${averages[1]} 不小于 L3 ${averages[2]}`)
+  assert.ok(averages[0]! >= 2 && averages[0]! < 3, `L1 平均 ${averages[0]} 不在 [2,3)`)
+  assert.ok(averages[1]! >= 2.4 && averages[1]! < 3, `L2 平均 ${averages[1]} 不在 [2.4,3)`)
+  assert.ok(averages[2]! >= 3.4 && averages[2]! < 5, `L3 平均 ${averages[2]} 不在 [3.4,5)`)
 })
 
 test('拓展题：同卷按“结构 + 知识点”去重，不按题干字符串', () => {
   const result = generateAdvanced({ grade: '3A', unitIds: UNITS_3A, level: 'L1', count: 20, seed: 90 })
-  assert.equal(result.questions.length, 20)
+  assert.equal(result.questions.length, 7, `L1 只有 7 类，实出 ${result.questions.length}`)
   const keys = new Set(result.questions.map((question) => question.key))
-  assert.equal(keys.size, 20, `同卷出现重复结构：${20 - keys.size}`)
+  assert.equal(keys.size, result.questions.length, `同卷出现重复结构：${result.questions.length - keys.size}`)
   const byStem = new Set(result.questions.map((question) => question.stem))
   assert.ok(byStem.size <= keys.size, '题干去重不应比结构去重更严格')
 })
 
-test('拓展题：300 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
+test('拓展题：115 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
   let total = 0
   let failures = 0
   let duplicates = 0
   const keys: string[] = []
   const memory = new MemoryStore()
+  // 解绑后每档可用结构数：L1=7、L2=10、L3=6
+  const perPaper = { L1: 7, L2: 10, L3: 6 } as const
   for (const level of ['L1', 'L2', 'L3'] as const) {
     for (let paper = 0; paper < 5; paper++) {
       memory.beginPaper()
@@ -113,7 +115,11 @@ test('拓展题：300 题审计（复核失败 0、结构-解法一致性失败 
         seed: 3000 + paper * 97 + (level === 'L1' ? 0 : level === 'L2' ? 1000 : 2000),
         memory,
       })
-      assert.equal(result.questions.length, 20, `${level} 第 ${paper + 1} 卷实出 ${result.questions.length}`)
+      assert.equal(
+        result.questions.length,
+        perPaper[level],
+        `${level} 第 ${paper + 1} 卷实出 ${result.questions.length}`,
+      )
       const issues = validateAdvancedPaper(result.questions)
       failures += issues.length
       duplicates += result.questions.length - new Set(result.questions.map((question) => question.key)).size
@@ -121,7 +127,7 @@ test('拓展题：300 题审计（复核失败 0、结构-解法一致性失败 
       total += result.questions.length
     }
   }
-  assert.equal(total, 300)
+  assert.equal(total, 115)
   assert.equal(failures, 0, `复核失败 ${failures}`)
   assert.equal(duplicates, 0, `同卷重复 ${duplicates}`)
   const crossDuplicate = keys.length - new Set(keys).size
@@ -191,21 +197,24 @@ test('反例：超纲词（面积/方程等）必须被拒', () => {
   assert.ok(issues.some((issue) => issue.includes('超纲词')), `应拒绝超纲词：${issues.join('；')}`)
 })
 
-test('方案 A 单元归属：U7 项目式单元不出拓展题，U3 删除数长方形后无 T2 类别', () => {
+test('方案 A 单元归属：U7 项目式单元不出拓展题，U3 转图形题；解绑后 U2/U5 各档可用', () => {
   assert.equal(advancedSupports('3A', ['3A-U7'], 'L2'), false)
   assert.deepEqual(advancedLevelsFor('3A', ['3A-U7']), [])
   assert.equal(advancedSupports('3A', ['3A-U3'], 'L2'), false)
   assert.equal(advancedSupports('3A', ['3A-U3'], 'L1'), false)
+  assert.equal(advancedSupports('3A', ['3A-U2'], 'L2'), true)
+  assert.deepEqual(advancedLevelsFor('3A', ['3A-U2']), ['L1', 'L2', 'L3'])
   assert.equal(advancedSupports('3A', ['3A-U5'], 'L1'), true)
   assert.equal(advancedSupports('3A', ['3A-U5'], 'L2'), true)
-  assert.equal(advancedSupports('3A', ['3A-U5'], 'L3'), false)
+  assert.equal(advancedSupports('3A', ['3A-U5'], 'L3'), true)
 })
 
-test('单题型 200 上限：多单元组合 L2/L3 均可出满且同卷不重复', () => {
+test('单题型上限：解绑后 L2=10 类、L3=6 类，同卷不重复', () => {
+  const expected = { L2: 10, L3: 6 } as const
   for (const level of ['L2', 'L3'] as const) {
     const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6'], level, count: 200, seed: 8100 })
-    assert.equal(result.questions.length, 200, `${level} 实出 ${result.questions.length}`)
-    assert.equal(new Set(result.questions.map((question) => question.key)).size, 200)
+    assert.equal(result.questions.length, expected[level], `${level} 实出 ${result.questions.length}`)
+    assert.equal(new Set(result.questions.map((question) => question.key)).size, expected[level])
     assert.deepEqual(validateAdvancedPaper(result.questions), [])
   }
 })
@@ -230,13 +239,13 @@ test('接入 buildPaper：默认 3 题、按类别留白、运行时复核 0 丢
   assert.equal(items.length, 3)
   for (const item of items) {
     assert.equal(item.kind, 'advanced')
-    // U1 L2 只剩逆向一类（4 行留白）
-    assert.ok([4].includes(item.workLines), `U1 L2 出现 ${item.workLines} 行留白`)
+    // U1 L2 解绑后有逆向 + 归一/年龄差/归总，留白按类别而非档位
+    assert.ok(item.workLines >= 3 && item.workLines <= 8, `U1 L2 出现 ${item.workLines} 行留白`)
     assert.deepEqual(verifyItemStructure(item), [])
   }
 })
 
-test('接入 typeAvailability：U7 标不适用，U3 删除数长方形后不可用，U5/L3 给可切档提示', () => {
+test('接入 typeAvailability：U7 标不适用，U3 转图形题，U5/L3 解绑后可用', () => {
   const availability = (unitIds: string[], level: 'L1' | 'L2' | 'L3') =>
     typeAvailability(
       { ...DEFAULT_CONFIG, grade: '3A', unitIds, level, types: ['advanced'], counts: { advanced: 3 }, count: 3 },
@@ -245,9 +254,8 @@ test('接入 typeAvailability：U7 标不适用，U3 删除数长方形后不可
   assert.equal(availability(['3A-U7'], 'L2').enabled, false)
   assert.equal(availability(['3A-U7'], 'L2').source, 'na')
   assert.equal(availability(['3A-U3'], 'L2').enabled, false)
-  const u5l3 = availability(['3A-U5'], 'L3')
-  assert.equal(u5l3.enabled, false)
-  assert.ok(u5l3.reason.includes('L1') || u5l3.reason.includes('L2'), u5l3.reason)
+  assert.equal(availability(['3A-U5'], 'L3').enabled, true)
+  assert.equal(availability(['3A-U2'], 'L2').enabled, true)
 })
 
 test('P0 数域扫描：13 类各 2000 次抽样，两位数除法/两位数×两位数/归一归总超 99 均为 0', () => {

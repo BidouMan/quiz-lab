@@ -428,7 +428,7 @@ export function typeAvailability(
         reason:
           levels.length > 0
             ? `所选单元在 ${config.level} 没有拓展题结构，可切到 ${levels.join('/')}`
-            : `不适用：本单元没有拓展题结构（按知识点映射：U1/U2/U4 四则推理、U3 图形计数、U5 时间与日期、U6 周长；U7 为项目式单元，暂不出拓展题）`,
+            : `不适用：本单元没有拓展题结构（按知识点映射：U1/U2/U4 四则推理、U5 时间与日期、U6 周长；U3 请改用图形题中的数三角形/数长方形；U7 为项目式单元，暂不出拓展题）`,
         source: levels.length > 0 ? undefined : 'na',
       }
       continue
