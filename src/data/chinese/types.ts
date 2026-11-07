@@ -348,7 +348,7 @@ export interface ChineseWritingPrompt {
   requirements: string[]
   wordCount: { min: number; max: number }
   /** 分项与分值，给家长核对，不参与自动判分 */
-  scoring?: ChineseWritingScoring
+  scoring: ChineseWritingScoring
   status: VerifyStatus
   sources: SourceRef[]
   note?: string
