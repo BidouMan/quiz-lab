@@ -6,6 +6,7 @@ import {
   advancedCategory,
   advancedKey,
   advancedLevelsFor,
+  advancedStructureKey,
   advancedStyleIssue,
   advancedSupports,
   generateAdvanced,
@@ -96,14 +97,14 @@ test('拓展题：同卷按“结构 + 知识点”去重，不按题干字符�
   assert.ok(byStem.size <= keys.size, '题干去重不应比结构去重更严格')
 })
 
-test('拓展题：115 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
+test('拓展题：150 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
   let total = 0
   let failures = 0
   let duplicates = 0
   const keys: string[] = []
   const memory = new MemoryStore()
-  // 解绑后每档可用结构数：L1=7、L2=10、L3=6
-  const perPaper = { L1: 7, L2: 10, L3: 6 } as const
+  // 扩池后每档可用结构数：L1=7、L2=13（T1 7 + T2 逆向 4 + 剪拼 1 + 星期 1）、L3=10（T2 6 + T3 4）
+  const perPaper = { L1: 7, L2: 13, L3: 10 } as const
   for (const level of ['L1', 'L2', 'L3'] as const) {
     for (let paper = 0; paper < 5; paper++) {
       memory.beginPaper()
@@ -127,7 +128,7 @@ test('拓展题：115 题审计（复核失败 0、结构-解法一致性失败 
       total += result.questions.length
     }
   }
-  assert.equal(total, 115)
+  assert.equal(total, 150)
   assert.equal(failures, 0, `复核失败 ${failures}`)
   assert.equal(duplicates, 0, `同卷重复 ${duplicates}`)
   const crossDuplicate = keys.length - new Set(keys).size
@@ -209,8 +210,8 @@ test('方案 A 单元归属：U7 项目式单元不出拓展题，U3 转图形�
   assert.equal(advancedSupports('3A', ['3A-U5'], 'L3'), true)
 })
 
-test('单题型上限：解绑后 L2=10 类、L3=6 类，同卷不重复', () => {
-  const expected = { L2: 10, L3: 6 } as const
+test('单题型上限：扩池后 L2=13 种结构、L3=10 种结构，同卷不重复', () => {
+  const expected = { L2: 13, L3: 10 } as const
   for (const level of ['L2', 'L3'] as const) {
     const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6'], level, count: 200, seed: 8100 })
     assert.equal(result.questions.length, expected[level], `${level} 实出 ${result.questions.length}`)
@@ -448,8 +449,8 @@ test('P0 拼成大长方形：4 步、答案唯一、并列最优拒生成、300
     scanned++
     const l = Number(params.l)
     const w = Number(params.w)
-    if (l < 8 || l > 12) violations.push(`长越界：${l}`)
-    if (w < 3 || w > 5) violations.push(`宽越界：${w}`)
+    if (l < 8 || l > 15) violations.push(`长越界：${l}`)
+    if (w < 3 || w > 6) violations.push(`宽越界：${w}`)
     if (l <= w) violations.push(`长不大于宽：${l}×${w}`)
     if (l === 2 * w) violations.push(`长=2宽：${l}×${w}`)
     const built = category.build(params)
@@ -508,7 +509,7 @@ test('固定周长摆长方形：枚举计数正确、唯一答案、退化情�
   assert.ok(min >= 12 && max <= 40, `周长实测 ${min}–${max} 超出 12–40`)
 })
 
-test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、周长范围与奇偶为 0', () => {
+test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、口径与奇偶为 0', () => {
   const category = advancedCategory('adv-arrange-rect')
   assert.ok(category)
   const rng = createRng(20261106)
@@ -523,24 +524,30 @@ test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、
       violations.push(`周长越界：${perimeter}`)
       continue
     }
+    const half = perimeter / 2
+    const includeSquare = params.squareCounts === undefined || Number(params.squareCounts) === 1
+    if (!includeSquare && half % 2 !== 0) violations.push(`不含正方形却半周长为奇数：${perimeter}`)
     const stem = category.stem(params)
     const texts = [stem, ...category.build(params).steps.map((step) => step.text)]
     for (const text of texts) {
       if (/铺|填|占满|每根算一条边/.test(text)) violations.push(`题面有铺满歧义：${text}`)
     }
-    if (!stem.includes('沿边围一圈') || !stem.includes('长不短于宽') || !stem.includes('每根算1厘米')) {
-      violations.push(`题干未锁定围边模型：${stem}`)
+    const squareRule = includeSquare ? '正方形也算一种长方形' : '只数长和宽不一样的长方形，正方形不算'
+    if (!stem.includes('沿边围一圈') || !stem.includes('长不短于宽') || !stem.includes('每根算1厘米') || !stem.includes(squareRule)) {
+      violations.push(`题干未锁定围边模型或口径：${stem}`)
     }
     const built = category.build(params)
     if (built.answer !== category.recompute(params)) violations.push(`两条路径答案不一致：${built.answer}`)
-    const half = perimeter / 2
     const parsed = [...built.answer.matchAll(/长(\d+)宽(\d+)/g)].map((match) => [
       Number(match[1]),
       Number(match[2]),
     ])
-    const expected = Math.floor(half / 2)
+    const expected = includeSquare ? Math.floor(half / 2) : Math.floor((half - 1) / 2)
     if (parsed.length !== expected) violations.push(`枚举数量不对：${built.answer}`)
     if (expected > 10) violations.push(`组合超过 10 组：${expected}`)
+    if (!includeSquare && built.answer.includes('（正方形）')) {
+      violations.push(`不含正方形却数进正方形：${built.answer}`)
+    }
     if (built.answer.length > 70) violations.push(`答案超过两行（${built.answer.length} 字）：${built.answer}`)
     const seen = new Set<string>()
     for (const [long, short] of parsed) {
@@ -555,27 +562,105 @@ test('P0 摆长方形：3000 题无铺满歧义、答案枚举完整且唯一、
   assert.deepEqual(violations.slice(0, 5), [], `摆长方形问题 ${violations.length} 条`)
 })
 
-test('摆长方形参数域：12–40 共 15 种；连续两卷周长重复 0', () => {
+test('摆长方形参数域：周长 12–40 共 15 种；连续两卷同结构重复 0', () => {
   const category = advancedCategory('adv-arrange-rect')
   assert.ok(category)
   const rng = createRng(20261110)
   const pool = new Set<number>()
+  const variants = new Set<string>()
   for (let index = 0; index < 3000; index++) {
     const params = category.draw(rng)
     if (params == null) continue
     pool.add(Number(params.perimeter))
+    variants.add(String(params.variant))
   }
   assert.deepEqual([...pool].sort((a, b) => a - b), [12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40])
+  assert.deepEqual([...variants].sort(), ['no-square', 'with-square'])
 
   const memory = new MemoryStore()
   memory.beginPaper()
   const first = generateAdvanced({ grade: '3A', unitIds: ['3A-U6'], level: 'L3', count: 7, seed: 11, memory })
   memory.beginPaper()
   const second = generateAdvanced({ grade: '3A', unitIds: ['3A-U6'], level: 'L3', count: 7, seed: 22, memory })
-  const perimeters = [...first.questions, ...second.questions]
+  const keys = [...first.questions, ...second.questions]
     .filter((question) => question.categoryId === 'adv-arrange-rect')
-    .map((question) => Number(question.params.perimeter))
-  assert.equal(perimeters.length, new Set(perimeters).size, `连续两卷周长重复：${perimeters.join('、')}`)
+    .map((question) => question.key)
+  assert.equal(keys.length, new Set(keys).size, `连续两卷出现完全相同的摆长方形：${keys.join('、')}`)
+})
+
+test('P0-2 逆向推理 4 变体：句式各不相同、双路径一致、同卷同变体只出 1 次', () => {
+  const category = advancedCategory('adv-reverse')
+  assert.ok(category)
+  assert.equal(category.variantCount, 4)
+  const rng = createRng(20261112)
+  const variants = new Set<string>()
+  const stems = new Map<string, string>()
+  let scanned = 0
+  for (let index = 0; index < 3000; index++) {
+    const params = category.draw(rng)
+    if (params == null) continue
+    scanned++
+    const variant = String(params.variant)
+    variants.add(variant)
+    const built = category.build(params)
+    assert.equal(String(category.recompute(params)), built.answer, `${variant} 双路径不一致`)
+    assert.equal(category.invariant(params), null, `${variant} 结构约束不通过`)
+    assert.equal(verifyAdvancedRecord({ ...recordOf({
+      categoryId: category.id,
+      tier: category.tier,
+      level: 'L2',
+      unitId: '3A-U1',
+      kpKey: category.primaryKp,
+      kpKeys: category.kpKeys,
+      params,
+      known: built.known,
+      unknown: built.unknown,
+      stem: category.stem(params),
+      steps: built.steps,
+      answer: built.answer,
+      key: advancedKey(category.id, category.primaryKp, params),
+    }) }).length, 0)
+    // 同一变体换数字后句式必须完全一致，防止模板串台
+    const normalized = category.stem(params).replace(/\d+/g, '#')
+    if (stems.has(variant)) assert.equal(normalized, stems.get(variant))
+    else stems.set(variant, normalized)
+    // 三上数域：乘数、除数都只能是 2–9
+    for (const key of ['mult', 'divisor']) {
+      const value = params[key]
+      if (typeof value === 'number') assert.ok(value >= 2 && value <= 9, `${variant} 的 ${key}=${value}`)
+    }
+  }
+  assert.ok(scanned >= 2900, `逆向推理扫描量只有 ${scanned}`)
+  assert.deepEqual([...variants].sort(), ['add-div', 'add-mul', 'mul-add', 'sub-mul'])
+  assert.equal(stems.size, 4, '4 个变体应有 4 套不同句式')
+
+  const paper = generateAdvanced({ grade: '3A', unitIds: ['3A-U1'], level: 'L2', count: 10, seed: 424242 })
+  const structures = paper.questions
+    .filter((question) => question.categoryId === 'adv-reverse')
+    .map((question) => advancedStructureKey(question.categoryId, question.params))
+  assert.equal(structures.length, new Set(structures).size, `同卷逆向重复变体：${structures.join('、')}`)
+})
+
+test('P0-2 出不满时：提示写清“只有 N 类”和缺哪几类题型', () => {
+  // U2 L2 只映射到“等量代换 + 归总问题”2 类，6 题必然出不满
+  const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U2'], level: 'L2', count: 6, seed: 907 })
+  assert.ok(result.questions.length < 6, `U2 L2 竟然出满 ${result.questions.length} 题`)
+  const note = result.notes.find((item) => item.includes('如实出'))
+  assert.ok(note, `缺少如实提示：${result.notes.join('｜')}`)
+  assert.ok(note!.includes('本单元该档目前只有 2 类'), note)
+  assert.ok(note!.includes('实际可用 2 种结构'), note)
+  assert.ok(note!.includes('等量代换') && note!.includes('归总问题'), note)
+  assert.ok(note!.includes('没有映射到本单元'), note)
+  // 缺的题型必须点名（只列同档题型，L3 专有的摆长方形不在 L2 这一档）
+  assert.ok(note!.includes('本档另有 8 类'), note)
+  for (const label of ['逆向推理', '周期排列', '归一问题', '剪拼后的周长', '星期几推算']) {
+    assert.ok(note!.includes(label), `缺的题型没点名 ${label}：${note}`)
+  }
+  assert.ok(!note!.includes('固定周长摆长方形'), `不该把 L3 题型算进 L2 缺口：${note}`)
+  // 出满的卷不出现这条提示
+  const full = generateAdvanced({ grade: '3A', unitIds: [ '3A-U1' ], level: 'L2', count: 6, seed: 907 })
+  assert.equal(full.questions.length, 6)
+  assert.ok(!full.notes.some((item) => item.includes('如实出')), full.notes.join('｜'))
 })
 
 test('P1 周期：3000 题周期串无重复符号、答案最高占比 <35%、题干要求写算式', () => {

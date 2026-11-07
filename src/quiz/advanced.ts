@@ -55,6 +55,8 @@ export interface AdvancedCategory {
   tier: AdvancedTier
   /** 可出现的难度层；缺省按基础档位推导（T1→L1/L2，T2→L2/L3，T3→L3） */
   levels?: Level[]
+  /** 同类别下的结构变体数（缺省 1），用于如实提示“有几类、几种结构” */
+  variantCount?: number
   /** 方案 A 单元归属：只从所选单元出题 */
   units: string[]
   /** 跨卷/同卷去重用的主知识点键 */
@@ -369,10 +371,12 @@ const dSubstitute = (rng: Rng): AdvParams | null =>
     const combos = [
       { big: '西瓜', mid: '菠萝', small: '苹果', verb: '换', smallUnit: '个' },
       { big: '书包', mid: '文具盒', small: '铅笔', verb: '装', smallUnit: '支' },
+      { big: '大箱', mid: '中箱', small: '水瓶', verb: '装', smallUnit: '瓶' },
+      { big: '礼品盒', mid: '小盒', small: '糖果', verb: '装', smallUnit: '颗' },
     ]
     const combo = pick(rng, combos)
-    const a = randInt(rng, 2, 5)
-    const b = randInt(rng, 2, 5)
+    const a = randInt(rng, 2, 6)
+    const b = randInt(rng, 2, 6)
     // 答案 4 太容易（2×2），T1 里没有拓展价值
     if (a * b === 4) return null
     if (a * b > 99) return null
@@ -387,7 +391,7 @@ const substitute: AdvancedCategory = {
   primaryKp: '3A-MUL-1',
   kpKeys: ['3A-MUL-1'],
   sample: '1个书包能装3个文具盒，1个文具盒能装4支铅笔，1个书包能装多少支铅笔？',
-  pool: '2 组等量关系 × 2–5 × 2–5 ≈ 40（排除答案 4；低频）',
+  pool: '4 组等量关系 × 2–6 × 2–6 ≈ 96（排除答案 4）',
   workLines: 3,
   draw: dSubstitute,
   stem: (p) =>
@@ -640,7 +644,7 @@ const ageDiff: AdvancedCategory = {
 
 const dJoinPerimeter = (rng: Rng): AdvParams | null =>
   retry(() => {
-    const count = randInt(rng, 2, 4)
+    const count = randInt(rng, 2, 6)
     const side = randInt(rng, 3, 9)
     const answer = 2 * (count + 1) * side
     if (answer > 120) return null
@@ -655,7 +659,7 @@ const joinPerimeter: AdvancedCategory = {
   primaryKp: '3A-PERIMETER',
   kpKeys: ['3A-PERIMETER'],
   sample: '把2个边长5厘米的正方形拼成一排，拼成的长方形的周长是多少？',
-  pool: '个数 2–4 × 边长 3–9 ≈ 21（低频）',
+  pool: '个数 2–6 × 边长 3–9 ≈ 44（周长上限 120）',
   workLines: 3,
   draw: dJoinPerimeter,
   stem: (p) =>
@@ -776,31 +780,69 @@ const totalize: AdvancedCategory = {
   },
 }
 
+/** 逆向推理的 4 个变体：两个运算的先后顺序、加/减/乘/除的组合都不同 */
+const REVERSE_VARIANTS = ['add-mul', 'sub-mul', 'add-div', 'mul-add'] as const
+type ReverseVariant = (typeof REVERSE_VARIANTS)[number]
+
 const dReverse = (rng: Rng): AdvParams | null =>
-  retry(() => {
+  retry((): AdvParams | null => {
+    const variant = pick(rng, REVERSE_VARIANTS)
+    if (variant === 'add-mul') {
+      const start = randInt(rng, 2, 20)
+      const add = randInt(rng, 2, 30)
+      const mult = randInt(rng, 2, 9)
+      const result = (start + add) * mult
+      if (result > 999) return null
+      return { variant, start, add, mult, result }
+    }
+    if (variant === 'sub-mul') {
+      const sub = randInt(rng, 2, 9)
+      const start = sub + randInt(rng, 2, 20)
+      const mult = randInt(rng, 2, 9)
+      const result = (start - sub) * mult
+      if (result > 999) return null
+      return { variant, start, sub, mult, result }
+    }
+    if (variant === 'add-div') {
+      const divisor = randInt(rng, 2, 9)
+      const quotient = randInt(rng, 2, 15)
+      const add = randInt(rng, 2, 20)
+      const start = quotient * divisor - add
+      // 倒推第一步不能直接得到负数，否则三上不会写
+      if (start < 2) return null
+      return { variant, start, add, divisor, quotient }
+    }
     const start = randInt(rng, 2, 20)
-    const add = randInt(rng, 2, 30)
     const mult = randInt(rng, 2, 9)
-    const result = (start + add) * mult
+    const add = randInt(rng, 2, 30)
+    const result = start * mult + add
     if (result > 999) return null
-    return { start, add, mult, result }
+    return { variant, start, mult, add, result }
   })
 
-const reverse: AdvancedCategory = {
-  id: 'adv-reverse',
-  label: '逆向推理',
-  tier: 'T2',
-  units: ['3A-U1', '3A-U4'],
-  primaryKp: '3A-TWO-STEP',
-  kpKeys: ['3A-DIV-1', '3A-ADD-SUB', '3A-TWO-STEP'],
-  sample: '一个数先加15，再乘3，得72，这个数是多少？',
-  pool: '起点 2–20 × 加数 2–30 × 倍数 2–9 ≈ 4000',
-  workLines: 4,
-  draw: dReverse,
-  stem: (p) =>
-    `一个数先加上${num(p, 'add')}，再乘${num(p, 'mult')}，结果是${num(p, 'result')}。这个数是多少？`,
-  build: (p) => {
-    const start = num(p, 'start')
+const reverseStem = (p: AdvParams): string => {
+  const variant = str(p, 'variant') as ReverseVariant
+  if (variant === 'add-mul') {
+    return `一个数先加上${num(p, 'add')}，再乘${num(p, 'mult')}，结果是${num(p, 'result')}。这个数是多少？`
+  }
+  if (variant === 'sub-mul') {
+    return `一个数先减去${num(p, 'sub')}，再乘${num(p, 'mult')}，结果是${num(p, 'result')}。这个数是多少？`
+  }
+  if (variant === 'add-div') {
+    return `一个数先加上${num(p, 'add')}，再除以${num(p, 'divisor')}，商是${num(p, 'quotient')}。这个数是多少？`
+  }
+  return `一个数先乘${num(p, 'mult')}，再加上${num(p, 'add')}，结果是${num(p, 'result')}。这个数是多少？`
+}
+
+const reverseBuild = (p: AdvParams): {
+  known: string[]
+  unknown: string
+  steps: AdvancedStep[]
+  answer: string
+} => {
+  const variant = str(p, 'variant') as ReverseVariant
+  const start = num(p, 'start')
+  if (variant === 'add-mul') {
     const add = num(p, 'add')
     const mult = num(p, 'mult')
     const result = num(p, 'result')
@@ -830,33 +872,176 @@ const reverse: AdvancedCategory = {
       ],
       answer: String(start),
     }
-  },
-  recompute: (p) => {
-    const start = num(p, 'start')
-    const add = num(p, 'add')
+  }
+  if (variant === 'sub-mul') {
+    const sub = num(p, 'sub')
     const mult = num(p, 'mult')
     const result = num(p, 'result')
-    // 独立路径：从原数正向模拟，必须回到题面结果
-    const forward = (start + add) * mult
-    if (forward !== result) throw new Error(`正向模拟得 ${forward}，与题面 ${result} 不符`)
+    const middle = result / mult
+    return {
+      known: [`先减${sub}，再乘${mult}`, `结果${result}`],
+      unknown: '原来的数',
+      steps: [
+        {
+          text: `从结果倒着想：${result}÷${mult}=${middle}`,
+          kp: '3A-DIV-1',
+          expr: `${result}/${mult}`,
+          result: middle,
+        },
+        {
+          text: `减去的要加回来：${middle}+${sub}=${start}`,
+          kp: '3A-ADD-SUB',
+          expr: `${middle}+${sub}`,
+          result: start,
+        },
+        {
+          text: `验算：(${start}-${sub})×${mult}=${result}`,
+          kp: '3A-TWO-STEP',
+          expr: `(${start}-${sub})*${mult}`,
+          result,
+        },
+      ],
+      answer: String(start),
+    }
+  }
+  if (variant === 'add-div') {
+    const add = num(p, 'add')
+    const divisor = num(p, 'divisor')
+    const quotient = num(p, 'quotient')
+    const dividend = quotient * divisor
+    return {
+      known: [`先加${add}，再除以${divisor}`, `商是${quotient}`],
+      unknown: '原来的数',
+      steps: [
+        {
+          text: `被除数 = 商×除数：${quotient}×${divisor}=${dividend}`,
+          kp: '3A-MUL-1',
+          expr: `${quotient}*${divisor}`,
+          result: dividend,
+        },
+        {
+          text: `${dividend}-${add}=${start}`,
+          kp: '3A-ADD-SUB',
+          expr: `${dividend}-${add}`,
+          result: start,
+        },
+        {
+          text: `验算：(${start}+${add})÷${divisor}=${quotient}`,
+          kp: '3A-DIV-1',
+          expr: `(${start}+${add})/${divisor}`,
+          result: quotient,
+        },
+      ],
+      answer: String(start),
+    }
+  }
+  const mult = num(p, 'mult')
+  const add = num(p, 'add')
+  const result = num(p, 'result')
+  const product = result - add
+  return {
+    known: [`先乘${mult}，再加${add}`, `结果${result}`],
+    unknown: '原来的数',
+    steps: [
+      {
+        text: `先把后加上的减掉：${result}-${add}=${product}`,
+        kp: '3A-ADD-SUB',
+        expr: `${result}-${add}`,
+        result: product,
+      },
+      {
+        text: `${product}÷${mult}=${start}`,
+        kp: '3A-DIV-1',
+        expr: `${product}/${mult}`,
+        result: start,
+      },
+      {
+        text: `验算：${start}×${mult}+${add}=${result}`,
+        kp: '3A-TWO-STEP',
+        expr: `${start}*${mult}+${add}`,
+        result,
+      },
+    ],
+    answer: String(start),
+  }
+}
+
+const reverse: AdvancedCategory = {
+  id: 'adv-reverse',
+  label: '逆向推理',
+  tier: 'T2',
+  units: ['3A-U1', '3A-U4'],
+  primaryKp: '3A-TWO-STEP',
+  kpKeys: ['3A-DIV-1', '3A-MUL-1', '3A-ADD-SUB', '3A-TWO-STEP'],
+  sample: '一个数先加15，再乘3，结果是72，这个数是多少？',
+  pool: '4 个变体（加→乘、减→乘、加→除、乘→加）× 各变体参数域',
+  workLines: 4,
+  variantCount: 4,
+  draw: dReverse,
+  stem: reverseStem,
+  build: reverseBuild,
+  recompute: (p) => {
+    const variant = str(p, 'variant') as ReverseVariant
+    const start = num(p, 'start')
+    // 独立路径：从原数正向模拟，必须回到题面给出的结果
+    const forward =
+      variant === 'add-mul'
+        ? (start + num(p, 'add')) * num(p, 'mult')
+        : variant === 'sub-mul'
+          ? (start - num(p, 'sub')) * num(p, 'mult')
+          : variant === 'add-div'
+            ? (start + num(p, 'add')) / num(p, 'divisor')
+            : start * num(p, 'mult') + num(p, 'add')
+    const expected =
+      variant === 'add-div' ? num(p, 'quotient') : num(p, 'result')
+    if (forward !== expected) throw new Error(`正向模拟得 ${forward}，与题面 ${expected} 不符`)
     return start
   },
   invariant: (p) => {
+    const variant = str(p, 'variant') as ReverseVariant
     const start = num(p, 'start')
-    const add = num(p, 'add')
+    if (start < 2) return '原来的数至少是 2'
+    if (variant === 'add-mul') {
+      const add = num(p, 'add')
+      const mult = num(p, 'mult')
+      const result = num(p, 'result')
+      if (result % mult !== 0) return `结果 ${result} 不能被 ${mult} 整除`
+      if (result / mult <= add) return '倒推第一步就减成非正数'
+      if ((start + add) * mult !== result) return '正向结果与题面不符'
+      return null
+    }
+    if (variant === 'sub-mul') {
+      const sub = num(p, 'sub')
+      const mult = num(p, 'mult')
+      const result = num(p, 'result')
+      if (sub >= start) return '原来的数必须大于减数'
+      if (result % mult !== 0) return `结果 ${result} 不能被 ${mult} 整除`
+      if ((start - sub) * mult !== result) return '正向结果与题面不符'
+      return null
+    }
+    if (variant === 'add-div') {
+      const add = num(p, 'add')
+      const divisor = num(p, 'divisor')
+      const quotient = num(p, 'quotient')
+      if (divisor < 2 || divisor > 9) return `除数 ${divisor} 超出 2–9`
+      if ((start + add) % divisor !== 0) return '倒推的被除数不能整除'
+      if ((start + add) / divisor !== quotient) return '正向模拟与商不符'
+      return null
+    }
     const mult = num(p, 'mult')
+    const add = num(p, 'add')
     const result = num(p, 'result')
-    if (result % mult !== 0) return `结果 ${result} 不能被 ${mult} 整除`
-    if (result / mult <= add) return '倒推第一步就减成非正数'
-    if ((start + add) * mult !== result) return '正向结果与题面不符'
+    if (result <= add) return '先减后加的结果必须大于加数'
+    if ((result - add) % mult !== 0) return '先减后加得到的积不能整除'
+    if (start * mult + add !== result) return '正向结果与题面不符'
     return null
   },
 }
 
 const dCutPerimeter = (rng: Rng): AdvParams | null =>
   retry(() => {
-    const w = randInt(rng, 3, 9)
-    const l = w + randInt(rng, 2, 8)
+    const w = randInt(rng, 3, 10)
+    const l = w + randInt(rng, 2, 9)
     // 长=2 宽时剩下的正好是正方形，教学点“剩下一个长方形”失效，直接排除
     if (l === 2 * w) return null
     if (2 * l > 60) return null
@@ -871,7 +1056,7 @@ const cutPerimeter: AdvancedCategory = {
   primaryKp: '3A-PERIMETER',
   kpKeys: ['3A-PERIMETER'],
   sample: '长8厘米、宽5厘米的长方形纸，从一端剪下一个最大的正方形，剩下图形的周长是多少？',
-  pool: '宽 3–9 × 长比宽多 2–8（排除长=2宽）≈ 40',
+  pool: '宽 3–10 × 长比宽多 2–9（排除长=2宽，周长≤60）≈ 58',
   workLines: 4,
   draw: dCutPerimeter,
   stem: (p) =>
@@ -1173,12 +1358,30 @@ const rentPlan: AdvancedCategory = {
 
 const dArrangeRect = (rng: Rng): AdvParams | null =>
   retry(() => {
-    const perimeter = 2 * randInt(rng, 6, 20)
-    // 周长 12–40 的偶数，保证长、宽都是整数；正方形也算长方形，题干里写死
-    // 半周长拆出的组合最多 10 组（P=40 时正好 10 组），答案不超两行
-    if (Math.floor(perimeter / 4) > 10) return null
-    return { perimeter }
+    const half = randInt(rng, 6, 20)
+    const perimeter = 2 * half
+    // 变体：正方形是否计入长方形。半周长为奇数时两种口径答案相同，只出“含正方形”
+    const squareCounts = half % 2 === 0 ? randInt(rng, 0, 1) : 1
+    return { perimeter, squareCounts, variant: squareCounts === 1 ? 'with-square' : 'no-square' }
   })
+
+/** 兼容旧参数：未写 squareCounts 时按“正方形也算长方形”处理 */
+const arrangeIncludesSquare = (p: AdvParams): boolean =>
+  p.squareCounts === undefined ? true : num(p, 'squareCounts') === 1
+
+const arrangeMaxWidth = (perimeter: number, includeSquare: boolean): number => {
+  const half = perimeter / 2
+  return includeSquare ? Math.floor(half / 2) : Math.floor((half - 1) / 2)
+}
+
+/** 长从大到小枚举，长不短于宽；按口径决定是否保留正方形那一组 */
+const arrangePairs = (half: number, includeSquare: boolean): Array<[number, number]> => {
+  const pairs: Array<[number, number]> = []
+  for (let long = half - 1; includeSquare ? long * 2 >= half : long * 2 > half; long--) {
+    pairs.push([long, half - long])
+  }
+  return pairs
+}
 
 const arrangePairText = (long: number, short: number): string =>
   long === short ? `长${long}宽${short}（正方形）` : `长${long}宽${short}`
@@ -1188,8 +1391,8 @@ const arrangeAnswer = (pairs: Array<[number, number]>): string =>
 
 const dCombinePerimeter = (rng: Rng): AdvParams | null =>
   retry(() => {
-    const l = randInt(rng, 8, 12)
-    const w = randInt(rng, 3, 5)
+    const l = randInt(rng, 8, 15)
+    const w = randInt(rng, 3, 6)
     // 长=宽时两种拼法周长并列；长=2宽时拼出正方形，称呼有争议，均排除
     if (l <= w || l === 2 * w) return null
     return { l, w }
@@ -1214,7 +1417,7 @@ const combinePerimeter: AdvancedCategory = {
   kpKeys: ['3A-PERIMETER', '3A-STRATEGY'],
   sample:
     '有两个长8厘米、宽3厘米的长方形纸片。把它们不重叠地拼成一个大长方形（正方形也算长方形），有几种拼法？哪种拼法的周长最短？',
-  pool: '长 8–12 × 宽 3–5（排除长=2宽）共 13 种',
+  pool: '长 8–15 × 宽 3–6（排除长=2宽）共 29 种',
   workLines: 6,
   draw: dCombinePerimeter,
   stem: (p) =>
@@ -1283,20 +1486,31 @@ const arrangeRect: AdvancedCategory = {
   primaryKp: '3A-PERIMETER',
   kpKeys: ['3A-PERIMETER', '3A-STRATEGY'],
   sample: '用12根同样长的小棒沿边围一圈，围成一个长方形（每根算1厘米，正方形也算长方形），长不短于宽。一共有几种围法？',
-  pool: '周长 12–24 的偶数 7 种（每种 2–6 个组合，低频）',
+  pool: '半周长 6–20（周长 12–40 共 15 种）× 2 种口径（含/不含正方形）≈ 23 种结构',
   workLines: 8,
+  variantCount: 2,
   draw: dArrangeRect,
-  stem: (p) =>
-    `用${num(p, 'perimeter')}根同样长的小棒首尾相接，沿边围一圈，围成一个长方形（每根算1厘米，正方形也算长方形），长不短于宽。一共有几种围法？写出每种的长和宽。`,
+  stem: (p) => {
+    const perimeter = num(p, 'perimeter')
+    const includeSquare = arrangeIncludesSquare(p)
+    return (
+      `用${perimeter}根同样长的小棒首尾相接，沿边围一圈，围成一个长方形（每根算1厘米，` +
+      `${includeSquare ? '正方形也算一种长方形' : '只数长和宽不一样的长方形，正方形不算'}），` +
+      `长不短于宽。一共有几种围法？写出每种的长和宽。`
+    )
+  },
   build: (p) => {
     const perimeter = num(p, 'perimeter')
     const half = perimeter / 2
-    const pairs: Array<[number, number]> = []
-    for (let long = half - 1; long * 2 >= half; long--) {
-      pairs.push([long, half - long])
-    }
+    const includeSquare = arrangeIncludesSquare(p)
+    const pairs = arrangePairs(half, includeSquare)
     return {
-      known: [`${perimeter}根小棒`, `每根算1厘米`, `沿边围一圈`, `正方形也算长方形，长不短于宽`],
+      known: [
+        `${perimeter}根小棒`,
+        '每根算1厘米',
+        '沿边围一圈',
+        includeSquare ? '正方形也算一种长方形，长不短于宽' : '只数长和宽不一样的长方形，长不短于宽',
+      ],
       unknown: '一共有几种围法（写出每种的长和宽）',
       steps: [
         {
@@ -1310,7 +1524,9 @@ const arrangeRect: AdvancedCategory = {
           kp: '3A-STRATEGY',
         },
         {
-          text: `从长最大开始，长每次少1、宽每次多1，长不短于宽，正好不重复、不遗漏`,
+          text: `从长最大开始，长每次少1、宽每次多1，长不短于宽，正好不重复、不遗漏${
+            includeSquare ? '' : '（长=宽的正方形不数）'
+          }`,
           kp: '3A-STRATEGY',
         },
         {
@@ -1324,20 +1540,25 @@ const arrangeRect: AdvancedCategory = {
   recompute: (p) => {
     const perimeter = num(p, 'perimeter')
     const half = perimeter / 2
-    // 独立路径：宽从 1 往上枚举，长 = 半周长 - 宽，只保留长 ≥ 宽（含正方形）
+    const includeSquare = arrangeIncludesSquare(p)
+    // 独立路径：宽从小到大枚举，长 = 半周长 - 宽
     const pairs: Array<[number, number]> = []
-    for (let width = 1; width * 2 <= half; width++) {
+    for (let width = 1; includeSquare ? width * 2 <= half : width * 2 < half; width++) {
       pairs.push([half - width, width])
     }
     return arrangeAnswer(pairs)
   },
   invariant: (p) => {
     const perimeter = num(p, 'perimeter')
+    const includeSquare = arrangeIncludesSquare(p)
     if (perimeter % 2 !== 0) return '周长必须是偶数，长和宽才是整数'
     if (perimeter < 12 || perimeter > 40) return '周长限定 12–40'
     const half = perimeter / 2
     if (half < 6) return '半周长过小，凑不出至少一种长方形'
-    if (Math.floor(half / 2) > 10) return '拆出的长宽组合超过 10 组，答案写不下'
+    if (arrangeMaxWidth(perimeter, includeSquare) > 10) return '拆出的长宽组合超过 10 组，答案写不下'
+    if (arrangeMaxWidth(perimeter, includeSquare) < 2) return '围法少于 2 种，题目太薄'
+    // 半周长为奇数时，正方形那一组本来就不存在，两种口径答案相同，失去变体意义
+    if (!includeSquare && half % 2 !== 0) return '不含正方形时半周长必须是偶数'
     return null
   },
 }
@@ -1893,8 +2114,19 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
   }
 
   if (questions.length < count) {
+    // 家长需要分清“没出满”是缺题型，还是同模板不重复的上限，不能只说“如实出 X/Y 题”
+    const levelCategories = ADV_CATEGORIES.filter((category) => categoryLevels(category).includes(level))
+    const missing = levelCategories.filter((category) => !categories.includes(category))
+    const scope = unitIds.length > 1 ? `所选 ${unitIds.length} 个单元` : '本单元'
+    const availableText = `拓展题：${scope}该档目前只有 ${categories.length} 类（${categories
+      .map((category) => category.label)
+      .join('、')}），实际可用 ${structureSeen.size} 种结构`
+    const missingText =
+      missing.length > 0
+        ? `；本档另有 ${missing.length} 类（${missing.map((category) => category.label).join('、')}）没有映射到${scope}`
+        : '；本档题型已全部映射到当前单元，再想多出只能加新结构'
     notes.push(
-      `拓展题：本档共有 ${structureSeen.size} 种不同结构，按“同模板同变体不重复”如实出 ${questions.length}/${count} 题（不用换数字的重复题凑数）`,
+      `${availableText}${missingText}。受“同模板同变体不重复”限制，只能如实出 ${questions.length}/${count} 题，不用换数字的重复题凑数`,
     )
   }
   if (crossReused > 0) {
