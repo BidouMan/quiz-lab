@@ -20,12 +20,11 @@
 // ---------- 本卷局部构件 ----------
 
 /// 古诗补全：题名行 + 前半句 + 书写空线（与既有样张一致）
-#let poem-fill(title, dynasty, author, first, blank: 42mm) = block(above: 2.5mm, below: 1.5mm)[
+#let poem-fill(title, dynasty, author, first, blank: 42mm) = block(above: 1.4mm, below: 0.8mm)[
   #text(size: 11.5pt)[#title　#(dynasty)·#(author)]
   #h(4mm)
   #text(size: 13pt)[#first]
   #box(width: blank, stroke: (bottom: (thickness: 0.5pt, paint: luma(140))), inset: 0pt)[]
-  #text(size: 13pt)[。]
 ]
 
 /// 按「（ ）」把题干拆成“文字 + 空线”，阅读填空和句子填空共用
@@ -67,7 +66,7 @@
 }
 
 /// 阅读题：选择 / 填空 / 简答三种版式分开排，简答按分数给书写行
-#let reading-question(no, q) = block(above: 3mm, below: 0.5mm)[
+#let reading-question(no, q) = block(above: 1.8mm, below: 0.5mm)[
   #if q.type == "choice" {
     text(size: 13pt)[#text(weight: "bold")[#(no)．]#q.stem]
     h(2mm)
@@ -85,7 +84,7 @@
     text(size: 10.5pt, fill: luma(95))[（#q.score 分）]
     v(0.5mm)
     for _ in range(if q.score >= 6 { 3 } else { 2 }) {
-      write-line(h: 9mm)
+      write-line(h: 8.4mm)
     }
   }
 ]
@@ -137,41 +136,44 @@
 #for poem in p.poems {
   poem-fill(poem.title, poem.dynasty, poem.author, poem.prompt)
 }
-#poem-blank(p.dimo.title, p.dimo.author, p.dimo.dynasty, lines: 2, gap: 9mm)
+#poem-blank(p.dimo.title, p.dimo.author, p.dimo.dynasty, lines: 2, gap: 6mm)
 
 #qhead(5, "句子运用", score: 10)
-#hint("按要求完成下列各题。")
 
-#text(size: 12.5pt, weight: "bold")[1．修改病句。]
+#text(size: 12.5pt, weight: "bold")[1．修改病句（每题 2 分，共 4 分；只改一处，保持原意）。]
 #for (i, g) in p.sentences.gaibing.enumerate() {
-  v(1.5mm)
+  v(0.8mm)
   text(size: 13pt)[（#(i + 1)）#g.broken]
-  v(0.5mm)
+  v(0.3mm)
   grid(
     columns: (16mm, 1fr),
     [#text(size: 12pt)[改为：]],
-    write-line(h: 8mm),
+    write-line(h: 7mm),
   )
 }
 
-#text(size: 12.5pt, weight: "bold")[2．填关联词。]
+#text(size: 12.5pt, weight: "bold")[2．填关联词（每题 1 分，共 2 分；同义说法都算对）。]
 #for (i, g) in p.sentences.guanlian.enumerate() {
-  v(2.5mm)
+  v(1.2mm)
   text(size: 13pt)[（#(i + 1)）]
   fill-inline(g.text, (18mm,) * g.blanks.len(), size: 13pt)
 }
 
-#text(size: 12.5pt, weight: "bold")[3．加标点。]
-#v(2.5mm)
+#text(size: 12.5pt, weight: "bold")[3．加标点（2 分）。]
+#v(1mm)
 #text(size: 13pt)[（1）#p.sentences.biaodian.text]
 
-#text(size: 12.5pt, weight: "bold")[4．仿写句子。]
-#v(1mm)
-#text(size: 12pt)[例：#p.sentences.fangxie.example]
-#v(1mm)
-#text(size: 13pt)[#p.sentences.fangxie.prompt]
-#write-line(h: 9mm)
-#write-line(h: 9mm)
+#text(size: 12.5pt, weight: "bold")[4．扩写句子（2 分，按要点作答：至少补三处，不改变原意）。]
+#v(0.8mm)
+#text(size: 13pt)[#p.sentences.kuoxie.base]
+#text(size: 10.5pt, fill: luma(105))[　提示：#p.sentences.kuoxie.hints.join("　/　")]
+#write-line(h: 8.5mm)
+
+#text(size: 12.5pt, weight: "bold")[5．仿写句子（2 分，按要点作答：把物当作人来写，写出人的动作或心情）。]
+#v(0.8mm)
+#text(size: 12pt)[例：#p.sentences.fangxie.example　#p.sentences.fangxie.prompt]
+#write-line(h: 8.5mm)
+#write-line(h: 8.5mm)
 
 // ==================== 第 3 页：课内 + 课外阅读 ====================
 
@@ -200,18 +202,18 @@
   fill: luma(250),
   stroke: (paint: luma(195), thickness: 0.6pt),
   radius: 1.5mm,
-  inset: (x: 5mm, y: 3.5mm),
+  inset: (x: 5mm, y: 2mm),
 )[
-  #set par(leading: 5.2mm, justify: false)
+  #set par(leading: 4.6mm, justify: false)
   #align(center, text(size: 12pt, weight: "bold")[#p.reading.title])
-  #v(1.5mm)
+  #v(0.8mm)
   #for para in p.reading.paragraphs {
-    [#text(size: 12.5pt)[#h(2em)#para]]
+    [#text(size: 12pt)[#h(2em)#para]]
     parbreak()
   }
 ]
 
-#v(1mm)
+#v(0.5mm)
 #for (i, q) in p.reading.questions.enumerate() {
   reading-question(i + 1, q)
 }
@@ -232,14 +234,14 @@
 }
 #text(size: 11.5pt)[字数：#p.writing.wordCount.min～#p.writing.wordCount.max 字。]
 
-#v(2mm)
+#v(0.8mm)
 #align(center)[
   #grid(
-    columns: (8mm,) * 20,
-    rows: (8mm,) * 22,
+    columns: (7.85mm,) * 20,
+    rows: (7.85mm,) * 22,
     stroke: (thickness: 0.6pt, paint: luma(145)),
     inset: 0pt,
-    ..range(20 * 22).map(i => tian-cell(size: 8mm, cross: false)),
+    ..range(20 * 22).map(i => tian-cell(size: 7.85mm, cross: false)),
   )
 ]
 
@@ -252,14 +254,14 @@
 
 #align(center, text(size: 16pt, weight: "bold")[参考答案与评分说明])
 #v(1.5mm)
-#text(size: 9pt, fill: luma(110))[答案页只给判分依据；习作只出题，不提供评分标准或范文。]
-#set par(leading: 4.2mm)
+#text(size: 9pt, fill: luma(110))[答案页给判分依据；扩写、仿写与习作按评分点面批，不给范文。]
+#set par(leading: 3.8mm)
 
 #anshead("一", "看拼音写词语（每词 1 分，共 10 分）")
 #grid(
-  columns: (1fr, 1fr),
-  row-gutter: 1.5mm,
-  ..p.words.map(w => box[#py(w.pinyin, size: 8.5pt)　#han(w.word, size: 11pt)]),
+  columns: (1fr,) * 4,
+  row-gutter: 1mm,
+  ..p.words.map(w => box[#py(w.pinyin, size: 8pt)　#han(w.word, size: 10.5pt)]),
 )
 
 #anshead("二", "给加点字注音（每字 1 分，共 6 分）")
@@ -269,7 +271,7 @@
 
 #anshead("三", "形近字组词（每组 1 分，共 6 分；答案不唯一）")
 #grid(
-  columns: (1fr, 1fr),
+  columns: (1fr,) * 3,
   row-gutter: 1mm,
   ..p.xingjin.map(x => box[
     #han(x.a, size: 11pt)（#text(size: 10pt)[#x.aAnswer]）　#han(x.b, size: 11pt)（#text(size: 10pt)[#x.bAnswer]）
@@ -284,7 +286,7 @@
 #text(size: 9.5pt)[《#p.dimo.title》（#p.dimo.dynasty#h(0.4mm)·#h(0.4mm)#p.dimo.author）　#p.dimo.lines.join("")]
 
 #anshead("五", "句子运用（共 10 分）")
-#text(size: 10pt, weight: "bold")[1．修改病句（每题 2 分）]
+#text(size: 10pt, weight: "bold")[1．修改病句（每题 2 分，共 4 分；只改一处）]
 #for (i, g) in p.sentences.gaibing.enumerate() {
   text(size: 9.5pt)[（#(i + 1)）#g.broken → #g.fixed]
   if g.acceptable.len() > 0 {
@@ -292,17 +294,23 @@
   }
   linebreak()
 }
-#text(size: 10pt, weight: "bold")[2．关联词（每题 1 分）]
+#text(size: 10pt, weight: "bold")[2．关联词（每题 1 分，共 2 分；同义说法都算对）]
 #for (i, g) in p.sentences.guanlian.enumerate() {
-  text(size: 9.5pt)[（#(i + 1)）依次填：#g.blanks.map(b => b.join("/")).join("，")]
+  text(size: 9.5pt)[（#(i + 1)）#g.answers.map(a => a.join("/")).join("；")]
   linebreak()
 }
 #text(size: 10pt, weight: "bold")[3．标点（2 分）]
 #text(size: 9.5pt)[#apply-blanks(p.sentences.biaodian.text, p.sentences.biaodian.blanks)]
-#v(0.5mm)
-#text(size: 10pt, weight: "bold")[4．仿写（2 分）]
+#if p.sentences.biaodian.answers.len() > 1 {
+  linebreak()
+  text(size: 9pt, fill: luma(105))[也可写作：#p.sentences.biaodian.answers.slice(1).map(a => apply-blanks(p.sentences.biaodian.text, a)).join("；")]
+}
+#text(size: 10pt, weight: "bold")[4．扩写（2 分，按评分点面批）]
+#text(size: 9.5pt)[示例：#p.sentences.kuoxie.samples.join("；")]
+#text(size: 8.8pt, fill: luma(105))[评分点（每条 0.5 分）：#p.sentences.kuoxie.rubric.join("；")]
+#text(size: 10pt, weight: "bold")[5．仿写（2 分，按评分点面批）]
 #text(size: 9.5pt)[示例：#p.sentences.fangxie.samples.join("；")]
-#text(size: 8.8pt, fill: luma(105))[（用拟人写书包，写出人的动作即可）]
+#text(size: 8.8pt, fill: luma(105))[评分点（每条 0.5 分）：#p.sentences.fangxie.rubric.join("；")]
 
 #anshead("六", "课内阅读（10 分）")
 #text(size: 9.5pt)[本卷未排此题：缺教材课文页，无答案。]
@@ -320,34 +328,59 @@
   linebreak()
 }
 
-#anshead("八", "习作（30 分）")
-#text(size: 9.5pt)[只出题，不判分：由教师按教材习作要求评阅，本卷不提供评分标准或范文。]
-
-#anshead("九", "卷面书写（3 分）")
-#text(size: 9.5pt)[按全卷书写工整、卷面整洁程度评分，无固定答案。]
-
-// ==================== 第 6 页：附录 ====================
+// ==================== 第 6 页：习作评分标准 ====================
 
 #pagebreak()
 
-#align(center, text(size: 15pt, weight: "bold")[分值构成、素材来源与缺口])
-#v(1.5mm)
-#set par(leading: 3.8mm)
+#align(center, text(size: 13.5pt, weight: "bold")[习作评分标准（家长面批，30 分）])
+#v(1mm)
+#text(size: 9pt)[
+  *八．习作（30 分）*：#p.writing.id《#p.writing.title》（#p.writing.unitName）。按“内容 10 + 条理 8 + 语言 9 + 标点与书写 3”四行评分，再对照 A/B/C 档。工具不自动判分，不给范文。
+]
+#v(0.8mm)
+#block[
+  #set text(size: 9pt)
+  #grid(
+    columns: (20mm, 12mm, 1fr),
+    stroke: (thickness: 0.5pt, paint: luma(170)),
+    inset: (x: 2.5mm, y: 1mm),
+    align: (center + horizon, center + horizon, left + horizon),
+    ..([*分项*], [*分值*], [*评分要点*]),
+    ..p.writing.scoring.rows.map(r => ([#r.aspect], [#r.points], [#r.description])).flatten(),
+  )
+]
+#v(1mm)
+#for b in p.writing.scoring.bands {
+  text(size: 9pt)[#text(weight: "bold")[#b.label]：#b.description]
+  v(0.4mm)
+}
+#v(1mm)
+#text(size: 9pt)[
+  *九．卷面书写（3 分）*：按全卷书写工整、卷面整洁程度评分，无固定答案。习作格内字迹也算入卷面。
+]
 
-#text(size: 9.5pt)[
+// ==================== 附录（与习作评分标准同页）====================
+
+#v(2mm)
+
+#align(center, text(size: 13.5pt, weight: "bold")[分值构成、素材来源与缺口])
+#v(1mm)
+#set par(leading: 3.4mm)
+
+#text(size: 9pt)[
   本卷共 #p.meta.total 分。其中第六题“课内阅读”10 分因缺教材课文页留空，*可判分部分约 #p.meta.gradable 分*。
   全卷只使用 `verified` 素材，没有用 pending 条目或临时编题顶替。
 ]
 
-#v(1.5mm)
-#text(size: 10.5pt, weight: "bold")[一、各题型实际分值]
+#v(1mm)
+#text(size: 10pt, weight: "bold")[一、各题型实际分值]
 #v(0.5mm)
 #block[
-  #set text(size: 9pt)
+  #set text(size: 8.6pt)
   #grid(
     columns: (11mm, 31mm, 12mm, 38mm, 1fr),
     stroke: (thickness: 0.5pt, paint: luma(170)),
-    inset: (x: 2mm, y: 1mm),
+    inset: (x: 2mm, y: 0.6mm),
     align: (center + horizon, left + horizon, center + horizon, left + horizon, left + horizon),
     ..([*题号*], [*题型*], [*分值*], [*判分方式*], [*素材依据*]),
     ..p.composition.map(c => ([#c.no], [#c.title], [#c.score], [#c.judge], [#c.basis])).flatten(),
@@ -358,13 +391,13 @@
 #text(size: 9.2pt)[
   *配比调整说明*：建议配比合计 97 分（字词 22 + 古诗 13 + 句子 10 + 课外阅读 12 + 习作 30 + 课内阅读 10）。
   本卷补 3 分“卷面书写”达到 100 分，依据是题型表 §2.5 的卷面 2–3 分；其余分值未改。
-  阅读 12 分按“选择 2 + 填空 2 + 填空 2 + 简答 6”分配；句子 10 分按“病句 2×2 + 关联词 2×1 + 标点 2 + 仿写 2”分配。
+  阅读 12 分按“选择 2 + 填空 2 + 填空 2 + 简答 6”分配；句子 10 分按“病句 2×2 + 关联词 2×1 + 标点 2 + 扩写 2 + 仿写 2”分配。
 ]
 
 #v(1mm)
 #text(size: 9.2pt)[
-  *版式说明*：习作用 20 列 × 22 行、8mm 方格（440 格），与三年级作文本常见格宽一致，便于把字写进格、控制字距和行距；440 格可容纳 300–400 字及标点。
-  课外阅读短文放在浅底框内，正文 12.5pt、行距 5.2mm；题目在框外单独编号，短文与题目分区。
+  *版式说明*：习作用 20 列 × 22 行、7.85mm 方格（440 格），与三年级作文本常见格宽接近，便于把字写进格、控制字距和行距；440 格可容纳 300–400 字及标点。
+  课外阅读短文放在浅底框内，正文 12pt、行距 4.6mm；题目在框外单独编号，短文与题目同页分区。
   题序按“字词—古诗—句子—课内阅读—课外阅读—习作”排列，先课内后课外；建议配比中的分值不变。
 ]
 
@@ -378,16 +411,65 @@
   *古诗*：《山行》《望洞庭》《夜书所见》来自第 4 课；《望天门山》《饮湖上初晴后雨》《鹿柴》来自第 20 课。
 ]
 #text(size: 9.2pt)[
-  *句子*：#p.sentences.gaibing.map(g => g.id).join("、")#("、")#p.sentences.guanlian.map(g => g.id).join("、")#("、")#p.sentences.biaodian.id#("、")#p.sentences.fangxie.id。
+  *句子*：#p.sentences.gaibing.map(g => g.id).join("、")#("、")#p.sentences.guanlian.map(g => g.id).join("、")#("、")#p.sentences.biaodian.id#("、")#p.sentences.kuoxie.id#("、")#p.sentences.fangxie.id。
 ]
 #text(size: 9.2pt)[
   *课外阅读*：#p.reading.id《#p.reading.title》，用完整 4 题；*习作*：#p.writing.id《#p.writing.title》（#p.writing.unitName）。
 ]
 
-#v(1.5mm)
-#text(size: 10.5pt, weight: "bold")[三、离真实三上卷还差什么]
-#v(0.5mm)
+// ==================== 第 8 页：合并验证与新版说明 ====================
+
+#pagebreak()
+
+#align(center, text(size: 15pt, weight: "bold")[合并验证与新版说明])
+#v(1mm)
+#set par(leading: 4.2mm)
+
+#block[#text(size: 10pt, weight: "bold")[一、合并状态]]
+#text(size: 9pt)[
+  句子/习作与阅读两条返修线合到同一工作区后，在 *966e0e1* 上跑全量 `node --test tests/*.test.ts`：238 通过、0 失败；`npx vue-tsc -b`：通过。
+  抽查又发现句子答案集的漏列，补 *d4de8d2* 后两项仍全绿。没有出现两边互相踩的冲突。
+]
+
+#v(1mm)
+#block[#text(size: 10pt, weight: "bold")[二、抽查发现的问题与修法（人读 19 条）]]
+#text(size: 9pt)[
+  *关联词 6 条*：GL-17、GL-24 单独成句时“不是……而是……”两个方向都成立，各加一句语境收窄为唯一方向；GL-18 漏“刚……就……”，补入；GL-05、GL-22、GL-29 的承接题补“接着”，承接词表同步。
+]
+#text(size: 9pt)[
+  *标点 6 条*：BD-30“春天桃花开、夏天荷花开、秋天菊花开”还可每层各自成句，原答案只列逗号与分号两种，补入句号分层答案。
+]
+#text(size: 9pt)[
+  *病句 3 条*：GB-16 “拂过微风”动宾搭配错误，改为“有微风拂过”；GB-18 原改法顺手加了“我看见”，像二次润色，改为只把“和”换成“，还有”。
+]
+#text(size: 9pt)[
+  *扩写、仿写各 2 条*：逐条核对答案集与评分点，数据未改；本卷把评分点排进了卷面与答案页。
+]
+
+#v(1mm)
+#block[#text(size: 10pt, weight: "bold")[三、阅读库抽查]]
+#text(size: 9pt)[
+  24 篇正文 *313–353 字*，全部落在 300–500 字，六个主题各 4 篇。三项新增自动检查都不是空断言：填空 34 空逐字命中原文；选择题说明 31 处引文逐字命中；简答 39 条与原文均有连续 5 字以上对应（最短恰为 5 字）。测试另要求每道选择题说明至少 1 处引文，避免“没有引文就跳过”。
+]
+
+#v(1mm)
+#block[#text(size: 10pt, weight: "bold")[四、这份卷与返修前那份相比]]
+#text(size: 9pt)[
+  *句子*：病句 GB-11/GB-25 换为 GB-12/GB-24；关联词 GL-14/GL-21（两条同为“既……又……”）换为 GL-02 转折、GL-10 条件；标点 BD-16 换为 BD-19；仿写 FP-22（C 档比喻晚霞）换为 FP-14（B 档拟人秋叶）；*新增扩写 KX-08*。
+]
+#text(size: 9pt)[
+  *卷面*：扩写、仿写题后标“按要点作答”，答案页给 4 条评分点（每条 0.5 分）与示例。病句只留 1 题、每题 2 分，给扩写、仿写各让出 2 分，句子总分仍为 10。
+]
+#text(size: 9pt)[
+  *阅读*：仍用 RD-01《修鞋的爷爷》，但短文已由返修前的 252–272 字扩到 *353 字*；本页短文、4 题与答题线仍排在同一页，未撑破版面。
+]
+#text(size: 9pt)[
+  *习作*：XZ-06《这儿真美》不变；答案页不再写“不提供评分标准”，改为在后页给出分项评分标准（内容 10 + 条理 8 + 语言 9 + 标点书写 3，附 A/B/C 档）。
+]
+
+#v(1mm)
+#block[#text(size: 10pt, weight: "bold")[五、离真实三上卷还差什么（沿用原样张条目）]]
 #for (i, gap) in p.gaps.enumerate() {
-  text(size: 9.2pt)[#text(weight: "bold")[#(i + 1)）#gap.title：]#gap.need]
-  v(0.6mm)
+  text(size: 8.4pt)[#text(weight: "bold")[#(i + 1)）#gap.title：]#gap.need]
+  v(0.4mm)
 }

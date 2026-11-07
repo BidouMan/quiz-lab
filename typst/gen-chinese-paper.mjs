@@ -17,6 +17,7 @@ import {
   FANGXIE_ITEMS,
   GAIBING_ITEMS,
   GUANLIAN_ITEMS,
+  KUOXIE_ITEMS,
 } from '../src/data/chinese/sentences/index.ts'
 import { READING_BANK } from '../src/data/chinese/readings/index.ts'
 import { WRITING_PROMPTS } from '../src/data/chinese/writing.ts'
@@ -121,7 +122,7 @@ const dimoPoem = poemByTitle('鹿柴')
 
 // ---------- 句子 ----------
 
-const gaibing = ['GB-11', 'GB-25'].map((id) => {
+const gaibing = ['GB-12', 'GB-24'].map((id) => {
   const item = pickById(GAIBING_ITEMS, id, '病句')
   return {
     id: item.id,
@@ -133,7 +134,7 @@ const gaibing = ['GB-11', 'GB-25'].map((id) => {
   }
 })
 
-const guanlian = ['GL-14', 'GL-21'].map((id) => {
+const guanlian = ['GL-02', 'GL-10'].map((id) => {
   const item = pickById(GUANLIAN_ITEMS, id, '关联词')
   return {
     id: item.id,
@@ -146,7 +147,7 @@ const guanlian = ['GL-14', 'GL-21'].map((id) => {
   }
 })
 
-const biaodianItem = pickById(BIAODIAN_ITEMS, 'BD-16', '标点')
+const biaodianItem = pickById(BIAODIAN_ITEMS, 'BD-19', '标点')
 const biaodian = {
   id: biaodianItem.id,
   level: biaodianItem.level,
@@ -157,7 +158,17 @@ const biaodian = {
   rule: biaodianItem.rule,
 }
 
-const fangxieItem = pickById(FANGXIE_ITEMS, 'FP-22', '仿写')
+const kuoxieItem = pickById(KUOXIE_ITEMS, 'KX-08', '扩写')
+const kuoxie = {
+  id: kuoxieItem.id,
+  level: kuoxieItem.level,
+  base: kuoxieItem.base,
+  hints: kuoxieItem.hints,
+  samples: kuoxieItem.samples,
+  rubric: kuoxieItem.rubric,
+}
+
+const fangxieItem = pickById(FANGXIE_ITEMS, 'FP-14', '仿写')
 const fangxie = {
   id: fangxieItem.id,
   level: fangxieItem.level,
@@ -166,6 +177,7 @@ const fangxie = {
   prompt: fangxieItem.prompt,
   samples: fangxieItem.samples,
   keywords: fangxieItem.keywords,
+  rubric: fangxieItem.rubric,
 }
 
 // ---------- 课外阅读 ----------
@@ -197,6 +209,7 @@ const writingOut = {
   prompt: writing.prompt,
   requirements: writing.requirements,
   wordCount: writing.wordCount,
+  scoring: writing.scoring,
 }
 
 // ---------- 卷面构成与缺口 ----------
@@ -210,12 +223,13 @@ const composition = [
     no: '五',
     title: '句子运用',
     score: 10,
-    judge: '按答案/可枚举答案判分',
-    basis: '句子库 GB-11、GB-25、GL-14、GL-21、BD-16、FP-22（verified）',
+    judge: '病句、关联词、标点按答案判分；扩写、仿写按评分点面批',
+    basis:
+      '句子库 GB-12、GB-24、GL-02、GL-10、BD-19、KX-08、FP-14（verified）',
   },
   { no: '六', title: '课内阅读', score: 10, judge: '留空，暂不可判', basis: '缺教材课文页（原文 + 课后题 + 答案）' },
-  { no: '七', title: '课外阅读', score: 12, judge: '客观 + 评分点', basis: '阅读库 RD-01《修鞋的爷爷》（verified）' },
-  { no: '八', title: '习作', score: 30, judge: '只出题，人工评阅', basis: '习作库 XZ-06《这儿真美》（verified）' },
+  { no: '七', title: '课外阅读', score: 12, judge: '客观 + 评分点', basis: '阅读库 RD-01《修鞋的爷爷》（verified，353 字）' },
+  { no: '八', title: '习作', score: 30, judge: '家长按分项评分标准面批', basis: '习作库 XZ-06《这儿真美》（verified，含评分标准）' },
   { no: '九', title: '卷面书写', score: 3, judge: '人工评分', basis: '题型表 §2.5：卷面书写 2–3 分' },
 ]
 
@@ -230,7 +244,7 @@ const gaps = [
   },
   {
     title: '课外阅读储备',
-    need: '24 篇均为原创，但每篇 252–272 字，接近 250 字下限；真实三上卷常用 300–400 字，并可能出现第二篇阅读或非连续性文本。',
+    need: '24 篇均为原创，2026-11 修订后每篇 313–353 字，已达三上卷 300–400 字的常用区间；但只有一篇的位置，仍缺第二篇阅读或非连续性文本的素材。',
   },
   {
     title: '古诗存量',
@@ -238,11 +252,11 @@ const gaps = [
   },
   {
     title: '句子题型覆盖',
-    need: '句子库五类齐全，但 10 分只够排四类（病句、关联词、标点、仿写），扩写未入卷；口语交际与情境表达需教材页，本轮未做。',
+    need: '句子库五类齐全，本卷已排病句、关联词、标点、扩写、仿写；但 10 分只够各排 1–2 题，口语交际与情境表达需教材页，本轮未做。',
   },
   {
     title: '习作判分',
-    need: '习作库 8 条可轮换，但按约定只给题目、提示、字数与书写空间，不提供评分标准或范文，不能自动判分，需教师按教材要求评阅。',
+    need: '习作库 8 条可轮换，每条已给内容/条理/语言/标点书写四行评分标准与 A/B/C 档，供家长面批；工具仍不自动判分，也不给范文。',
   },
   {
     title: '其他常见题型',
@@ -256,7 +270,7 @@ const paper = {
     subtitle: '统编版·五四学制 2025 年秋修订版　｜　满分 100 分　时间 90 分钟',
     total: 100,
     gradable: 90,
-    note: '样张：只使用 verified 素材；课内阅读 10 分留空并注明缺口。',
+    note: '样张：只使用 verified 素材；课内阅读 10 分留空并注明缺口；扩写、仿写按评分点面批。',
   },
   words: wordItems,
   zhuyin,
@@ -269,7 +283,7 @@ const paper = {
     lines: dimoPoem.lines,
     source: dimoPoem.sources.map((s) => s.label).join('；'),
   },
-  sentences: { gaibing, guanlian, biaodian, fangxie },
+  sentences: { gaibing, guanlian, biaodian, kuoxie, fangxie },
   reading: readingOut,
   writing: writingOut,
   composition,
@@ -284,8 +298,8 @@ console.log(`已写出 ${path.relative(here, outFile)}`)
 console.log(`卷面总分 ${total}；可判分 ${paper.meta.gradable}（课内阅读 10 分留空）`)
 console.log(`词语 ${wordItems.length} / 注音 ${zhuyin.length} / 形近字 ${xingjin.length} / 古诗 ${fillPoems.length + 1}`)
 console.log(
-  `句子 ${gaibing.length + guanlian.length + 1 + 1}（病句 ${gaibing.map((g) => g.id).join('/')}，关联词 ${guanlian
+  `句子 ${gaibing.length + guanlian.length + 1 + 1 + 1}（病句 ${gaibing.map((g) => g.id).join('/')}，关联词 ${guanlian
     .map((g) => g.id)
-    .join('/')}，标点 ${biaodian.id}，仿写 ${fangxie.id}）`,
+    .join('/')}，标点 ${biaodian.id}，扩写 ${kuoxie.id}，仿写 ${fangxie.id}）`,
 )
 console.log(`阅读 ${readingOut.id}，${readingOut.questions.length} 题；习作 ${writingOut.id}`)
