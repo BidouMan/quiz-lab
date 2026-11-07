@@ -44,12 +44,6 @@ const SRC_WORKBOOK: SourceRef = {
   locator: '第 X 课·看拼音写词语',
 }
 
-/** 教材课文原文（电子课本目录同名课文；仅用于核对词形，不做逐字转录） */
-const SRC_TEXTBOOK_TEXT: SourceRef = {
-  label: '教材课文原文（2025 秋修订版）',
-  locator: '第 X 课课文',
-}
-
 const v = (char: string, pinyin: string, table: 'renzi' | 'xiezi', sources: SourceRef[]): ChineseChar => ({
   char,
   pinyin,
@@ -259,8 +253,8 @@ const U2_L6: ChineseLesson = {
   ],
   renzi: [
   ],
-  words: [wv('钥匙', [SRC_TEXTBOOK_TEXT])],
-  note: '无可靠来源：字表条目只来自教辅 OCR 且识字/写字归属冲突，本课暂不出题。',
+  words: [],
+  note: '无可靠来源：字表条目只来自教辅 OCR 且识字/写字归属冲突，本课暂不出题。词语「钥匙」虽有 S3 课文原文依据，但按本批口径第 5–7 课字词暂不使用，已记入核对清单待补名单。',
 }
 
 const U2_L7: ChineseLesson = {

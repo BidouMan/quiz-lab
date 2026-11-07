@@ -89,7 +89,20 @@ test('语文三上：第 1–2 单元已核实素材可出题', () => {
   assert.equal(u1.renzi, 15)
   assert.ok(u1.words >= 12)
   assert.equal(u2.xiezi, 11)
-  // 1 条词语（钥匙）+ 3 首古诗
-  assert.equal(u2.words, 4)
+  // 3 首古诗（第 4 课）；第 5–7 课字词已按口径撤空
+  assert.equal(u2.words, 3)
   assert.equal(CHINESE_CURRICULUM_3A.units[1].lessons[0].poems?.length, 3)
+})
+
+test('语文三上：第 5–7 课字词保持撤空（防止待核实条目回流）', () => {
+  const lessons = chineseUnits.flatMap((u) => u.lessons)
+  for (const no of [5, 6, 7]) {
+    const lesson = lessons.find((l) => l.no === no)
+    assert.ok(lesson, `第 ${no} 课缺失`)
+    assert.equal(
+      lesson.xiezi.length + lesson.renzi.length + lesson.words.length,
+      0,
+      `第 ${no} 课出现了字词条目；拿到教材附录页前不得回流`,
+    )
+  }
 })
