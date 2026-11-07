@@ -1563,6 +1563,691 @@ const arrangeRect: AdvancedCategory = {
   },
 }
 
+// ---------- P1 第一批：改围图形 / 月历牌推理 / 错中求解 / 积的位数 ----------
+
+/**
+ * 改围图形：同一根绳子改围成另一种图形，周长不变。
+ * 三个变体的已知量不同（长宽 / 正方形边长+长 / 周长+长），不是换数字。
+ */
+const dReshape = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['rect-to-square', 'square-to-rect', 'perimeter-to-width'] as const)
+    if (variant === 'rect-to-square') {
+      const w = randInt(rng, 3, 9)
+      const l = w + randInt(rng, 2, 9)
+      const perimeter = 2 * (l + w)
+      // 改围正方形要求周长能被 4 整除，否则边长不是整厘米
+      if (perimeter % 4 !== 0) return null
+      return { variant, l, w }
+    }
+    if (variant === 'square-to-rect') {
+      const side = randInt(rng, 4, 12)
+      const perimeter = 4 * side
+      const l = randInt(rng, 5, 15)
+      const w = perimeter / 2 - l
+      if (w <= 0 || w >= l) return null
+      // 宽只有 1–2 厘米的长方形太扁，不像课本里的图形
+      if (w < 3) return null
+      if (perimeter > 60) return null
+      return { variant, side, l }
+    }
+    const w = randInt(rng, 3, 9)
+    const l = w + randInt(rng, 2, 9)
+    const perimeter = 2 * (l + w)
+    if (perimeter > 60) return null
+    return { variant, l, perimeter }
+  })
+
+const reshape: AdvancedCategory = {
+  id: 'adv-reshape',
+  label: '改围图形',
+  tier: 'T2',
+  units: ['3A-U6'],
+  primaryKp: '3A-PERIMETER',
+  kpKeys: ['3A-PERIMETER', '3A-ADD-SUB'],
+  sample: '一根铁丝正好围成长6厘米、宽4厘米的长方形。如果改围成一个正方形，边长是多少厘米？',
+  pool: '3 个变体（长方形→正方形、正方形→长方形、周长+长→宽）× 长宽参数域',
+  workLines: 4,
+  variantCount: 3,
+  draw: dReshape,
+  stem: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'rect-to-square') {
+      return `一根铁丝正好围成长${num(p, 'l')}厘米、宽${num(p, 'w')}厘米的长方形。如果把这根铁丝改围成一个正方形，边长是多少厘米？`
+    }
+    if (variant === 'square-to-rect') {
+      return `一根铁丝正好围成一个边长${num(p, 'side')}厘米的正方形。如果把这根铁丝改围成长${num(p, 'l')}厘米的长方形，宽是多少厘米？`
+    }
+    return `一根铁丝正好围成一个长方形，长是${num(p, 'l')}厘米，周长是${num(p, 'perimeter')}厘米。这个长方形的宽是多少厘米？`
+  },
+  build: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'rect-to-square') {
+      const l = num(p, 'l')
+      const w = num(p, 'w')
+      const perimeter = 2 * (l + w)
+      const side = perimeter / 4
+      return {
+        known: [`长方形长${l}厘米、宽${w}厘米`, '改围成正方形'],
+        unknown: '正方形的边长',
+        steps: [
+          {
+            text: `先求铁丝的长，也就是长方形的周长：(${l}+${w})×2=${perimeter}（厘米）`,
+            kp: '3A-PERIMETER',
+            expr: `(${l}+${w})*2`,
+            result: perimeter,
+          },
+          {
+            text: `改围正方形，周长不变，4条边一样长：${perimeter}÷4=${side}（厘米）`,
+            kp: '3A-PERIMETER',
+            expr: `${perimeter}/4`,
+            result: side,
+          },
+          {
+            text: `验算：${side}×4=${perimeter}（厘米），和长方形的周长相同`,
+            kp: '3A-PERIMETER',
+            expr: `${side}*4`,
+            result: perimeter,
+          },
+        ],
+        answer: `${side}厘米`,
+      }
+    }
+    if (variant === 'square-to-rect') {
+      const side = num(p, 'side')
+      const l = num(p, 'l')
+      const perimeter = 4 * side
+      const half = perimeter / 2
+      const w = half - l
+      return {
+        known: [`正方形边长${side}厘米`, `改围成长${l}厘米的长方形`],
+        unknown: '长方形的宽',
+        steps: [
+          {
+            text: `正方形的周长就是铁丝的长：${side}×4=${perimeter}（厘米）`,
+            kp: '3A-PERIMETER',
+            expr: `${side}*4`,
+            result: perimeter,
+          },
+          {
+            text: `长方形长+宽是周长的一半：${perimeter}÷2=${half}（厘米）`,
+            kp: '3A-PERIMETER',
+            expr: `${perimeter}/2`,
+            result: half,
+          },
+          {
+            text: `宽：${half}-${l}=${w}（厘米）`,
+            kp: '3A-ADD-SUB',
+            expr: `${half}-${l}`,
+            result: w,
+          },
+          {
+            text: `验算：(${l}+${w})×2=${perimeter}（厘米），和原来的周长相同`,
+            kp: '3A-PERIMETER',
+            expr: `(${l}+${w})*2`,
+            result: perimeter,
+          },
+        ],
+        answer: `${w}厘米`,
+      }
+    }
+    const l = num(p, 'l')
+    const perimeter = num(p, 'perimeter')
+    const half = perimeter / 2
+    const w = half - l
+    return {
+      known: [`周长${perimeter}厘米`, `长${l}厘米`],
+      unknown: '长方形的宽',
+      steps: [
+        {
+          text: `长+宽是周长的一半：${perimeter}÷2=${half}（厘米）`,
+          kp: '3A-PERIMETER',
+          expr: `${perimeter}/2`,
+          result: half,
+        },
+        {
+          text: `宽：${half}-${l}=${w}（厘米）`,
+          kp: '3A-ADD-SUB',
+          expr: `${half}-${l}`,
+          result: w,
+        },
+        {
+          text: `验算：(${l}+${w})×2=${perimeter}（厘米），和题面的周长相同`,
+          kp: '3A-PERIMETER',
+          expr: `(${l}+${w})*2`,
+          result: perimeter,
+        },
+      ],
+      answer: `${w}厘米`,
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    // 独立路径：不套公式，按“四条边一条一条加起来”还原
+    if (variant === 'rect-to-square') {
+      const l = num(p, 'l')
+      const w = num(p, 'w')
+      const total = l + w + l + w
+      let side = 0
+      while (side * 4 < total) side++
+      if (side * 4 !== total) throw new Error('四条边不能正好四等分')
+      return `${side}厘米`
+    }
+    if (variant === 'square-to-rect') {
+      const side = num(p, 'side')
+      const l = num(p, 'l')
+      let perimeter = 0
+      for (let index = 0; index < 4; index++) perimeter += side
+      let w = 0
+      while (l + w + l + w < perimeter) w++
+      if (l + w + l + w !== perimeter) throw new Error('宽无法凑成整厘米')
+      return `${w}厘米`
+    }
+    const l = num(p, 'l')
+    const perimeter = num(p, 'perimeter')
+    // 独立路径：周长减去两条长，剩下的就是两条宽
+    const twoWidths = perimeter - l - l
+    if (twoWidths % 2 !== 0 || twoWidths <= 0) throw new Error('周长减两条长后不能平分')
+    return `${twoWidths / 2}厘米`
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    if (variant === 'rect-to-square') {
+      const l = num(p, 'l')
+      const w = num(p, 'w')
+      const perimeter = 2 * (l + w)
+      if (l <= w) return '长方形必须长大于宽'
+      if (perimeter % 4 !== 0) return '周长不能被4整除，正方形边长不是整厘米'
+      if (perimeter > 60) return '周长超过60厘米'
+      return null
+    }
+    if (variant === 'square-to-rect') {
+      const side = num(p, 'side')
+      const l = num(p, 'l')
+      const w = 2 * side - l
+      if (w <= 0) return '改围后宽不能是0或负数'
+      if (w >= l) return '改围后必须还是长方形（宽小于长）'
+      if (w < 3) return '宽小于3厘米，题目太薄'
+      if (4 * side > 60) return '周长超过60厘米'
+      return null
+    }
+    const l = num(p, 'l')
+    const perimeter = num(p, 'perimeter')
+    const w = perimeter / 2 - l
+    if (perimeter % 2 !== 0) return '周长必须是偶数'
+    if (w <= 0) return '长已经吃掉整个半周长，宽为0'
+    if (w >= l) return '宽不小于长，不是长方形'
+    if (w < 3) return '宽小于3厘米，题目太薄'
+    if (perimeter > 60) return '周长超过60厘米'
+    return null
+  },
+}
+
+/**
+ * 月历牌推理：利用月历牌上“竖排差7、横排差1”的位置关系反求日期。
+ * 三个变体分别覆盖竖排 3 个、横排 3 个（求最左）、十字 5 个。
+ */
+const dCalendarCard = (rng: Rng): AdvParams | null => {
+  const months = Object.keys(MONTH_DAYS).map(Number)
+  const month = pick(rng, months)
+  const days = MONTH_DAYS[month]!
+  const variant = pick(rng, ['vertical-3', 'horizontal-3', 'cross-5'] as const)
+  if (variant === 'horizontal-3') {
+    const first = randInt(rng, 1, days - 2)
+    return { variant, month, first, sum: first + (first + 1) + (first + 2) }
+  }
+  // 中间日期下限 8：保证上方的日期至少是 1 号；上限 days-7：保证下方的日期不跨月
+  const middle = randInt(rng, 8, days - 7)
+  return { variant, month, middle, sum: variant === 'vertical-3' ? 3 * middle : 5 * middle }
+}
+
+const calendarCard: AdvancedCategory = {
+  id: 'adv-calendar-card',
+  label: '月历牌推理',
+  tier: 'T2',
+  units: ['3A-U5'],
+  primaryKp: '3A-CALENDAR',
+  kpKeys: ['3A-CALENDAR', '3A-DIV-1', '3A-ADD-SUB'],
+  sample: '月历牌上竖着相邻的三个日期，加起来是33。中间那个是几号？',
+  pool: '12 个月 × 竖排/横排/十字 3 个变体 × 日期位置',
+  workLines: 4,
+  variantCount: 3,
+  draw: dCalendarCard,
+  stem: (p) => {
+    const variant = str(p, 'variant')
+    const month = num(p, 'month')
+    const sum = num(p, 'sum')
+    if (variant === 'horizontal-3') {
+      return `${month}月的月历牌上，横着相邻的三个日期加起来是${sum}。最左边一个是${month}月几日？`
+    }
+    if (variant === 'vertical-3') {
+      return `${month}月的月历牌上，竖着相邻的三个日期加起来是${sum}。中间那个是${month}月几日？`
+    }
+    return `${month}月的月历牌上，中间一个日期和它上、下、左、右四个相邻日期加起来是${sum}。中间那个是${month}月几日？`
+  },
+  build: (p) => {
+    const variant = str(p, 'variant')
+    const month = num(p, 'month')
+    const sum = num(p, 'sum')
+    if (variant === 'vertical-3') {
+      const middle = sum / 3
+      return {
+        known: [`${month}月月历牌`, '竖着相邻的三个日期', `和是${sum}`],
+        unknown: `中间那个是${month}月几日`,
+        steps: [
+          {
+            text: '月历牌上同一列竖着相邻的两个日期正好差7天，中间数的上面一个少7，下面一个多7',
+            kp: '3A-CALENDAR',
+          },
+          {
+            text: '上面一个和下面一个合起来正好是2个中间数，所以三个日期的和是中间数的3倍',
+            kp: '3A-ADD-SUB',
+          },
+          {
+            text: `${sum}÷3=${middle}（日）`,
+            kp: '3A-DIV-1',
+            expr: `${sum}/3`,
+            result: middle,
+          },
+          {
+            text: `验算：${middle - 7}+${middle}+${middle + 7}=${sum}`,
+            kp: '3A-ADD-SUB',
+            expr: `${middle - 7}+${middle}+${middle + 7}`,
+            result: sum,
+          },
+        ],
+        answer: `中间是${middle}日`,
+      }
+    }
+    if (variant === 'horizontal-3') {
+      const middle = sum / 3
+      const first = middle - 1
+      return {
+        known: [`${month}月月历牌`, '横着相邻的三个日期', `和是${sum}`],
+        unknown: `最左边一个是${month}月几日`,
+        steps: [
+          {
+            text: '月历牌上横着相邻的两个日期正好差1天，中间数比左边大1、比右边小1',
+            kp: '3A-CALENDAR',
+          },
+          {
+            text: '三个日期的和是中间数的3倍',
+            kp: '3A-ADD-SUB',
+          },
+          {
+            text: `${sum}÷3=${middle}，中间是${middle}日`,
+            kp: '3A-DIV-1',
+            expr: `${sum}/3`,
+            result: middle,
+          },
+          {
+            text: `最左边比中间小1：${middle}-1=${first}（日）`,
+            kp: '3A-ADD-SUB',
+            expr: `${middle}-1`,
+            result: first,
+          },
+          {
+            text: `验算：${first}+${first + 1}+${first + 2}=${sum}`,
+            kp: '3A-ADD-SUB',
+            expr: `${first}+${first + 1}+${first + 2}`,
+            result: sum,
+          },
+        ],
+        answer: `最左边是${first}日`,
+      }
+    }
+    const middle = sum / 5
+    return {
+      known: [`${month}月月历牌`, '十字形五个日期', `和是${sum}`],
+      unknown: `中间那个是${month}月几日`,
+      steps: [
+        {
+          text: '十字形里上、下两个日期和中间都差7，左、右两个日期和中间都差1',
+          kp: '3A-CALENDAR',
+        },
+        {
+          text: '上、下两个合起来是2个中间数，左、右两个合起来也是2个中间数，再加中间一共是5个中间数',
+          kp: '3A-ADD-SUB',
+        },
+        {
+          text: `${sum}÷5=${middle}（日）`,
+          kp: '3A-DIV-1',
+          expr: `${sum}/5`,
+          result: middle,
+        },
+        {
+          text: `验算：${middle - 7}+${middle + 7}+${middle - 1}+${middle + 1}+${middle}=${sum}`,
+          kp: '3A-ADD-SUB',
+          expr: `${middle - 7}+${middle + 7}+${middle - 1}+${middle + 1}+${middle}`,
+          result: sum,
+        },
+      ],
+      answer: `中间是${middle}日`,
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    const month = num(p, 'month')
+    const sum = num(p, 'sum')
+    const days = MONTH_DAYS[month]!
+    // 独立路径：把月历牌上每一组可能的位置都试一遍，看哪一组正好等于题面的和
+    if (variant === 'horizontal-3') {
+      for (let first = 1; first + 2 <= days; first++) {
+        if (first + (first + 1) + (first + 2) === sum) return `最左边是${first}日`
+      }
+      throw new Error('横排三个日期找不到唯一解')
+    }
+    for (let middle = 8; middle + 7 <= days; middle++) {
+      if (variant === 'vertical-3' && (middle - 7) + middle + (middle + 7) === sum) return `中间是${middle}日`
+      if (variant === 'cross-5' && 5 * middle === sum) return `中间是${middle}日`
+    }
+    throw new Error('竖排或十字形找不到唯一解')
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    const month = num(p, 'month')
+    const sum = num(p, 'sum')
+    const days = MONTH_DAYS[month]
+    if (!days) return '月份不合法'
+    if (variant === 'horizontal-3') {
+      if (sum % 3 !== 0) return '三个日期的和必须是3的倍数'
+      const first = sum / 3 - 1
+      if (first < 1) return '最左边日期跨到上个月了'
+      if (first + 2 > days) return '最右边日期跨到下个月了'
+      return null
+    }
+    const divisor = variant === 'vertical-3' ? 3 : 5
+    if (sum % divisor !== 0) return `和不是${divisor}的倍数`
+    const middle = sum / divisor
+    if (middle < 8) return '中间日期上方没有日期了'
+    if (middle + 7 > days) return '中间日期下方跨到下个月了'
+    return null
+  },
+}
+
+/**
+ * 错中求解：别人把运算看错了，先用错误结果还原原来的数，再算正确结果。
+ * 两个变体分别是看错因数、把乘看成除。
+ */
+const dMisread = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['factor', 'op-swap'] as const)
+    if (variant === 'factor') {
+      const a = randInt(rng, 2, 9)
+      const b = randInt(rng, 2, 9)
+      if (a === b) return null
+      // 原数取两位数，才配得上“一位数乘两位数”这一单元
+      const x = randInt(rng, 11, 29)
+      return { variant, a, b, x, wrong: x * b, correct: x * a }
+    }
+    const a = randInt(rng, 2, 9)
+    const q = randInt(rng, 2, 9)
+    const x = q * a
+    if (x < 10) return null
+    return { variant, a, q, x, correct: x * a }
+  })
+
+const misread: AdvancedCategory = {
+  id: 'adv-misread',
+  label: '错中求解',
+  tier: 'T2',
+  units: ['3A-U2', '3A-U4'],
+  primaryKp: '3A-MUL-1',
+  kpKeys: ['3A-MUL-1', '3A-DIV-1'],
+  sample: '小明算一个数乘6，把6看成了9，算出的积是54。正确的积是多少？',
+  pool: '2 个变体（看错因数、把乘看成除）× 因数 2–9 × 原数 11–29',
+  workLines: 4,
+  variantCount: 2,
+  draw: dMisread,
+  stem: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    if (variant === 'factor') {
+      return `小明算一个数乘${a}，把${a}看成了${num(p, 'b')}，算出的积是${num(p, 'wrong')}。正确的积是多少？`
+    }
+    return `小明算一个数乘${a}，却算成了除以${a}，得到商${num(p, 'q')}。正确的积是多少？`
+  },
+  build: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    if (variant === 'factor') {
+      const b = num(p, 'b')
+      const x = num(p, 'x')
+      const wrong = num(p, 'wrong')
+      const correct = num(p, 'correct')
+      return {
+        known: [`把乘${a}看成乘${b}`, `算出的积是${wrong}`],
+        unknown: '正确的积',
+        steps: [
+          {
+            text: `先照着别人的错算还原这个数：${wrong}÷${b}=${x}`,
+            kp: '3A-DIV-1',
+            expr: `${wrong}/${b}`,
+            result: x,
+          },
+          {
+            text: `再用这个数算正确的积：${x}×${a}=${correct}`,
+            kp: '3A-MUL-1',
+            expr: `${x}*${a}`,
+            result: correct,
+          },
+          {
+            text: `验算：${x}×${b}=${wrong}，正好是别人算出的积`,
+            kp: '3A-MUL-1',
+            expr: `${x}*${b}`,
+            result: wrong,
+          },
+        ],
+        answer: String(correct),
+      }
+    }
+    const q = num(p, 'q')
+    const x = num(p, 'x')
+    const correct = num(p, 'correct')
+    return {
+      known: [`把乘${a}算成除以${a}`, `得到商${q}`],
+      unknown: '正确的积',
+      steps: [
+        {
+          text: `除以${a}得到${q}，说明原来的数是${q}个${a}相加：${q}×${a}=${x}`,
+          kp: '3A-MUL-1',
+          expr: `${q}*${a}`,
+          result: x,
+        },
+        {
+          text: `正确的积：${x}×${a}=${correct}`,
+          kp: '3A-MUL-1',
+          expr: `${x}*${a}`,
+          result: correct,
+        },
+        {
+          text: `验算：${x}÷${a}=${q}，和题面的商一样`,
+          kp: '3A-DIV-1',
+          expr: `${x}/${a}`,
+          result: q,
+        },
+      ],
+      answer: String(correct),
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    if (variant === 'factor') {
+      const b = num(p, 'b')
+      const wrong = num(p, 'wrong')
+      // 独立路径：不用除法，逐个试乘找出原来的数
+      for (let x = 1; x <= 99; x++) if (x * b === wrong) return x * a
+      throw new Error('试乘找不到原来的数')
+    }
+    const q = num(p, 'q')
+    // 独立路径：用连加还原和求积，而不是直接背口诀
+    let x = 0
+    for (let index = 0; index < a; index++) x += q
+    let correct = 0
+    for (let index = 0; index < a; index++) correct += x
+    return correct
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    if (a < 2 || a > 9) return `乘数 ${a} 超出 2–9`
+    if (variant === 'factor') {
+      const b = num(p, 'b')
+      const x = num(p, 'x')
+      if (b < 2 || b > 9) return `看错的乘数 ${b} 超出 2–9`
+      if (a === b) return '看错前后是同一个乘数，题目无意义'
+      if (x < 11 || x > 29) return '原来的数超出两位数范围'
+      if (x * b !== num(p, 'wrong')) return '错算的积与参数不符'
+      if (x * a !== num(p, 'correct')) return '正确的积与参数不符'
+      return null
+    }
+    const q = num(p, 'q')
+    if (q < 2 || q > 9) return `商 ${q} 超出 2–9`
+    if (q * a !== num(p, 'x')) return '商乘除数还原不出原数'
+    if (num(p, 'x') * a !== num(p, 'correct')) return '正确的积与参数不符'
+    if (num(p, 'correct') > 999) return '正确的积超过三位数'
+    return null
+  },
+}
+
+/**
+ * 积的位数：一位数乘两位数，反求“积是两位数时最大能填几 / 积是三位数时最小填几”。
+ * 两条路径：试乘枚举 vs 99÷a、100÷a 的除法估算。
+ */
+const dDigitCount = (rng: Rng): AdvParams | null =>
+  retry((): AdvParams | null => {
+    const variant = pick(rng, ['two-digit-max', 'three-digit-min'] as const)
+    const a = randInt(rng, 2, 9)
+    if (variant === 'two-digit-max') {
+      const m = Math.floor(99 / a)
+      if (m < 10) return null
+      return { variant, a, m, product: a * m }
+    }
+    const m = Math.ceil(100 / a)
+    if (m > 99) return null
+    if (a * m > 999) return null
+    return { variant, a, m, product: a * m }
+  })
+
+const digitCount: AdvancedCategory = {
+  id: 'adv-digit-count',
+  label: '积的位数',
+  tier: 'T2',
+  units: ['3A-U2'],
+  primaryKp: '3A-MUL-1',
+  kpKeys: ['3A-MUL-1', '3A-DIV-1', '3A-DIV-REMAINDER', '3A-STRATEGY', '3A-ADD-SUB'],
+  sample: '一个数乘8，积是两位数，这个数最大是几？',
+  pool: '2 个变体（积两位数求最大、积三位数求最小）× 乘数 2–9',
+  workLines: 4,
+  variantCount: 2,
+  draw: dDigitCount,
+  stem: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    return variant === 'two-digit-max'
+      ? `一个数乘${a}，积是两位数，这个数最大是几？`
+      : `一个数乘${a}，积是三位数，这个数最小是几？`
+  },
+  build: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    const m = num(p, 'm')
+    if (variant === 'two-digit-max') {
+      const q = Math.floor(99 / a)
+      const r = 99 % a
+      return {
+        known: [`乘${a}`, '积是两位数'],
+        unknown: '这个数最大是几',
+        steps: [
+          {
+            text: `先试乘：${a}×${q}=${a * q} 还是两位数，这个数再加1，积就满三位数了`,
+            kp: '3A-STRATEGY',
+            expr: `${a}*${q}`,
+            result: a * q,
+          },
+          {
+            text:
+              r > 0
+                ? `用除法找上限：99÷${a}=${q}……${r}，所以最大只能填${q}`
+                : `用除法找上限：99÷${a}=${q}，正好整除，所以最大能填${q}`,
+            kp: '3A-DIV-REMAINDER',
+            expr: `${99 - r}/${a}`,
+            result: q,
+          },
+          {
+            text: `验算：${a}×${m}=${a * m} 是两位数；${a}×${m + 1}=${a * (m + 1)} 已经是三位数`,
+            kp: '3A-MUL-1',
+            expr: `${a}*${m + 1}`,
+            result: a * (m + 1),
+          },
+        ],
+        answer: String(m),
+      }
+    }
+    const q = Math.floor(100 / a)
+    const r = 100 % a
+    return {
+      known: [`乘${a}`, '积是三位数'],
+      unknown: '这个数最小是几',
+      steps: [
+        {
+          text:
+            r > 0
+              ? `100÷${a}=${q}……${r}，说明这个数填${q}时积还不到100`
+              : `100÷${a}=${q}，${a}×${q}=100，正好是三位数`,
+          kp: '3A-DIV-REMAINDER',
+          expr: r > 0 ? `${a}*${q}` : `100/${a}`,
+          result: r > 0 ? a * q : q,
+        },
+        {
+          text: r > 0 ? `这个数还要再大1：${q}+1=${m}` : `所以这个数最小是${m}`,
+          kp: '3A-ADD-SUB',
+          ...(r > 0 ? { expr: `${q}+1`, result: m } : {}),
+        },
+        {
+          text: `验算：${a}×${m}=${a * m} 是三位数；${a}×${m - 1}=${a * (m - 1)} 还是两位数`,
+          kp: '3A-MUL-1',
+          expr: `${a}*${m - 1}`,
+          result: a * (m - 1),
+        },
+      ],
+      answer: String(m),
+    }
+  },
+  recompute: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    // 独立路径：从小到大逐个试乘，不借用除法
+    if (variant === 'two-digit-max') {
+      let m = 10
+      while (a * (m + 1) <= 99) m++
+      return m
+    }
+    let m = 10
+    while (a * m < 100) m++
+    return m
+  },
+  invariant: (p) => {
+    const variant = str(p, 'variant')
+    const a = num(p, 'a')
+    const m = num(p, 'm')
+    if (a < 2 || a > 9) return `乘数 ${a} 超出 2–9`
+    if (variant === 'two-digit-max') {
+      if (m !== Math.floor(99 / a)) return '最大值不是 99 除以乘数的整数商'
+      if (m < 10 || m > 99) return '这个数不是两位数'
+      if (a * m > 99) return '积已经是三位数'
+      if (a * (m + 1) < 100) return '再乘一个仍然是两位数，没取到最大'
+      return null
+    }
+    if (m !== Math.ceil(100 / a)) return '最小值不是 100 除以乘数向上取整'
+    if (m < 10 || m > 99) return '这个数不是两位数'
+    if (a * m < 100) return '积还不是三位数'
+    if (a * (m - 1) >= 100) return '再少一个仍是三位数，没取到最小'
+    return null
+  },
+}
+
 export const ADV_CATEGORIES: AdvancedCategory[] = [
   cycle,
   normalize,
@@ -1577,6 +2262,10 @@ export const ADV_CATEGORIES: AdvancedCategory[] = [
   rentPlan,
   combinePerimeter,
   arrangeRect,
+  reshape,
+  calendarCard,
+  misread,
+  digitCount,
 ]
 
 export const advancedCategory = (id: string): AdvancedCategory | undefined =>

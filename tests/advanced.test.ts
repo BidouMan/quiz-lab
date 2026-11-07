@@ -55,13 +55,13 @@ const recordOf = (question: {
   key: question.key,
 })
 
-test('拓展题：13 类可做，每类每一步都只挂三上知识点', () => {
-  assert.equal(ADV_CATEGORIES.length, 13, `可做类别应为 13，实际 ${ADV_CATEGORIES.length}`)
+test('拓展题：17 类可做，每类每一步都只挂三上知识点', () => {
+  assert.equal(ADV_CATEGORIES.length, 17, `可做类别应为 17，实际 ${ADV_CATEGORIES.length}`)
   const tierCounts = ADV_CATEGORIES.reduce<Record<string, number>>((acc, category) => {
     acc[category.tier] = (acc[category.tier] ?? 0) + 1
     return acc
   }, {})
-  assert.deepEqual(tierCounts, { T1: 7, T2: 3, T3: 3 }, `分档计数 ${JSON.stringify(tierCounts)}`)
+  assert.deepEqual(tierCounts, { T1: 7, T2: 7, T3: 3 }, `分档计数 ${JSON.stringify(tierCounts)}`)
   for (const category of ADV_CATEGORIES) {
     for (const kp of category.kpKeys) {
       assert.ok(ADV_3A_KP[kp], `${category.id} 的 ${kp} 不在三上允许集合`)
@@ -84,7 +84,7 @@ test('拓展题：三档平均步骤数实测严格递增（解绑后 L2 含 T1 
   assert.ok(averages[0]! < averages[1]!, `L1 ${averages[0]} 不小于 L2 ${averages[1]}`)
   assert.ok(averages[1]! < averages[2]!, `L2 ${averages[1]} 不小于 L3 ${averages[2]}`)
   assert.ok(averages[0]! >= 2 && averages[0]! < 3, `L1 平均 ${averages[0]} 不在 [2,3)`)
-  assert.ok(averages[1]! >= 2.4 && averages[1]! < 3, `L2 平均 ${averages[1]} 不在 [2.4,3)`)
+  assert.ok(averages[1]! >= 2.4 && averages[1]! < 3.7, `L2 平均 ${averages[1]} 不在 [2.4,3.7)`)
   assert.ok(averages[2]! >= 3.4 && averages[2]! < 5, `L3 平均 ${averages[2]} 不在 [3.4,5)`)
 })
 
@@ -97,14 +97,14 @@ test('拓展题：同卷按“结构 + 知识点”去重，不按题干字符�
   assert.ok(byStem.size <= keys.size, '题干去重不应比结构去重更严格')
 })
 
-test('拓展题：150 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
+test('拓展题：250 题审计（复核失败 0、结构-解法一致性失败 0、同卷重复 0）', () => {
   let total = 0
   let failures = 0
   let duplicates = 0
   const keys: string[] = []
   const memory = new MemoryStore()
-  // 扩池后每档可用结构数：L1=7、L2=13（T1 7 + T2 逆向 4 + 剪拼 1 + 星期 1）、L3=10（T2 6 + T3 4）
-  const perPaper = { L1: 7, L2: 13, L3: 10 } as const
+  // P1 第一批后每档可用结构数：L1=7、L2=23（T1 7 + T2 16）、L3=20（T2 16 + T3 4）
+  const perPaper = { L1: 7, L2: 23, L3: 20 } as const
   for (const level of ['L1', 'L2', 'L3'] as const) {
     for (let paper = 0; paper < 5; paper++) {
       memory.beginPaper()
@@ -112,7 +112,7 @@ test('拓展题：150 题审计（复核失败 0、结构-解法一致性失败 
         grade: '3A',
         unitIds: UNITS_3A,
         level,
-        count: 20,
+        count: 40,
         seed: 3000 + paper * 97 + (level === 'L1' ? 0 : level === 'L2' ? 1000 : 2000),
         memory,
       })
@@ -128,7 +128,7 @@ test('拓展题：150 题审计（复核失败 0、结构-解法一致性失败 
       total += result.questions.length
     }
   }
-  assert.equal(total, 150)
+  assert.equal(total, 250)
   assert.equal(failures, 0, `复核失败 ${failures}`)
   assert.equal(duplicates, 0, `同卷重复 ${duplicates}`)
   const crossDuplicate = keys.length - new Set(keys).size
@@ -210,8 +210,8 @@ test('方案 A 单元归属：U7 项目式单元不出拓展题，U3 转图形�
   assert.equal(advancedSupports('3A', ['3A-U5'], 'L3'), true)
 })
 
-test('单题型上限：扩池后 L2=13 种结构、L3=10 种结构，同卷不重复', () => {
-  const expected = { L2: 13, L3: 10 } as const
+test('单题型上限：P1 第一批后 L2=23 种结构、L3=20 种结构，同卷不重复', () => {
+  const expected = { L2: 23, L3: 20 } as const
   for (const level of ['L2', 'L3'] as const) {
     const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U1', '3A-U2', '3A-U4', '3A-U5', '3A-U6'], level, count: 200, seed: 8100 })
     assert.equal(result.questions.length, expected[level], `${level} 实出 ${result.questions.length}`)
@@ -428,6 +428,10 @@ test('租船：方案表 ≤5 行、留白 8 行；各类别留白按类别而�
     'adv-rent-plan': 8,
     'adv-combine-perimeter': 6,
     'adv-arrange-rect': 8,
+    'adv-reshape': 4,
+    'adv-calendar-card': 4,
+    'adv-misread': 4,
+    'adv-digit-count': 4,
   })
 })
 
@@ -642,25 +646,68 @@ test('P0-2 逆向推理 4 变体：句式各不相同、双路径一致、同卷
 })
 
 test('P0-2 出不满时：提示写清“只有 N 类”和缺哪几类题型', () => {
-  // U2 L2 只映射到“等量代换 + 归总问题”2 类，6 题必然出不满
-  const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U2'], level: 'L2', count: 6, seed: 907 })
-  assert.ok(result.questions.length < 6, `U2 L2 竟然出满 ${result.questions.length} 题`)
+  // U6 L2 只映射到“拼图形后的周长 + 剪拼后的周长 + 改围图形”3 类共 5 种结构，6 题必然出不满
+  const result = generateAdvanced({ grade: '3A', unitIds: ['3A-U6'], level: 'L2', count: 6, seed: 907 })
+  assert.ok(result.questions.length < 6, `U6 L2 竟然出满 ${result.questions.length} 题`)
   const note = result.notes.find((item) => item.includes('如实出'))
   assert.ok(note, `缺少如实提示：${result.notes.join('｜')}`)
-  assert.ok(note!.includes('本单元该档目前只有 2 类'), note)
-  assert.ok(note!.includes('实际可用 2 种结构'), note)
-  assert.ok(note!.includes('等量代换') && note!.includes('归总问题'), note)
+  assert.ok(note!.includes('本单元该档目前只有 3 类'), note)
+  assert.ok(note!.includes('实际可用 5 种结构'), note)
+  assert.ok(note!.includes('拼图形后的周长') && note!.includes('剪拼后的周长') && note!.includes('改围图形'), note)
   assert.ok(note!.includes('没有映射到本单元'), note)
-  // 缺的题型必须点名（只列同档题型，L3 专有的摆长方形不在 L2 这一档）
-  assert.ok(note!.includes('本档另有 8 类'), note)
-  for (const label of ['逆向推理', '周期排列', '归一问题', '剪拼后的周长', '星期几推算']) {
+  // 缺的题型必须点名（只列同档题型，L3 专有的拼大长方形/摆长方形不算 L2 缺口）
+  assert.ok(note!.includes('本档另有 11 类'), note)
+  for (const label of ['逆向推理', '周期排列', '归一问题', '等量代换', '月历牌推理', '错中求解']) {
     assert.ok(note!.includes(label), `缺的题型没点名 ${label}：${note}`)
   }
   assert.ok(!note!.includes('固定周长摆长方形'), `不该把 L3 题型算进 L2 缺口：${note}`)
-  // 出满的卷不出现这条提示
-  const full = generateAdvanced({ grade: '3A', unitIds: [ '3A-U1' ], level: 'L2', count: 6, seed: 907 })
+  // 出满的卷不出现这条提示（U2 L2 有 4 类 6 种结构，正好出满）
+  const full = generateAdvanced({ grade: '3A', unitIds: ['3A-U2'], level: 'L2', count: 6, seed: 907 })
   assert.equal(full.questions.length, 6)
   assert.ok(!full.notes.some((item) => item.includes('如实出')), full.notes.join('｜'))
+})
+
+test('P1 第一批新增 4 类：双路径一致、变体齐全、数域守卫生效', () => {
+  const checks = [
+    { id: 'adv-reshape', variants: ['rect-to-square', 'square-to-rect', 'perimeter-to-width'] },
+    { id: 'adv-calendar-card', variants: ['vertical-3', 'horizontal-3', 'cross-5'] },
+    { id: 'adv-misread', variants: ['factor', 'op-swap'] },
+    { id: 'adv-digit-count', variants: ['two-digit-max', 'three-digit-min'] },
+  ] as const
+  for (const check of checks) {
+    const category = advancedCategory(check.id)
+    assert.ok(category, check.id)
+    assert.equal(category.variantCount, check.variants.length, `${check.id} 变体数`)
+    const rng = createRng(20261115)
+    const seen = new Set<string>()
+    let scanned = 0
+    for (let index = 0; index < 2000; index++) {
+      const params = category.draw(rng)
+      if (params == null) continue
+      scanned++
+      const variant = String(params.variant)
+      seen.add(variant)
+      const built = category.build(params)
+      assert.equal(String(category.recompute(params)), built.answer, `${check.id}/${variant} 两条路径不一致`)
+      assert.equal(category.invariant(params), null, `${check.id}/${variant} 约束不通过`)
+      const texts = [category.stem(params), ...built.steps.map((step) => step.text), built.answer]
+      for (const text of texts) {
+        assert.ok(
+          !/面积|平方厘米|平方米|分数|小数|方程/.test(text),
+          `${check.id} 出现三上以外的内容：${text}`,
+        )
+      }
+      // 三上数域：乘数、除数都只能是 2–9，且不出现两位数乘两位数
+      for (const key of ['a', 'b', 'divisor']) {
+        const value = params[key]
+        if (typeof value === 'number') assert.ok(value >= 2 && value <= 9, `${check.id} 的 ${key}=${value}`)
+      }
+      const products = [...`${texts.join(' ')}`.matchAll(/(\d{2,})×(\d{2,})/g)]
+      assert.equal(products.length, 0, `${check.id} 出现两位数乘两位数：${products.map((m) => m[0]).join('、')}`)
+    }
+    assert.ok(scanned >= 1900, `${check.id} 扫描量只有 ${scanned}`)
+    assert.deepEqual([...seen].sort(), [...check.variants].sort(), `${check.id} 变体未出全`)
+  }
 })
 
 test('P1 周期：3000 题周期串无重复符号、答案最高占比 <35%、题干要求写算式', () => {
