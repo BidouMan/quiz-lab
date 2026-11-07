@@ -32,7 +32,7 @@ const RAW: RawReading[] = [
       },
       {
         type: 'fill',
-        stem: '月季花瓣上沾着雨点，红得（ ）。',
+        stem: '月季花瓣上沾着雨点，红得（ ）了。',
         blanks: ['更亮'],
         explain: '第二段写“月季花瓣上还沾着雨点，红得更亮了”。',
       },
