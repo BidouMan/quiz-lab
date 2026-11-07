@@ -136,6 +136,23 @@ export type ChineseSentenceKind = 'gaibing' | 'kuoxie' | 'guanlian' | 'biaodian'
 /** 病句四类，按三上常见的修改类型划分 */
 export type GaibingSubkind = '成分残缺' | '搭配不当' | '语序颠倒' | '重复啰嗦'
 
+/** 判分方式：auto 可机械判分；rubric 为开放题，只给参考评分点、不自动判分 */
+export type ChineseSentenceJudging = 'auto' | 'rubric'
+
+/** 答案声明：unique 答案唯一；multiple 允许多种写法（答案集尽量穷举，或给出示例） */
+export type ChineseSentenceAnswerKind = 'unique' | 'multiple'
+
+/** 关联词的关系类型，用于校验答案集与题干语境一致 */
+export type GuanlianRelation =
+  | '因果'
+  | '转折'
+  | '假设'
+  | '并列'
+  | '并列递进'
+  | '承接'
+  | '递进'
+  | '条件'
+
 interface SentenceItemBase {
   /** 题库内唯一编号，例：GB-01 / KX-03 */
   id: string
@@ -145,12 +162,20 @@ interface SentenceItemBase {
   sources: SourceRef[]
   /** 这条题为什么这么改 / 为什么用这个标点，给复核和教师看 */
   explain: string
+  /** 判分方式：客观题 auto，开放题 rubric */
+  judging: ChineseSentenceJudging
+  /** 答案声明：唯一或多解 */
+  answerKind: ChineseSentenceAnswerKind
+  /** 本题声明的合法答案数量；unique 必须为 1，multiple 至少为 2 */
+  answerCount: number
 }
 
-/** 修改病句：broken 为病句，fixed 为主答案，acceptable 为其他可接受改法（可枚举） */
+/** 修改病句：broken 为病句，fixed 为主答案，acceptable 为其他可接受改法（尽量穷举） */
 export interface GaibingItem extends SentenceItemBase {
   kind: 'gaibing'
   subkind: GaibingSubkind
+  /** 题干指令；开放题在这里写明「补出主语即可，答案不唯一」 */
+  instruction: string
   broken: string
   fixed: string
   acceptable: string[]
@@ -161,40 +186,51 @@ export interface GaibingItem extends SentenceItemBase {
   reason: string
 }
 
-/** 扩写句子：base 为原句，requiredParts 为必须用上的词，samples 为可枚举的参考答案 */
+/** 扩写句子：base 为原句，hints 为提示角，samples 为不同写法的参考示例 */
 export interface KuoxieItem extends SentenceItemBase {
   kind: 'kuoxie'
   base: string
   keep: string[]
-  requiredParts: string[]
+  /** 提示角：时间、地点、样子、动作、心情等，学生任选，不强制用词 */
+  hints: string[]
   samples: string[]
   rubric: string[]
 }
 
-/** 关联词填空：text 中的「（ ）」按顺序对应 blanks 的每一空；每空给出可接受答案集 */
+/** 关联词填空：text 中的「（ ）」按顺序对应答案组合里的每个词 */
 export interface GuanlianItem extends SentenceItemBase {
   kind: 'guanlian'
   text: string
-  blanks: string[][]
+  /** 题干指令，用于说明「同义说法都算对」或收窄语境 */
+  instruction: string
+  relation: GuanlianRelation
+  /** 合法的完整填法；每项按空顺序给出词语，任一组合都算对 */
+  answers: string[][]
+  /** 主搭配，用于答案页展示 */
   pair: string
 }
 
-/** 标点符号：text 中的「（ ）」按顺序对应 blanks；每空一个标点 */
+/** 标点符号：text 中的「（ ）」按顺序对应答案组合里的每个标点 */
 export interface BiaodianItem extends SentenceItemBase {
   kind: 'biaodian'
   text: string
-  blanks: string[]
+  /** 题干指令，用语气或写法约束，减少多解 */
+  instruction: string
+  /** 合法的完整标点组合；每项按空顺序给出标点，任一组合都算对 */
+  answers: string[][]
   rule: string
 }
 
-/** 比喻与拟人仿写：samples 为可枚举的参考句；keywords 为判读用的特征词 */
+/** 比喻与拟人仿写：samples 为不同写法的参考句；keywords 仅为参考词，不作唯一判定 */
 export interface FangxieItem extends SentenceItemBase {
   kind: 'fangxie'
   mode: '比喻' | '拟人'
   example: string
   prompt: string
   samples: string[]
+  /** 参考词，帮助学生打开思路；判分看评分点，不卡词表 */
   keywords: string[]
+  rubric: string[]
   guide: string
 }
 
@@ -278,7 +314,28 @@ export interface ChineseReadingBankMeta {
 
 // ==================== 习作题目 ====================
 
-/** 习作只给题目、提示与字数要求，不判分、不给范文 */
+/** 习作评分标准的单行：分项、分值、给家长看的说明 */
+export interface ChineseWritingRubricRow {
+  aspect: string
+  points: number
+  description: string
+}
+
+/** 习作评分的三档描述 */
+export interface ChineseWritingBand {
+  band: 'A' | 'B' | 'C'
+  label: string
+  description: string
+}
+
+/** 给家长看的评分标准；工具不据此自动判分 */
+export interface ChineseWritingScoring {
+  total: number
+  rows: ChineseWritingRubricRow[]
+  bands: ChineseWritingBand[]
+}
+
+/** 习作只给题目、提示与字数要求；评分标准仅供家长面批，机器不判分 */
 export interface ChineseWritingPrompt {
   id: string
   unitId: string
@@ -286,8 +343,12 @@ export interface ChineseWritingPrompt {
   title: string
   /** 写作提示，面向学生 */
   prompt: string
+  /** 续写类习作给出的固定故事开头；其他单元为空 */
+  storyOpening?: string
   requirements: string[]
   wordCount: { min: number; max: number }
+  /** 分项与分值，给家长核对，不参与自动判分 */
+  scoring?: ChineseWritingScoring
   status: VerifyStatus
   sources: SourceRef[]
   note?: string

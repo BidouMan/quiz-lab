@@ -139,7 +139,9 @@ const guanlian = ['GL-14', 'GL-21'].map((id) => {
     id: item.id,
     level: item.level,
     text: item.text,
-    blanks: item.blanks,
+    instruction: item.instruction,
+    blanks: item.answers[0],
+    answers: item.answers,
     pair: item.pair,
   }
 })
@@ -149,7 +151,9 @@ const biaodian = {
   id: biaodianItem.id,
   level: biaodianItem.level,
   text: biaodianItem.text,
-  blanks: biaodianItem.blanks,
+  instruction: biaodianItem.instruction,
+  blanks: biaodianItem.answers[0],
+  answers: biaodianItem.answers,
   rule: biaodianItem.rule,
 }
 
