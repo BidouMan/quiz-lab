@@ -7,10 +7,25 @@ import {
   pickReadings,
   readingCharCount,
   readingCounts,
+  readingText,
 } from '../src/data/chinese/readings/index.ts'
 
 const PLACEHOLDER = '（ ）'
 const placeholders = (text: string): number => text.split(PLACEHOLDER).length - 1
+const quotes = (text: string): string[] =>
+  [...text.matchAll(/“([^”]+)”/g)].map((match) => match[1])
+
+/** 答案与原文的最长公共片段（按字符计），用于判断有没有原文依据 */
+function longestCommon(text: string, answer: string): number {
+  let best = 0
+  for (let start = 0; start < answer.length; start += 1) {
+    for (let end = start + best + 1; end <= answer.length; end += 1) {
+      if (text.includes(answer.slice(start, end))) best = end - start
+      else break
+    }
+  }
+  return best
+}
 
 test('课外阅读：20–30 篇，六个主题各 4 篇', () => {
   assert.ok(READING_BANK.length >= 20 && READING_BANK.length <= 30)
@@ -20,10 +35,10 @@ test('课外阅读：20–30 篇，六个主题各 4 篇', () => {
   }
 })
 
-test('课外阅读：正文 250–450 字（只计汉字）', () => {
+test('课外阅读：正文 300–500 字（只计汉字）', () => {
   for (const reading of READING_BANK) {
     const count = readingCharCount(reading)
-    assert.ok(count >= 250 && count <= 450, `${reading.id} 字数 ${count} 越界`)
+    assert.ok(count >= 300 && count <= 500, `${reading.id} 字数 ${count} 越界`)
     assert.ok(reading.paragraphs.length >= 3, `${reading.id} 分段少于 3 段`)
   }
 })
@@ -102,6 +117,72 @@ test('课外阅读：简答题有参考答案与 2–3 个评分点', () => {
       for (const point of question.scoring) {
         assert.ok(point.length > 0, `${reading.id} 空评分点`)
       }
+    }
+  }
+})
+
+test('课外阅读：每道题的答案都不为空', () => {
+  for (const reading of READING_BANK) {
+    for (const question of reading.questions) {
+      if (question.type === 'choice') {
+        assert.ok(question.explain.trim().length > 0, `${reading.id} 选择题说明为空`)
+        for (const option of question.options) {
+          assert.ok(option.trim().length > 0, `${reading.id} 选择题有空选项`)
+        }
+      } else if (question.type === 'fill') {
+        assert.ok(question.blanks.length > 0, `${reading.id} 填空题没有答案`)
+        for (const blank of question.blanks) {
+          assert.ok(blank.trim().length > 0, `${reading.id} 填空答案为空`)
+        }
+      } else {
+        assert.ok(question.answer.trim().length > 0, `${reading.id} 简答题参考答案为空`)
+        assert.ok(question.scoring.length > 0, `${reading.id} 简答题没有评分点`)
+      }
+    }
+  }
+})
+
+test('课外阅读：填空题答案必须逐字出现在原文', () => {
+  for (const reading of READING_BANK) {
+    const text = readingText(reading)
+    for (const question of reading.questions) {
+      if (question.type !== 'fill') continue
+      for (const blank of question.blanks) {
+        assert.ok(
+          text.includes(blank),
+          `${reading.id} 填空答案「${blank}」在原文找不到：${question.stem}`,
+        )
+      }
+    }
+  }
+})
+
+test('课外阅读：选择题说明里的引文必须逐字出现在原文', () => {
+  for (const reading of READING_BANK) {
+    const text = readingText(reading)
+    for (const question of reading.questions) {
+      if (question.type !== 'choice') continue
+      const cited = quotes(question.explain)
+      assert.ok(cited.length > 0, `${reading.id} 选择题说明没有原文引文：${question.stem}`)
+      for (const segment of cited) {
+        assert.ok(
+          text.includes(segment),
+          `${reading.id} 引文「${segment}」在原文找不到：${question.stem}`,
+        )
+      }
+    }
+  }
+})
+
+test('课外阅读：简答题答案与原文至少有一处连续 5 字以上的依据', () => {
+  for (const reading of READING_BANK) {
+    const text = readingText(reading)
+    for (const question of reading.questions) {
+      if (question.type !== 'short') continue
+      assert.ok(
+        longestCommon(text, question.answer) >= 5,
+        `${reading.id} 简答答案与原文没有连续 5 字以上的对应：${question.stem}`,
+      )
     }
   }
 })

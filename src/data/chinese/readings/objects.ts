@@ -72,7 +72,7 @@ const RAW: RawReading[] = [
         type: 'fill',
         stem: '奶奶说针线盒是她的“（ ）”。',
         blanks: ['小药箱'],
-        explain: '第二段写“奶奶常说，针线盒是她的‘小药箱’”。',
+        explain: '第二段写“奶奶常说，针线盒是她的”，后面用了“小药箱”这个说法。',
       },
       {
         type: 'short',
