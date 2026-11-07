@@ -55,7 +55,10 @@ const isValidPair = (relation: GuanlianRelation, combo: string[]): boolean => {
         (a === '不是' && b === '而是')
       )
     case '承接':
-      return ((a === '先' || a === '首先') && (b === '再' || b === '然后')) || (a === '一' && b === '就')
+      return (
+        ((a === '先' || a === '首先') && (b === '再' || b === '然后' || b === '接着')) ||
+        ((a === '一' || a === '刚') && b === '就')
+      )
     case '递进':
       return (a === '不但' || a === '不仅') && (b === '而且' || b === '还')
     case '条件':
