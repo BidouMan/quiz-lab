@@ -90,9 +90,15 @@
   #linebreak()
   #tian-row(n: word.clusters().len(), size: size)
 ]
-#let kanpinyin-line(items, size: 10mm, gap: 5mm) = {
+#let kanpinyin-line(items, size: 10mm, gap: 5mm, cols: none) = {
   let blocks = items.map(((w, p)) => kanpinyin(w, p, size: size))
-  grid(columns: (1fr,) * blocks.len(), column-gutter: gap, ..blocks)
+  let n = if cols == none { blocks.len() } else { cols }
+  if n > blocks.len() {
+    for _ in range(n - blocks.len()) {
+      blocks.push(box())
+    }
+  }
+  grid(columns: (1fr,) * n, column-gutter: gap, ..blocks)
 }
 
 /// 给加点字注音：上方书写空线 9mm，下方汉字带点
@@ -111,29 +117,26 @@
 )
 
 /// 形近字组词：字 + 括号书写区
-#let xingjin-cell(ch, w: 78mm, blank: 28mm) = box(width: w)[
+#let xingjin-cell(ch, w: 70mm, blank: 22mm) = box(width: w)[
   #han(ch, size: 14pt)
   #h(1.2mm)
   （#box(width: blank, inset: 0pt)[]）
 ]
 /// 一组形近字占一行，左侧原字、右侧形近字
-#let xingjin-line(pairs, w: 78mm, gap: 10mm, row-gap: 5mm) = grid(
+#let xingjin-line(pairs, w: 70mm, gap: 12mm, row-gap: 5mm) = grid(
   columns: (w, w),
   column-gutter: gap,
   row-gutter: row-gap,
   ..pairs.map(((a, b)) => (xingjin-cell(a, w: w), xingjin-cell(b, w: w))).flatten(),
 )
 
-/// 古诗默写：题名行 + 两条书写横线
-#let poem-blank(title, author, dynasty, lines: 2, line-w: 100%) = block(above: 3mm, below: 3mm)[
-  #grid(columns: (1fr, auto), ..(
-    text(size: 12pt)[#title　#(dynasty)·#(author)],
-    text(size: 10pt, fill: luma(120))[#lines 句],
-  ))
+/// 古诗默写：题名行 + 若干书写横线
+#let poem-blank(title, author, dynasty, lines: 2, line-w: 100%, gap: 9mm) = block(above: 3mm, below: 3mm)[
+  #text(size: 12pt)[#title　#(dynasty)·#(author)]
   #v(1mm)
   #for _ in range(lines) {
     block(width: line-w, stroke: (bottom: (thickness: 0.5pt, paint: luma(150))), inset: 0pt)[]
-    v(7mm)
+    v(gap)
   }
 ]
 
