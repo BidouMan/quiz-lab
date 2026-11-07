@@ -1,2 +1,3 @@
 export * from './types.ts'
 export * from './curriculum.ts'
+export * from './sentences/index.ts'

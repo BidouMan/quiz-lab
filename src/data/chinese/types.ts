@@ -125,3 +125,177 @@ export interface ChineseCurriculum {
   source: string
   units: ChineseUnit[]
 }
+
+// ==================== 句子题库 ====================
+//
+// 与教材字词不同，句子题是原创命题，来源定位到题库 id 本身；每条仍须 verified，
+// 并在复核记录中写明「独立重做 + 机械校验」的结论。
+
+export type ChineseSentenceKind = 'gaibing' | 'kuoxie' | 'guanlian' | 'biaodian' | 'fangxie'
+
+/** 病句四类，按三上常见的修改类型划分 */
+export type GaibingSubkind = '成分残缺' | '搭配不当' | '语序颠倒' | '重复啰嗦'
+
+interface SentenceItemBase {
+  /** 题库内唯一编号，例：GB-01 / KX-03 */
+  id: string
+  kind: ChineseSentenceKind
+  level: ChineseLevel
+  status: VerifyStatus
+  sources: SourceRef[]
+  /** 这条题为什么这么改 / 为什么用这个标点，给复核和教师看 */
+  explain: string
+}
+
+/** 修改病句：broken 为病句，fixed 为主答案，acceptable 为其他可接受改法（可枚举） */
+export interface GaibingItem extends SentenceItemBase {
+  kind: 'gaibing'
+  subkind: GaibingSubkind
+  broken: string
+  fixed: string
+  acceptable: string[]
+  /** 被替换/删除的原片段；成分残缺时为空串 */
+  defect: string
+  /** 替换成的片段；删除类为空串，成分残缺时为补上的成分 */
+  replacement: string
+  reason: string
+}
+
+/** 扩写句子：base 为原句，requiredParts 为必须用上的词，samples 为可枚举的参考答案 */
+export interface KuoxieItem extends SentenceItemBase {
+  kind: 'kuoxie'
+  base: string
+  keep: string[]
+  requiredParts: string[]
+  samples: string[]
+  rubric: string[]
+}
+
+/** 关联词填空：text 中的「（ ）」按顺序对应 blanks 的每一空；每空给出可接受答案集 */
+export interface GuanlianItem extends SentenceItemBase {
+  kind: 'guanlian'
+  text: string
+  blanks: string[][]
+  pair: string
+}
+
+/** 标点符号：text 中的「（ ）」按顺序对应 blanks；每空一个标点 */
+export interface BiaodianItem extends SentenceItemBase {
+  kind: 'biaodian'
+  text: string
+  blanks: string[]
+  rule: string
+}
+
+/** 比喻与拟人仿写：samples 为可枚举的参考句；keywords 为判读用的特征词 */
+export interface FangxieItem extends SentenceItemBase {
+  kind: 'fangxie'
+  mode: '比喻' | '拟人'
+  example: string
+  prompt: string
+  samples: string[]
+  keywords: string[]
+  guide: string
+}
+
+export type ChineseSentenceItem =
+  | GaibingItem
+  | KuoxieItem
+  | GuanlianItem
+  | BiaodianItem
+  | FangxieItem
+
+/** 题库复核记录：证明答案不是「生成时觉得对」 */
+export interface ChineseBankReview {
+  authoredAt: string
+  /** 第一遍：命题与写答案 */
+  pass1: string
+  /** 第二遍：不看答案独立重做，再与存档比对 */
+  pass2: string
+  /** 机械校验：由测试逐条执行的结构检查 */
+  mechanical: string[]
+  /** 抽查记录 */
+  samples: string[]
+}
+
+export interface ChineseSentenceBankMeta {
+  subject: 'chinese'
+  grade: '3A'
+  scope: '句子'
+  review: ChineseBankReview
+}
+
+// ==================== 课外阅读短文库 ====================
+
+export type ReadingTheme = '写人' | '写景' | '写事' | '状物' | '寓言' | '科普'
+
+export interface ReadingChoiceQuestion {
+  type: 'choice'
+  stem: string
+  options: string[]
+  /** 正确选项下标，从 0 开始 */
+  answer: number
+  explain: string
+}
+
+export interface ReadingFillQuestion {
+  type: 'fill'
+  stem: string
+  /** 逐空答案，可枚举 */
+  blanks: string[]
+  explain: string
+}
+
+export interface ReadingShortQuestion {
+  type: 'short'
+  stem: string
+  answer: string
+  /** 评分点，逐条对应 1 分；简答题按点给分 */
+  scoring: string[]
+}
+
+export type ReadingQuestion = ReadingChoiceQuestion | ReadingFillQuestion | ReadingShortQuestion
+
+export interface ChineseReading {
+  id: string
+  title: string
+  theme: ReadingTheme
+  /** 逐段，排版时自然分段 */
+  paragraphs: string[]
+  status: VerifyStatus
+  sources: SourceRef[]
+  questions: ReadingQuestion[]
+  /** 本文的复核记录 */
+  review: string
+}
+
+export interface ChineseReadingBankMeta {
+  subject: 'chinese'
+  grade: '3A'
+  scope: '课外阅读'
+  review: ChineseBankReview
+}
+
+// ==================== 习作题目 ====================
+
+/** 习作只给题目、提示与字数要求，不判分、不给范文 */
+export interface ChineseWritingPrompt {
+  id: string
+  unitId: string
+  unitName: string
+  title: string
+  /** 写作提示，面向学生 */
+  prompt: string
+  requirements: string[]
+  wordCount: { min: number; max: number }
+  status: VerifyStatus
+  sources: SourceRef[]
+  note?: string
+}
+
+export interface ChineseWritingBankMeta {
+  subject: 'chinese'
+  grade: '3A'
+  scope: '习作'
+  review: ChineseBankReview
+}
