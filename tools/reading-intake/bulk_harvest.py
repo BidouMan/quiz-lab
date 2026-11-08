@@ -41,14 +41,14 @@ SANXIA = "https://appsj.szxuexiao.com/sannianji/index{}.html"
 MIXED = "https://www.szxuexiao.com/examination/index{}.html"
 CATEGORY_PAGES = 24
 SANXIA_PAGES = 60
-MIXED_PAGES = 719
+MIXED_PAGES = 410
 TARGET = 300
 REPORT_EVERY = 50
 
 F_TITLE = re.compile(r"<title>(.*?)</title>", re.S)
 ANCHOR = re.compile(
     r'<a[^>]+href="(?:https?://appsj\.szxuexiao\.com)?(/html/(\d+)\.html)"[^>]*>'
-    r'(?:[^<]*|(.*?)</a>)', re.S)
+    r'(.*?)</a>', re.S)
 ANCHOR_TITLE = re.compile(
     r'<a[^>]+href="(?:https?://appsj\.szxuexiao\.com)?/html/(\d+)\.html"[^>]*title="([^"]*)"',
     re.S)
@@ -147,7 +147,7 @@ def parse_items(html):
         if pid not in items:
             items[pid] = title
     for m in ANCHOR.finditer(html):
-        pid, inner = m.group(1), m.group(3)
+        pid, inner = m.group(2), m.group(3)
         if pid in items:
             continue
         txt = re.sub(r"<[^>]+>", "", inner or "").strip()

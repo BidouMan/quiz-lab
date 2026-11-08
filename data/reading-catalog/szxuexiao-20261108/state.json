@@ -1,20 +1,21 @@
 {
  "category_page": 25,
- "mixed_page": 253,
+ "mixed_page": 411,
  "category_done": true,
  "halt": null,
  "haltAt": null,
  "accepted": 191,
  "rejected": {
   "站点导航/假正文": 5,
-  "批内重复": 21
+  "批内重复": 21,
+  "答案页误判": 1
  },
  "bodyonly": 0,
- "pagesAttempted": 266,
+ "pagesAttempted": 321,
  "pagesBlocked": 0,
- "candidates": 318,
+ "candidates": 321,
  "dupes": 0,
- "lastReportAt": 0,
+ "lastReportAt": 191,
  "startedAt": "2026-11-08 10:50:02",
  "sanxia_page": 61,
  "sanxia_done": true
