@@ -24,6 +24,8 @@ from collections import Counter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DRAFTS = os.path.join(ROOT, "data", "reading-catalog", "quiz-drafts")
+DOWNLIST = os.path.join(ROOT, "data", "reading-catalog", "downlisted.json")
+GATE = os.path.join(ROOT, "data", "reading-catalog", "quality-gate.jsonl")
 TARGET = os.path.join(ROOT, "src", "data", "chinese", "readings", "mounted.ts")
 
 THEMES = {"写人", "写景", "写事", "状物", "寓言", "科普"}
@@ -126,10 +128,27 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
+    downlisted = set()
+    if os.path.exists(DOWNLIST):
+        with open(DOWNLIST, encoding="utf-8") as f:
+            downlisted = {item["id"] for item in json.load(f).get("readings", [])}
+
+    passed = None
+    if os.path.exists(GATE):
+        with open(GATE, encoding="utf-8") as f:
+            passed = {json.loads(line)["id"] for line in f if line.strip() and json.loads(line)["pass"]}
+
     readings, ids = [], set()
+    skipped = pending = 0
     for path in sorted(glob.glob(os.path.join(DRAFTS, "*.json"))):
         with open(path, encoding="utf-8") as f:
             draft = json.load(f)
+        if draft.get("id") in downlisted:
+            skipped += 1
+            continue
+        if passed is not None and draft.get("id") not in passed:
+            pending += 1
+            continue
         item = export_reading(draft)
         if item["id"] in ids:
             fail(f"编号重复：{item['id']}")
@@ -144,11 +163,12 @@ def main():
             + json.dumps(readings, ensure_ascii=False, indent=2) + "\n")
 
     if args.dry_run:
-        print(f"待导出 {len(readings)} 篇")
+        print(f"待导出 {len(readings)} 篇（已下架 {skipped} 篇，未过闸待处理 {pending} 篇）")
     else:
         with open(TARGET, "w", encoding="utf-8") as f:
             f.write(header + body)
-        print(f"已写入 {os.path.relpath(TARGET, ROOT)}：{len(readings)} 篇")
+        print(f"已写入 {os.path.relpath(TARGET, ROOT)}：{len(readings)} 篇"
+              f"（已下架 {skipped} 篇，未过闸待处理 {pending} 篇）")
 
     themes = Counter(r["theme"] for r in readings)
     qtypes = Counter(q["type"] for r in readings for q in r["questions"])
@@ -156,7 +176,7 @@ def main():
     print("主题：", " ".join(f"{k}{v}" for k, v in themes.items()))
     print("题量：", sum(qtypes.values()), "题", dict(qtypes))
     print(f"正文汉字：min {min(chars)} / median {sorted(chars)[len(chars) // 2]} / max {max(chars)}")
-    print(f"编号：{min(ids)} – {max(ids)}；缺号 {len([n for n in range(301, 501) if f'RD-{n}' not in ids])} 个")
+    print(f"编号：{min(ids)} – {max(ids)}；未挂载 {len([n for n in range(301, 501) if f'RD-{n}' not in ids])} 个（缺号 + 已下架）")
 
 
 if __name__ == "__main__":

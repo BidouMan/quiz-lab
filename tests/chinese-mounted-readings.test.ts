@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import {
   MOUNTED_READINGS,
   PRACTICE_READING_BANK,
@@ -12,17 +13,38 @@ import { readingCandidates } from '../src/chinese/materials.ts'
 const PLACEHOLDER = '（ ）'
 const placeholders = (text: string): number => text.split(PLACEHOLDER).length - 1
 
-test('挂载题库：199 份 RD-301–RD-500 已并入出卷题库', () => {
-  assert.equal(MOUNTED_READINGS.length, 199, `挂载篇数 ${MOUNTED_READINGS.length}`)
+const gateRecords: Array<{ id: string; pass: boolean }> = readFileSync(
+  new URL('../data/reading-catalog/quality-gate.jsonl', import.meta.url),
+  'utf8',
+)
+  .trim()
+  .split('\n')
+  .map((line) => JSON.parse(line))
+const gatePassed = new Set(gateRecords.filter((record) => record.pass).map((record) => record.id))
+const downlisted = new Set(
+  JSON.parse(
+    readFileSync(new URL('../data/reading-catalog/downlisted.json', import.meta.url), 'utf8'),
+  ).readings.map((item: { id: string }) => item.id),
+)
+
+test('挂载题库：只挂载 quality_gate 通过且未下架的篇目', () => {
+  assert.equal(
+    MOUNTED_READINGS.length,
+    gatePassed.size,
+    `挂载 ${MOUNTED_READINGS.length} 篇，过闸 ${gatePassed.size} 篇`,
+  )
   assert.equal(
     PRACTICE_READING_BANK.length,
     READING_BANK.length + MOUNTED_READINGS.length,
     '出卷题库没有合并精选库与挂载稿',
   )
   const mountedIds = new Set(MOUNTED_READINGS.map((reading) => reading.id))
-  assert.equal(mountedIds.size, 199, '挂载稿编号有重复')
+  assert.equal(mountedIds.size, MOUNTED_READINGS.length, '挂载稿编号有重复')
+  for (const id of mountedIds) {
+    assert.ok(gatePassed.has(id), `${id} 未通过 quality_gate 却被挂载`)
+    assert.ok(!downlisted.has(id), `${id} 已下架却被挂载`)
+  }
   assert.ok(!mountedIds.has('RD-492'), 'RD-492 本应缺号')
-  for (const id of ['RD-301', 'RD-500']) assert.ok(mountedIds.has(id), `缺 ${id}`)
 })
 
 test('挂载题库：结构完整，题目与答案可直接使用', () => {
@@ -96,8 +118,8 @@ test('挂载题库：简答题有 2–3 个非空评分点', () => {
 test('挂载题库：可进入出卷候选题并能判客观题', () => {
   const candidates = readingCandidates()
   assert.equal(candidates.length, PRACTICE_READING_BANK.length)
-  const mounted = candidates.filter((item) => /^RD-(3\d\d|4\d\d|500)$/.test(item.id))
-  assert.equal(mounted.length, 199)
+  const mounted = candidates.filter((item) => gatePassed.has(item.id))
+  assert.equal(mounted.length, MOUNTED_READINGS.length)
   const sample = mounted.slice(0, 10)
   for (const item of sample) {
     assert.ok(item.paragraphs.length > 0, `${item.id} 候选正文为空`)
