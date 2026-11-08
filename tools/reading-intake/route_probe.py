@@ -122,17 +122,23 @@ def html_to_text(html):
 # ---------------------------------------------------------------- 正文切分
 Q_START = re.compile(r"^\s*(?:[（(]\s*)?(\d{1,2})\s*[)）]?\s*[.、．:：]\s*\S")
 SECTION_START = re.compile(r"^\s*[一二三四五六七八九十]{1,3}\s*[、.．]")
-READ_HEADER = re.compile(r"(阅读理解|阅读短文|阅读[^。\n]{0,6}短文|阅读下面的|开心阅读|"
-                         r"课外阅读|课内阅读|阅读[（(][一二三四][)）]|阅读[一二三四][、.]|"
-                         r"短文阅读|阅读练习|阅读天地|阅读[^。\n]{0,4}篇短文)")
+READ_HEADER = re.compile(r"(阅读理解|阅读短文|阅读[^。\n]{0,6}短文|阅读下面|开心阅读|"
+                         r"课外阅读|课内阅读|阅读材料|阅读《|阅读[（(][一二三四][)）]|"
+                         r"阅读[一二三四][、.]|短文阅读|阅读练习|阅读天地|"
+                         r"阅读[^。\n]{0,4}篇短文)")
 SUB_HEADER = re.compile(r"^\s*[（(]\s*[一二三四]\s*[)）]")
 TITLE_LINE = re.compile(r"《[^》]{2,25}》")
+# 独立成行的文章标题（《…》一行，最多带个“节选/选段”后缀），用来判多篇粘连
+TITLE_LINE_STANDALONE = re.compile(r"^\s*《[^》]{2,25}》\s*[（(]?[选节摘][）)]?\s*$")
 
 
 def is_passage_header(ln):
     if len(ln) > 60:
         return False
     if READ_HEADER.search(ln):
+        return True
+    # “六、阅读材料，完成练习。”这类大题头
+    if SECTION_START.match(ln) and "阅读" in ln:
         return True
     if SUB_HEADER.match(ln) and len(ln) <= 20 and not is_question_line(ln):
         return True
@@ -156,10 +162,13 @@ def q_types(block):
         types.add("choice")
     if re.search(r"(判断|画“?√”?|打“?√”?|对的画|错的画|画“?×”?)", text):
         types.add("judge")
-    if re.search(r"(_{2,}|＿{2,}|（\s*）|\(\s*\)|补充完整|填写|填入|填在|填一填)", text):
+    if re.search(r"(_{2,}|＿{2,}|（\s*）|\(\s*\)|补充完整|填写|填入|填在|填一填|"
+                 r"、\s*、\s*、)", text):
         types.add("fill")
     if re.search(r"(为什么|说说|写出|写一写|想一想|你认为|体会|感受|情感|道理|"
-                 r"概括|解释|意思|表达|怎样|哪些|哪个|有何)", text):
+                 r"概括|解释|意思|表达|怎样|哪些|哪个|有何|发挥想象|想象|"
+                 r"写两句|写一句|写几句话|想什么|做什么|说什么|会想|会说|会做|"
+                 r"画出|用“\s*”画)", text):
         types.add("short")
     return sorted(types)
 
@@ -202,7 +211,7 @@ def split_pieces(lines, allow_whole_page=False):
         merged_marks.append(i)
     if not merged_marks:
         # 纯文学作品页没有“阅读”板块头，整页当一篇
-        return [("".join(lines), [], "", "")] if allow_whole_page else []
+        return [("".join(lines), [], "", 0)] if allow_whole_page else []
     pieces = []
     for k, start in enumerate(merged_marks):
         end = merged_marks[k + 1] if k + 1 < len(merged_marks) else len(lines)
@@ -216,7 +225,38 @@ def split_pieces(lines, allow_whole_page=False):
                                  (SECTION_START.match(ln) and not Q_START.match(ln))):
                 break          # 本题题目到此为止，后面是别的大题/全卷答案
             (qs if state == "q" else body).append(ln)
-        pieces.append(("".join(body), qs, header, ""))
+        title_hint = len([ln for ln in body if TITLE_LINE_STANDALONE.match(ln)])
+        pieces.append(("".join(body), qs, header, title_hint))
+    return pieces
+
+
+def split_unanchored(lines):
+    """没有“阅读”板块头时，按问句块倒推正文（用于《阅读理解》专项这类页面）。"""
+    cut = next((i for i, ln in enumerate(lines) if ANSWER_HEAD.match(ln)), len(lines))
+    body_lines = lines[:cut]
+    q = [i for i, ln in enumerate(body_lines) if is_question_line(ln)]
+    if not q:
+        return []
+    blocks, cur = [], [q[0]]
+    for i in q[1:]:
+        if i - cur[-1] <= 3:
+            cur.append(i)
+        else:
+            blocks.append((cur[0], cur[-1]))
+            cur = [i]
+    blocks.append((cur[0], cur[-1]))
+    pieces, prev_end = [], -1
+    for b, e in blocks:
+        raw_body, body = body_lines[prev_end + 1:b], []
+        for ln in raw_body:
+            if is_question_line(ln) or re.match(r"^\s*[A-E][、.．]", ln):
+                break
+            body.append(ln)
+        text = "".join(body)
+        # 倒推出来的正文必须像一段成篇文字：够长、有句读、不是选项/导航
+        if char_count(text) >= 150 and len(re.findall(r"[。！？!?…]", text)) >= 3:
+            pieces.append((text, body_lines[b:e + 1], (body[0][:40] if body else ""), 0))
+        prev_end = e
     return pieces
 
 
@@ -228,7 +268,7 @@ POOL_MIN = 60
 TOO_LONG = 1500
 
 
-def analyse_piece(body, qs, ans=(), header=""):
+def analyse_piece(body, qs, ans=(), header="", title_hint=0):
     chars = char_count(body)
     n_q = len([1 for ln in qs if is_question_line(ln)])
     types = q_types(qs)
@@ -237,7 +277,7 @@ def analyse_piece(body, qs, ans=(), header=""):
     has_answer = len(list(ans)) > 0 or bool(re.search(r"(参考答案|答案|解析)", "\n".join(qs)))
     sent = len(re.findall(r"[。！？!?…]", body))
     body_ok = chars >= 150 and sent >= 3
-    merged = len(TITLE_LINE.findall(body)) >= 2 or len(SUB_HEADER.findall(body)) >= 2
+    merged = title_hint >= 2 or len(SUB_HEADER.findall(body)) >= 2
     nav = len(re.findall(r"(登录|注册|版权|声明|权利|筛选|加载更多|网站|首页|版本|"
                          r"联系我们|投稿|教材版本|共找到)", body))
     boilerplate = sent < 2 or (nav >= 4 and chars < 600)
@@ -266,7 +306,10 @@ def extract_pieces(text, page_title="", min_chars=POOL_MIN, allow_whole_page=Fal
         lines = [ln for ln in lines if key not in re.sub(r"\s+", "", ln) or len(ln) > 80]
     out = []
     groups = answer_groups(lines)
-    for body, qs, header, _ in split_pieces(lines, allow_whole_page):
+    pieces = split_pieces(lines, allow_whole_page)
+    if not pieces and not allow_whole_page:
+        pieces = split_unanchored(lines)   # 无板块头时按问句块倒推，宁收不漏
+    for body, qs, header, title_hint in pieces:
         # 去掉“标题 - 站名标题”这种页头重复
         body = re.sub(r"^(?P<t>[\u4e00-\u9fff][\u4e00-\u9fff：“”‘’《》、·\w]{4,40}?)\s*[-–]\s*"
                       r"[\u4e00-\u9fff]{2,20}(?P=t)", "", body)
@@ -275,7 +318,7 @@ def extract_pieces(text, page_title="", min_chars=POOL_MIN, allow_whole_page=Fal
             ans, scope = groups[key], "section"
         else:
             ans, scope = [ln for g in groups.values() for ln in g], ("full-paper" if groups else "none")
-        info = analyse_piece(body, qs, ans, header)
+        info = analyse_piece(body, qs, ans, header, title_hint)
         info["answerScope"] = scope
         info["questionText"] = "\n".join(qs)
         info["answerText"] = "\n".join(ans)

@@ -1,0 +1,26 @@
+{
+ "category_page": 25,
+ "mixed_page": 205,
+ "category_done": true,
+ "halt": null,
+ "haltAt": null,
+ "accepted": 140,
+ "rejected": {
+  "课内阅读（教材原文，不可内置）": 44,
+  "题量不足（2 道）": 14,
+  "题量不足（1 道）": 6,
+  "题量不足（0 道）": 1,
+  "题型单一（short）": 20,
+  "批内重复": 1,
+  "题型单一（fill）": 8,
+  "题型单一（未识别）": 2,
+  "题型单一（choice）": 1
+ },
+ "bodyonly": 0,
+ "pagesAttempted": 114,
+ "pagesBlocked": 0,
+ "candidates": 138,
+ "dupes": 0,
+ "lastReportAt": 0,
+ "startedAt": "2026-11-08 10:50:02"
+}
