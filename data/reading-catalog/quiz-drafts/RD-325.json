@@ -1,7 +1,10 @@
 {
   "id": "RD-325",
   "sourceSeq": "RD-325",
-  "kind": "extracurricular",
+  "kind": "in-text",
+  "scope": "in-text",
+  "term": "3B",
+  "lesson": "第20课",
   "title": "肥皂泡",
   "theme": "写事",
   "status": "verified",
