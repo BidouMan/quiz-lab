@@ -78,7 +78,7 @@ def export_question(q, rid):
     fail(f"{rid} 未知题型：{qtype}")
 
 
-def export_reading(draft):
+def export_reading(draft, pending=False):
     rid = draft.get("id") or ""
     if not re.match(r"^RD-\d{3}$", rid):
         fail(f"编号异常：{rid}")
@@ -111,12 +111,14 @@ def export_reading(draft):
         fail(f"{rid} 缺复核记录")
     if draft.get("theme") != theme:
         review += f"（题库挂载：主题 {draft['theme']} 映射为 {theme}，应用题库仅六类主题。）"
+    if pending:
+        review += "（待修区：quality_gate 未通过，题目待修补；仅供练习，不计入合格挂载，不参与精选/考试模式。）"
     return {
         "id": rid,
         "title": title,
         "theme": theme,
         "paragraphs": paragraphs,
-        "status": draft.get("status") or "verified",
+        "status": "pending" if pending else (draft.get("status") or "verified"),
         "sources": sources,
         "questions": questions,
         "review": review,
@@ -138,38 +140,42 @@ def main():
         with open(GATE, encoding="utf-8") as f:
             passed = {json.loads(line)["id"] for line in f if line.strip() and json.loads(line)["pass"]}
 
-    readings, ids = [], set()
-    skipped = pending = 0
+    official, pending = [], []
+    ids = set()
+    skipped = 0
     for path in sorted(glob.glob(os.path.join(DRAFTS, "*.json"))):
         with open(path, encoding="utf-8") as f:
             draft = json.load(f)
         if draft.get("id") in downlisted:
             skipped += 1
             continue
-        if passed is not None and draft.get("id") not in passed:
-            pending += 1
-            continue
-        item = export_reading(draft)
+        is_official = passed is None or draft.get("id") in passed
+        item = export_reading(draft, pending=not is_official)
         if item["id"] in ids:
             fail(f"编号重复：{item['id']}")
         ids.add(item["id"])
-        readings.append(item)
+        (official if is_official else pending).append(item)
 
     header = (
         "// 由 tools/reading-intake/export_mounted.py 自动生成，请改 quiz-drafts 后重跑，不要手改。\n"
+        "// MOUNTED_READINGS 为正式题库（quality_gate 通过）；PENDING_READINGS 为待修区（可练习，不计入合格数）。\n"
         "import type { ChineseReading } from '../types.ts'\n\n"
     )
-    body = ("export const MOUNTED_READINGS: ChineseReading[] = "
-            + json.dumps(readings, ensure_ascii=False, indent=2) + "\n")
+    body = (
+        "export const MOUNTED_READINGS: ChineseReading[] = "
+        + json.dumps(official, ensure_ascii=False, indent=2) + "\n\n"
+        + "export const PENDING_READINGS: ChineseReading[] = "
+        + json.dumps(pending, ensure_ascii=False, indent=2) + "\n"
+    )
 
     if args.dry_run:
-        print(f"待导出 {len(readings)} 篇（已下架 {skipped} 篇，未过闸待处理 {pending} 篇）")
+        print(f"正式题库 {len(official)} 篇；待修区 {len(pending)} 篇；已下架 {skipped} 篇")
     else:
         with open(TARGET, "w", encoding="utf-8") as f:
             f.write(header + body)
-        print(f"已写入 {os.path.relpath(TARGET, ROOT)}：{len(readings)} 篇"
-              f"（已下架 {skipped} 篇，未过闸待处理 {pending} 篇）")
+        print(f"已写入 {os.path.relpath(TARGET, ROOT)}：正式 {len(official)} 篇，待修 {len(pending)} 篇，已下架 {skipped} 篇")
 
+    readings = official + pending
     themes = Counter(r["theme"] for r in readings)
     qtypes = Counter(q["type"] for r in readings for q in r["questions"])
     chars = [len(re.findall(r"[\u4e00-\u9fff]", "".join(r["paragraphs"]))) for r in readings]

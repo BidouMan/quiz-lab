@@ -406,19 +406,28 @@ export function sentenceCandidates(kind: ChineseSentenceKind): ChinesePaperItem[
 }
 
 export function readingCandidates(): ReadingPaperItem[] {
-  return PRACTICE_READING_BANK.map((reading: ChineseReading) => ({
-    typeId: 'reading',
-    key: `reading:${reading.id}`,
-    score: 0,
-    level: 'B',
-    source: `${reading.id}《${reading.title}》｜${reading.theme}`,
-    id: reading.id,
-    title: reading.title,
-    theme: reading.theme,
-    paragraphs: reading.paragraphs,
-    questions: reading.questions.map((question) => ({ ...question, score: 0 })),
-    questionCount: reading.questions.length,
-  }))
+  return PRACTICE_READING_BANK.map((reading: ChineseReading) => {
+    const pending = reading.status === 'pending'
+    return {
+      typeId: 'reading',
+      key: `reading:${reading.id}`,
+      score: 0,
+      level: 'B',
+      source: `${pending ? '【待修】' : ''}${reading.id}《${reading.title}》｜${reading.theme}`,
+      id: reading.id,
+      title: reading.title,
+      theme: reading.theme,
+      paragraphs: reading.paragraphs,
+      questions: reading.questions.map((question) => ({ ...question, score: 0 })),
+      questionCount: reading.questions.length,
+      quality: pending ? 'pending-repair' : 'qualified',
+    }
+  })
+}
+
+/** 只取正式题库（quality_gate 通过），供精选/考试模式使用。 */
+export function qualifiedReadingCandidates(): ReadingPaperItem[] {
+  return readingCandidates().filter((item) => item.quality === 'qualified')
 }
 
 export function writingCandidates(): WritingPaperItem[] {

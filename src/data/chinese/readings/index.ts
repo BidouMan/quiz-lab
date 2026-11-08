@@ -10,7 +10,7 @@ import { OBJECT_READINGS } from './objects.ts'
 import { FABLE_READINGS } from './fables.ts'
 import { SCIENCE_READINGS } from './science.ts'
 import { IMPORTED_READINGS } from './imported.ts'
-import { MOUNTED_READINGS } from './mounted.ts'
+import { MOUNTED_READINGS, PENDING_READINGS } from './mounted.ts'
 
 export {
   PEOPLE_READINGS,
@@ -21,6 +21,7 @@ export {
   SCIENCE_READINGS,
   IMPORTED_READINGS,
   MOUNTED_READINGS,
+  PENDING_READINGS,
 }
 
 export const READING_THEMES: ReadingTheme[] = ['写人', '写景', '写事', '状物', '寓言', '科普']
@@ -35,14 +36,21 @@ export const READING_BANK: ChineseReading[] = [
   ...IMPORTED_READINGS,
 ]
 
-/**
- * 出卷可用的全部短文：精选库（原创 24 + 试点 20，逐条过严格质检）加上
- * 批量挂载的 199 份命题稿（RD-301–RD-500）。分开展示是为了让严格质检
- * 继续只约束精选库；批量稿的质量复审在题库迭代中单独进行。
- */
-export const PRACTICE_READING_BANK: ChineseReading[] = [
+/** 正式题库：精选库 + quality_gate 通过且未下架的命题稿，计入合格挂载。 */
+export const QUALIFIED_READING_BANK: ChineseReading[] = [
   ...READING_BANK,
   ...MOUNTED_READINGS,
+]
+
+/** 待修区：quality_gate 未通过、但正文合格且未下架的命题稿；可练习，不计入合格数。 */
+export const PENDING_READING_BANK: ChineseReading[] = [
+  ...PENDING_READINGS,
+]
+
+/** 出卷可用的全部短文：正式题库 + 待修区。 */
+export const PRACTICE_READING_BANK: ChineseReading[] = [
+  ...QUALIFIED_READING_BANK,
+  ...PENDING_READING_BANK,
 ]
 
 export const READING_BANK_META: ChineseReadingBankMeta = {

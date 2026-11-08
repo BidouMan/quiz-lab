@@ -38,6 +38,7 @@ DRAFTS = os.path.join(ROOT, "data", "reading-catalog", "quiz-drafts")
 OUTPUT = os.path.join(ROOT, "data", "reading-catalog", "quality-gate.jsonl")
 DOWNLIST = os.path.join(ROOT, "data", "reading-catalog", "downlisted.json")
 REJECTED = os.path.join(ROOT, "data", "reading-catalog", "quiz-drafts-rejected.jsonl")
+HUMAN_SAMPLES = os.path.join(ROOT, "data", "reading-catalog", "human-review-samples.jsonl")
 
 HANZI = re.compile(r"[\u4e00-\u9fff]")
 PLACEHOLDER = "（ ）"
@@ -71,6 +72,14 @@ BANNED_OPTION_RE = re.compile(r"以上都(?:对|不对|正确|错误)|无法判�
 
 # SK4（推断体会）题干落在「体会/情感/品质」时，按 T1 的「SK3 或 SK5 主观题」口径计入
 EMOTION_RE = re.compile(r"体会|感受|心情|品质|喜爱|喜欢|赞美|情感|感悟|领略")
+
+# 脚本判不了、必须人工抽样复核的四类
+HUMAN_REVIEW = {
+    "R9": "简答锚点的语义支撑（脚本只看字符串是否命中）",
+    "R6": "纯抄写/纯记忆判定（脚本只看问法关键词）",
+    "R10": "干扰项同质同域（脚本只看长度比与凑数词）",
+    "R12": "难度分层（脚本按字数与 SK 粗分）",
+}
 
 SCOPE_RE = re.compile(r"下册|三年级下")
 PASS_SCORE = None  # 预留：综合分阈值（当前按规则一票否决）
@@ -302,6 +311,15 @@ def review_one(draft: dict) -> dict:
     difficulty = difficulty_of(char_count, skills)
     rule_names = sorted({item["rule"] for item in failures}, key=lambda r: int(r[1:]))
 
+    flags = []
+    if any(q.get("type") == "short" for q in questions):
+        flags.append("R9")
+    if copy_memory:
+        flags.append("R6")
+    if any(q.get("type") == "choice" for q in questions):
+        flags.append("R10")
+    flags.append("R12")
+
     return {
         "id": rid,
         "title": title,
@@ -309,6 +327,8 @@ def review_one(draft: dict) -> dict:
         "failures": failures,
         "rules": rule_names,
         "difficulty": difficulty,
+        "human_review_flags": flags,
+        "needs_human_review": (not failures) and bool(flags),
         "details": {
             "charCount": char_count,
             "questionCount": len(questions),
@@ -358,6 +378,62 @@ def write_downlist(records: list[dict], drafts: dict[str, dict]) -> None:
             }, ensure_ascii=False) + "\n")
 
 
+def write_human_samples(records: list[dict], drafts: dict[str, dict]) -> list[dict]:
+    """四类脚本判不了的问题各留 3 条样例，供人工抽样复核。"""
+    samples: list[dict] = []
+    down_ids = {r["id"] for r in records if set(r["rules"]) & {"R1", "R2"}}
+
+    def first_question(draft: dict, predicate):
+        for index, question in enumerate(draft.get("questions") or [], start=1):
+            if predicate(question):
+                return index, question
+        return None, None
+
+    def push(record: dict, category: str, detail: str) -> None:
+        samples.append({
+            "category": category,
+            "label": HUMAN_REVIEW[category],
+            "id": record["id"],
+            "title": record["title"],
+            "detail": detail,
+        })
+
+    # R9：优先取锚点确实不足的篇目
+    r9 = [
+        r for r in records
+        if r["id"] not in down_ids
+        and ("R9" in r["rules"] or "R9" in r["human_review_flags"])
+    ]
+    for record in r9[:3]:
+        index, question = first_question(drafts[record["id"]], lambda q: q.get("type") == "short")
+        detail = f"第 {index} 题「{(question or {}).get('stem', '')[:36]}」评分点与原文的对应需人工确认"
+        push(record, "R9", detail)
+
+    # R6：有抄写/记忆嫌疑题的篇目
+    r6 = [r for r in records if r["id"] not in down_ids and "R6" in r["human_review_flags"]]
+    for record in r6[:3]:
+        index, question = first_question(drafts[record["id"]], lambda q: is_copy_or_memory(q)[0])
+        detail = f"第 {index} 题「{(question or {}).get('stem', '')[:36]}」是否属于纯抄写/纯记忆需人工判定"
+        push(record, "R6", detail)
+
+    # R10：长度比或凑数项被脚本命中的篇目
+    r10 = [r for r in records if r["id"] not in down_ids and "R10" in r["rules"]]
+    for record in r10[:3]:
+        detail = next(f["detail"] for f in record["failures"] if f["rule"] == "R10")
+        push(record, "R10", f"{detail}；四个选项是否同质同域需人工判定")
+
+    # R12：易/中/难各取 1 篇
+    for level in ("易", "中", "难"):
+        record = next((r for r in records if r["id"] not in down_ids and r["difficulty"] == level), None)
+        if record:
+            push(record, "R12", f"脚本按正文 {record['details']['charCount']} 字与 SK {'/'.join(record['details']['skills'])} 判为「{level}」")
+
+    with open(HUMAN_SAMPLES, "w", encoding="utf-8") as f:
+        for sample in samples:
+            f.write(json.dumps(sample, ensure_ascii=False) + "\n")
+    return samples
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
@@ -379,9 +455,12 @@ def main() -> None:
     if not args.dry_run:
         with open(OUTPUT, "w", encoding="utf-8") as f:
             f.write(payload)
+    draft_map = {draft["id"]: draft for draft in drafts}
     if args.write_downlist:
-        write_downlist(records, {draft["id"]: draft for draft in drafts})
+        write_downlist(records, draft_map)
+        samples = write_human_samples(records, draft_map)
         print(f"下架清单：{os.path.relpath(DOWNLIST, ROOT)}；拒收记录：{os.path.relpath(REJECTED, ROOT)}")
+        print(f"人工复核样例：{os.path.relpath(HUMAN_SAMPLES, ROOT)}（{len(samples)} 条）")
 
     order = [f"R{n}" for n in range(1, 12)]
     print(f"命题稿 {len(records)} 篇；pass {len(passes)} 篇；fail {len(records) - len(passes)} 篇")
@@ -389,6 +468,8 @@ def main() -> None:
     for rule in order:
         print(f"  {rule}: {rule_hits.get(rule, 0)} 篇")
     print("难度分布：", dict(Counter(r["difficulty"] for r in records)))
+    flagged = [r for r in records if r["needs_human_review"]]
+    print(f"pass 但需人工复核：{len(flagged)} 篇" + (f"（{', '.join(r['id'] for r in flagged)}）" if flagged else ""))
     print("失败规则组合 Top：")
     for combo, count in Counter("+".join(r["rules"]) for r in records if not r["pass"]).most_common(8):
         print(f"  {combo}: {count}")
