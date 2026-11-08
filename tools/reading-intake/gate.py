@@ -71,8 +71,12 @@ def check(reading: dict) -> list[tuple[str, bool, str]]:
                         ("id", "title", "theme", "status", "sources", "review", "paragraphs", "questions")),
         "缺 " + ",".join(k for k in ("id", "title", "theme", "status", "sources", "review", "paragraphs", "questions") if k not in reading))
 
-    count = hanzi_count(text)
-    add("正文 300–500 汉字", 300 <= count <= 500, f"实际 {count}")
+    kind = reading.get("kind", "extracurricular")
+    add("kind 合法", kind in {"in-text", "extracurricular"}, str(kind))
+    # 试点稿的正文已剥离原题；字数闸按来源切分单元的实际字数判定，两者都记录
+    count = int(reading.get("sourceCharCount") or hanzi_count(text))
+    low, high = (150, 400) if kind == "in-text" else (150, 600)
+    add(f"正文 ≥{low} 汉字（{kind}）", count >= low, f"实际 {count}")
     add("分段 ≥3", len(reading.get("paragraphs", [])) >= 3,
         f"实际 {len(reading.get('paragraphs', []))}")
 
@@ -127,6 +131,14 @@ def check(reading: dict) -> list[tuple[str, bool, str]]:
 def hints(reading: dict) -> list[str]:
     """不判失败、但需要记录的处理提示。"""
     out: list[str] = []
+    kind = reading.get("kind", "extracurricular")
+    low, high = (150, 400) if kind == "in-text" else (150, 600)
+    count = int(reading.get("sourceCharCount") or hanzi_count(reading_text(reading)))
+    body = hanzi_count(reading_text(reading))
+    if reading.get("sourceCharCount"):
+        out.append(f"正文本体 {body} 字；字数闸按源切分单元 {count} 字（原题已剥离）")
+    if count > high:
+        out.append(f"正文 {count} 字，超过 {kind} 上限 {high}，已标出但不拒收")
     for index, question in enumerate(reading.get("questions", []), start=1):
         if question.get("type") == "short" and str(question.get("answer", "")).strip():
             out.append(f"Q{index} 主观简答仍带参考答案，仅作批改参考，不作标准答案")
