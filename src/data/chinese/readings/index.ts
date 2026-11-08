@@ -9,6 +9,8 @@ import { EVENTS_READINGS } from './events.ts'
 import { OBJECT_READINGS } from './objects.ts'
 import { FABLE_READINGS } from './fables.ts'
 import { SCIENCE_READINGS } from './science.ts'
+import { IMPORTED_READINGS } from './imported.ts'
+import { MOUNTED_READINGS } from './mounted.ts'
 
 export {
   PEOPLE_READINGS,
@@ -17,6 +19,8 @@ export {
   OBJECT_READINGS,
   FABLE_READINGS,
   SCIENCE_READINGS,
+  IMPORTED_READINGS,
+  MOUNTED_READINGS,
 }
 
 export const READING_THEMES: ReadingTheme[] = ['写人', '写景', '写事', '状物', '寓言', '科普']
@@ -28,6 +32,17 @@ export const READING_BANK: ChineseReading[] = [
   ...OBJECT_READINGS,
   ...FABLE_READINGS,
   ...SCIENCE_READINGS,
+  ...IMPORTED_READINGS,
+]
+
+/**
+ * 出卷可用的全部短文：精选库（原创 24 + 试点 20，逐条过严格质检）加上
+ * 批量挂载的 199 份命题稿（RD-301–RD-500）。分开展示是为了让严格质检
+ * 继续只约束精选库；批量稿的质量复审在题库迭代中单独进行。
+ */
+export const PRACTICE_READING_BANK: ChineseReading[] = [
+  ...READING_BANK,
+  ...MOUNTED_READINGS,
 ]
 
 export const READING_BANK_META: ChineseReadingBankMeta = {
@@ -44,7 +59,7 @@ export const READING_BANK_META: ChineseReadingBankMeta = {
       '题量：每篇 3–5 题，且选择题、填空题、简答题各至少一道。',
       '选择题：4 个选项、互不重复、正确项下标在范围内，答案说明里的引文必须逐字出现在原文中。',
       '填空题：题干「（ ）」数量与答案数量一致，答案非空，且每个答案都能在原文中逐字找到。',
-      '简答题：参考答案非空，评分点 2–3 条，答案与原文至少有一处连续 5 字以上的共同片段。',
+      '简答题：不设标准答案，评分点 2–3 条；题干与解析里“”引用的原句必须逐字出现在原文。',
     ],
     samples: [
       'RD-02《我的同桌》：选择题错项“只有一支彩笔”与原文“十二支彩笔”矛盾。',
