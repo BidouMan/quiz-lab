@@ -89,6 +89,10 @@ NOISE_LINE = re.compile(
     r"设为首页|加入收藏|分享到|点赞|在看|评论区|验证码|请先登录|开通会员|付费|"
     r"站内搜索|当前位置|网站首页|联系电话|投稿邮箱)")
 HARD_NOISE = re.compile(r"(站内搜索|当前位置|网站首页|版权所有|技术支持)")
+# 只有题号的答案行（"1.C"、"2.3421"、"（3）"），汉字数常为 0–3，需保留
+ANSWER_NUM_LINE = re.compile(
+    r"^\s*(?:[（(]\s*\d{1,3}\s*[)）]|\d{1,3}\s*[.、．:：]"
+    r"|[一二三四五六七八九十]{1,3}\s*[、.．])")
 
 
 def html_to_text(html):
@@ -109,7 +113,9 @@ def html_to_text(html):
         if not ln:
             continue
         han = len(re.findall(r"[\u4e00-\u9fff]", ln))
-        if han < 4:
+        if han < 4 and not ANSWER_NUM_LINE.match(ln):
+            # 答案块里 "1.C"、"2.3421"、"4." 这类行汉字很少甚至没有，
+            # 早期按汉字数一刀切会把答案题号丢掉，导致后续无法对位。
             continue
         if han < 20 and NOISE_LINE.search(ln):
             continue
@@ -174,7 +180,45 @@ def q_types(block):
 
 
 ANSWER_HEAD = re.compile(r"^\s*(参考答案|答案与解析|答案|解析)\s*[:：]?\s*$")
+# 站点常把答案标题写成「…期末测试卷答案」「…参考答案」等整行标题
+ANSWER_HEAD_WIDE = re.compile(r"^\s*[^。\n]{1,30}?(?:参考答案|答案与解析|答案)\s*[:：]?\s*$")
+ANSWER_HEAD_NOISE = re.compile(r"(试卷|试题|真题|下载)")
 SECTION_KEY = re.compile(r"^\s*([一二三四五六七八九十]{1,3})\s*[、.．]")
+CN_NUM = "一二三四五六七八九十"
+TOP_NUM = re.compile(
+    r"^\s*(?:(?P<ar>\d{1,3})\s*[.、．]\s*|(?P<cn>[一二三四五六七八九十]{1,3})\s*[、.．]\s*)")
+SUB_NUM = re.compile(r"^\s*[（(]\s*(\d{1,2})\s*[)）]")
+
+
+def is_answer_head(line):
+    if ANSWER_HEAD.match(line):
+        return True
+    return bool(len(line) <= 34 and ANSWER_HEAD_WIDE.match(line)
+                and not ANSWER_HEAD_NOISE.search(line))
+
+
+def cn_to_int(s):
+    if not s or s[0] not in CN_NUM:
+        return None
+    if len(s) == 1:
+        return CN_NUM.index(s) + 1
+    if s[0] == "十":
+        return 10 + (CN_NUM.index(s[1]) + 1 if s[1] in CN_NUM else 0)
+    if len(s) >= 2 and s[1] == "十":
+        return CN_NUM.index(s[0]) + 1
+    return None
+
+
+def line_num(line):
+    """行首大题号：阿拉伯数字或中文数字，统一成整数。"""
+    m = TOP_NUM.match(line)
+    if not m:
+        return None
+    return int(m.group("ar")) if m.group("ar") else cn_to_int(m.group("cn"))
+
+
+def header_num(header):
+    return line_num(header) if header else None
 
 
 def section_key(line):
@@ -183,21 +227,54 @@ def section_key(line):
 
 
 def answer_groups(lines):
-    """按大题号把答案块分组：{大题号: [答案行]}。"""
-    start = next((i for i, ln in enumerate(lines) if ANSWER_HEAD.match(ln)), None)
+    """按大题号把答案块分组：{大题号(int): 答案文本}。
+
+    原实现只认「一、二、」中文小节，阿拉伯编号（本批试卷答案的主流写法）全部
+    落到同一个 "_" 组，等于没分组；这里把两种编号统一成整数，按首次出现归组。
+    """
+    start = next((i for i, ln in enumerate(lines) if is_answer_head(ln)), None)
     if start is None:
         return {}
-    groups, cur = {}, "_"
-    groups[cur] = []
+    groups, cur = {}, None
     for ln in lines[start + 1:]:
-        # 有的站点答案前带 "1." 这类序号，先剥掉再认大题号
-        core = re.sub(r"^\d{1,2}\s*[.、．]\s*", "", ln)
-        k = section_key(core)
-        if k:
+        k = line_num(ln)
+        if k is not None:
             cur = k
             groups.setdefault(cur, [])
-        groups.setdefault(cur, []).append(ln)
-    return groups
+        if cur is not None:
+            groups[cur].append(ln)
+    return {k: "\n".join(v) for k, v in groups.items()}
+
+
+def split_subsections(text):
+    """把一个大题的答案按 (一)(二) 子篇拆开，返回 [(序号, 文本)]。"""
+    parts = re.split(r"[（(]\s*([一二三四五六七八九十])\s*[)）]", text)
+    if len(parts) < 3:
+        return []
+    out = []
+    for i in range(1, len(parts) - 1, 2):
+        out.append((cn_to_int(parts[i]), parts[i + 1]))
+    return out
+
+
+def take_sub_items(text, n):
+    """取答案段前 n 个子题的答案（"（1）…（2）…"）。子题不足则返回 None。"""
+    body = TOP_NUM.sub("", text, count=1)
+    items, cur = [], None
+    for ln in body.split("\n"):
+        if SUB_NUM.match(ln):
+            if cur is not None:
+                items.append(cur)
+            cur = [ln]
+        elif cur is not None:
+            cur.append(ln)
+    if cur is not None:
+        items.append(cur)
+    if not items:
+        return text.strip() if n <= 1 and text.strip() else None
+    if len(items) < n:
+        return None
+    return "\n".join("\n".join(x) for x in items[:n])
 
 
 def split_pieces(lines, allow_whole_page=False):
@@ -221,7 +298,7 @@ def split_pieces(lines, allow_whole_page=False):
         for ln in lines[start + 1:end]:
             if state == "body" and is_question_line(ln):
                 state = "q"
-            if state == "q" and (ANSWER_HEAD.match(ln) or
+            if state == "q" and (is_answer_head(ln) or
                                  (SECTION_START.match(ln) and not Q_START.match(ln))):
                 break          # 本题题目到此为止，后面是别的大题/全卷答案
             (qs if state == "q" else body).append(ln)
@@ -232,7 +309,7 @@ def split_pieces(lines, allow_whole_page=False):
 
 def split_unanchored(lines):
     """没有“阅读”板块头时，按问句块倒推正文（用于《阅读理解》专项这类页面）。"""
-    cut = next((i for i, ln in enumerate(lines) if ANSWER_HEAD.match(ln)), len(lines))
+    cut = next((i for i, ln in enumerate(lines) if is_answer_head(ln)), len(lines))
     body_lines = lines[:cut]
     q = [i for i, ln in enumerate(body_lines) if is_question_line(ln)]
     if not q:
@@ -311,22 +388,71 @@ def extract_pieces(text, page_title="", min_chars=POOL_MIN, allow_whole_page=Fal
     pieces = split_pieces(lines, allow_whole_page)
     if not pieces and not allow_whole_page:
         pieces = split_unanchored(lines)   # 无板块头时按问句块倒推，宁收不漏
-    for body, qs, header, title_hint in pieces:
+    # 同一大题号下可能挂着多篇短文（(一)(二)），先按出现顺序登记
+    keys = [header_num(h) for (_, _, h, _) in pieces]
+    answers = assign_answers(pieces, groups, keys)
+    for (body, qs, header, title_hint), (ans, scope) in zip(pieces, answers):
         # 去掉“标题 - 站名标题”这种页头重复
         body = re.sub(r"^(?P<t>[\u4e00-\u9fff][\u4e00-\u9fff：“”‘’《》、·\w]{4,40}?)\s*[-–]\s*"
                       r"[\u4e00-\u9fff]{2,20}(?P=t)", "", body)
-        key = section_key(header)
-        if key and key in groups:
-            ans, scope = groups[key], "section"
-        else:
-            ans, scope = [ln for g in groups.values() for ln in g], ("full-paper" if groups else "none")
-        info = analyse_piece(body, qs, ans, header, title_hint)
+        info = analyse_piece(body, qs, [ans] if ans else [], header, title_hint)
         info["answerScope"] = scope
         info["questionText"] = "\n".join(qs)
-        info["answerText"] = "\n".join(ans)
+        info["answerText"] = ans
+        info["answerMatched"] = bool(ans)
         if info["chars"] >= min_chars and info["questions"] <= 60:
             out.append({"body": body.strip(), **info})
     return out
+
+
+def assign_answers(pieces, groups, keys):
+    """给每篇短文配答案：按大题号取该大题的答案，再按子题号截取。
+
+    约定：
+      - 题头带大题号且答案块有同号大题 → 取该大题；
+      - 该大题答案里含 (一)(二) 子篇，且相邻多篇共用同一大题号 → 按顺序分给孩子篇；
+      - 取不到或子题数量不够 → 留空（answerScope=none），绝不把整卷答案塞给单篇。
+    """
+    ans = [("", "none")] * len(pieces)
+    i = 0
+    while i < len(pieces):
+        k = keys[i]
+        if k is None or k not in groups:
+            i += 1
+            continue
+        # 本篇及紧随其后的无编号篇，视为同一大题下的连续短文
+        j = i + 1
+        while j < len(pieces) and keys[j] in (None, k):
+            j += 1
+        span = j - i
+        seg = groups[k]
+        subs = split_subsections(seg)
+        if subs and len(subs) >= 2:
+            for r in range(span):
+                if r >= len(subs):
+                    break
+                n = pieces[i + r][1]
+                n = len([1 for ln in n if is_question_line(ln)]) if n else 1
+                txt = take_sub_items(subs[r][1], max(n, 1)) or subs[r][1].strip()
+                ans[i + r] = (txt, "subsection")
+            i = j
+            continue
+        n = pieces[i][1]
+        n = len([1 for ln in n if is_question_line(ln)]) if n else 1
+        txt = take_sub_items(seg, max(n, 1))
+        ans[i] = (txt or "", "by-number" if txt else "none")
+        i += 1
+    # 只有题号、没有实际内容的答案段（"五、""8、"）一律视为没取到
+    return [(t, s) if answer_content(t) else ("", "none") for t, s in ans]
+
+
+def answer_content(text):
+    """答案是否真有内容：去掉题号/标点后至少 10 个字。"""
+    if not text:
+        return False
+    core = re.sub(r"[（(]?\s*\d{1,3}\s*[)）.、．:：]?", "", text)
+    core = re.sub(r"[\s,，。;；:：、．.！!？?“”‘’\"'《》—\-]+", "", core)
+    return len(core) >= 10
 
 
 # ---------------------------------------------------------------- PDF

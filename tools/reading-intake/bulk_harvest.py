@@ -348,42 +348,19 @@ def _match(p, text, scope):
 
 
 def align_answers(pieces):
-    """答案能对回本短文才保留；拆不开就标 unmatched，不留整卷答案混淆。
+    """答案已在 extract_pieces 里按「大题号 → 该大题答案」对位。
 
-    整卷答案通常按 (一)(二) 分小节，与页内短文顺序一一对应。
-    只有在「小节数 ≥ 短文数」且「答案条目数 ≈ 本题题量」时才认领。
+    这里只做最后校验：非空才认；不再把整卷答案按 (一)(二) 二次拆分，
+    那种拆法会把别的短文的答案塞给本篇（2026-11-08 审计发现的空答案/错答案来源）。
     """
     for p in pieces:
-        p["answerText"] = trim_answer(p.get("answerText", ""))
-        p["answerPresent"] = bool(p["answerText"])
-    answered = [p for p in pieces if p["answerPresent"]]
-    if not answered:
-        return
-    full = max(answered, key=lambda p: len(p["answerText"]))["answerText"]
-    subs = split_subsections(full)
-    if subs:
-        take = subs[-len(answered):] if len(subs) >= len(answered) else subs
-        for i, p in enumerate(answered):
-            if i >= len(take):
-                _unmatch(p)
-                continue
-            cand = take[i][1].strip()
-            n = count_items(cand)
-            if len(cand) <= 800 and n and abs(n - p["questions"]) <= 1:
-                _match(p, cand, "subsection")
-            else:
-                _unmatch(p)
-        return
-    # 没有小节标记：只认领短段落（整卷答案长且含多个大题号的一律不认）
-    for p in answered:
-        t = p["answerText"]
-        n = count_items(t)
-        heads = set(re.findall(r"[一二三四五六七八九十]{1,3}\s*[、．]", t))
-        if (len(t) <= 800 and len(heads) < 2 and not has_restart(t)
-                and n and abs(n - p["questions"]) <= 1):
-            _match(p, t, "section" if p["answerScope"] == "section" else "whole")
-        else:
-            _unmatch(p)
+        p["answerText"] = trim_answer(p.get("answerText", "") or "")
+        present = bool(p["answerText"])
+        p["answerPresent"] = present
+        p["answerMatched"] = present and p.get("answerScope") not in ("none", "unmatched")
+        if not p["answerMatched"]:
+            p["answerText"] = ""
+            p["answerScope"] = "unmatched" if p.get("answerScope") != "none" else "none"
 
 
 def harvest_page(c, st, seen_sha, pre_sha, accepted_count):
