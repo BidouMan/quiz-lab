@@ -1,4 +1,4 @@
-// 单篇阅读样张：正文 + 4 题 + 答案页
+// 单篇阅读样张：正文 + 题目 + 答案页（含原题留痕）
 // 数据直接读取命题稿，版式沿用语文卷面构件。
 // 生成：
 //   typst compile --root . --font-path typst/fonts typst/reading-sample.typ samples/reading-sample-RD-301.pdf
@@ -7,6 +7,19 @@
 
 #let p = json("../data/reading-catalog/quiz-drafts/RD-301.json")
 #let letters = ("A", "B", "C", "D")
+#let total = p.questions.fold(0, (acc, q) => acc + q.score)
+
+/// 原题处理方式标签
+#let action-tag(action) = {
+  let body = text(size: 7.5pt, fill: if action == "保留" { white } else { luma(35) })[#action]
+  if action == "保留" {
+    box(fill: luma(45), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#body]
+  } else if action == "修正" {
+    box(stroke: (paint: luma(110), thickness: 0.5pt), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#body]
+  } else {
+    box(fill: luma(232), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#body]
+  }
+}
 
 #set page(
   width: 210mm,
@@ -40,17 +53,28 @@
   }
 }
 
-/// 选择题四选一
-#let choice-options(options) = grid(
-  columns: (1fr,) * 2,
-  column-gutter: 6mm,
-  row-gutter: 1.5mm,
-  ..options.enumerate().map(((i, opt)) => box[#text(size: 12pt)[#letters.at(i)．#opt]]),
-)
+/// 选择题选项：短选项两列，长选项单列，避免串行
+#let choice-options(options) = {
+  let wide = options.fold(0, (acc, o) => calc.max(acc, o.len())) > 14
+  if wide {
+    grid(
+      columns: (1fr,),
+      row-gutter: 1.2mm,
+      ..options.enumerate().map(((i, opt)) => box[#text(size: 12pt)[#letters.at(i)．#opt]]),
+    )
+  } else {
+    grid(
+      columns: (1fr,) * 2,
+      column-gutter: 6mm,
+      row-gutter: 1.5mm,
+      ..options.enumerate().map(((i, opt)) => box[#text(size: 12pt)[#letters.at(i)．#opt]]),
+    )
+  }
+}
 
 #paper-title(
   [单篇阅读样张],
-  sub: [统编版三年级上册　｜　课外阅读　｜　体裁：#p.theme　｜　4 题 12 分],
+  sub: [统编版三年级上册　｜　课外阅读　｜　体裁：#p.theme　｜　#p.questions.len() 题 #total 分],
 )
 #info-row(fields: ("班级", "姓名", "得分"))
 
@@ -87,7 +111,7 @@
       choice-options(q.options)
     } else if q.type == "fill" {
       text(size: 12pt)[#text(weight: "bold")[#(i + 1)．]]
-      fill-inline(q.stem, q.blanks.len())
+      fill-inline(q.stem, q.blanks.len(), w: if q.blanks.at(0).len() > 15 { 130mm } else { 26mm })
       h(2mm)
       text(size: 10pt, fill: luma(95))[（#q.score 分）]
     } else {
@@ -95,7 +119,8 @@
       h(2mm)
       text(size: 10pt, fill: luma(95))[（#q.score 分）]
       v(0.5mm)
-      for _ in range(7) {
+      let n = if q.score >= 4 { 8 } else { 5 }
+      for _ in range(n) {
         write-line(h: 8.5mm)
       }
     }
@@ -116,6 +141,8 @@
   [#box(fill: luma(248), stroke: (paint: luma(130), thickness: 0.5pt), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#text(size: 7.5pt, fill: luma(60))[按要点看]]],
   [主观题：只列评分要点，不给标准答案。],
 )
+#v(1mm)
+#text(size: 9pt, fill: luma(70))[#p.strategyNote]
 #v(2mm)
 #set par(leading: 4mm)
 
@@ -145,11 +172,22 @@
         linebreak()
       }
     }
+    #let o = q.at("origin", default: none)
+    #if o != none {
+      v(1.5mm)
+      action-tag(o.action)
+      h(2mm)
+      text(size: 8.5pt, fill: luma(80))[原题：#o.original]
+      if o.at("note", default: none) != none {
+        linebreak()
+        text(size: 8pt, fill: luma(115))[#o.at("note")]
+      }
+    }
   ]
 }
 
 #v(3mm)
 #text(size: 8.5pt, fill: luma(100))[
   正文来源：#p.sources.at(0).label（#p.sources.at(0).locator）。
-  正文已修正 OCR 错字，原题未沿用。
+  正文已修正 OCR 错字；原题逐题验判，保留/修正/新命见上方标注。
 ]
