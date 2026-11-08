@@ -110,6 +110,10 @@ def corpus_texts():
         for r in read_jsonl(os.path.join(base, name)):
             if r.get("text"):
                 texts.append(r["text"])
+    # 本站在之前批次已入池的正文也要进语料，否则跨批次异文会漏判
+    for r in read_jsonl(os.path.join(OUT, "passages.jsonl")):
+        if r.get("text"):
+            texts.append(r["text"])
     for f in glob.glob(os.path.join(ROOT, "data", "reading-catalog", "quiz-drafts", "*.json")):
         try:
             d = json.load(open(f, encoding="utf-8"))
@@ -230,6 +234,12 @@ def parse_doc(html, rid):
         qm = Q_START.match(ln)
         if qm:
             num = int(qm.group(1))
+            if cur is None:
+                # 无标题的篇目（如整卷开头直接给「阅读短文」）不入池，但题号
+                # 要照常推进，否则后面每篇的题号都对不上答案。
+                expected_q = num + 1
+                global_last = max(global_last, num)
+                continue
             if cur is not None and (num == expected_q or
                                     (num == 1 and expected_q > 3)):
                 cur["question"].append(ln.lstrip("0123456789.、． "))
@@ -246,7 +256,8 @@ def parse_doc(html, rid):
                 and ("阅读" in ln or DIVIDER.search(ln)) and not Q_START.match(ln)):
             cur = None
             continue
-        if is_title(ln, nxt) and (cur is None or cur["state"] == "q"):
+        if is_title(ln, nxt) and (cur is None or cur["state"] == "q"
+                                  or len(han("".join(cur["text"]))) >= 60):
             cur = {"title": clean_title(ln), "text": [], "question": [], "qnums": [],
                    "scope": scope, "state": "body"}
             pieces.append(cur)
@@ -310,11 +321,11 @@ def fetch_page(rid, suffix="", force=False):
     return st, open(p, "rb").read(), False
 
 
-def run(ids):
+def run(ids, force=False):
     os.makedirs(OUT, exist_ok=True)
     existing = {r["docId"] for r in read_jsonl(paths()["attempts"])}
     for rid in ids:
-        if rid in existing:
+        if rid in existing and not force:
             print(f"skip {rid} 已处理")
             continue
         st, raw, cached = fetch_page(rid)
@@ -388,7 +399,7 @@ def main():
     if not ids:
         print("需要 --ids")
         return
-    run(ids)
+    run(ids, force=args.force)
 
 
 if __name__ == "__main__":

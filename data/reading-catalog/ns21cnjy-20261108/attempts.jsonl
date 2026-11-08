@@ -52,3 +52,260 @@
 {"docId": "24851716", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:05:07"}
 {"docId": "24851717", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:05:07"}
 {"docId": "24851718", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 19, "at": "2026-11-08 16:05:39"}
+{"docId": "24851719", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:06:10"}
+{"docId": "24851720", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:06:10"}
+{"docId": "24206391", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 26, "at": "2026-11-08 16:31:16"}
+{"docId": "23777361", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 27, "at": "2026-11-08 16:31:18"}
+{"docId": "23995145", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:31:20"}
+{"docId": "17197198", "status": 200, "cached": true, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 33, "at": "2026-11-08 16:31:20"}
+{"docId": "23573108", "status": 200, "cached": false, "pieces": 5, "kept": 0, "rejected": 5, "answerGroups": 0, "at": "2026-11-08 16:31:22"}
+{"docId": "23995219", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 0, "at": "2026-11-08 16:31:24"}
+{"docId": "24255949", "status": 200, "cached": true, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:31:24"}
+{"docId": "17774692", "status": 200, "cached": false, "pieces": 3, "kept": 3, "rejected": 0, "answerGroups": 24, "at": "2026-11-08 16:31:26"}
+{"docId": "26483074", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 28, "at": "2026-11-08 16:31:27"}
+{"docId": "26107156", "status": 200, "cached": true, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:31:27"}
+{"docId": "23405166", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:31:59"}
+{"docId": "24989275", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:32:30"}
+{"docId": "24206391", "status": 200, "cached": true, "pieces": 5, "kept": 4, "rejected": 1, "answerGroups": 26, "at": "2026-11-08 16:33:43"}
+{"docId": "23777361", "status": 200, "cached": true, "pieces": 7, "kept": 4, "rejected": 3, "answerGroups": 27, "at": "2026-11-08 16:33:43"}
+{"docId": "23995145", "status": 200, "cached": true, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:33:43"}
+{"docId": "17197198", "status": 200, "cached": true, "pieces": 4, "kept": 3, "rejected": 1, "answerGroups": 33, "at": "2026-11-08 16:33:43"}
+{"docId": "23573108", "status": 200, "cached": true, "pieces": 5, "kept": 0, "rejected": 5, "answerGroups": 0, "at": "2026-11-08 16:33:43"}
+{"docId": "23995219", "status": 200, "cached": true, "pieces": 3, "kept": 1, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:33:43"}
+{"docId": "24255949", "status": 200, "cached": true, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:33:43"}
+{"docId": "17774692", "status": 200, "cached": true, "pieces": 4, "kept": 0, "rejected": 4, "answerGroups": 24, "at": "2026-11-08 16:33:43"}
+{"docId": "26483074", "status": 200, "cached": true, "pieces": 3, "kept": 0, "rejected": 3, "answerGroups": 28, "at": "2026-11-08 16:33:43"}
+{"docId": "26107156", "status": 200, "cached": true, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:33:43"}
+{"docId": "23405166", "status": 200, "cached": true, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:34:13"}
+{"docId": "24989275", "status": 200, "cached": true, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:34:43"}
+{"docId": "24073455", "status": 200, "cached": false, "pieces": 5, "kept": 4, "rejected": 1, "answerGroups": 28, "at": "2026-11-08 16:35:26"}
+{"docId": "24289606", "status": 200, "cached": false, "pieces": 1, "kept": 1, "rejected": 0, "answerGroups": 13, "at": "2026-11-08 16:35:28"}
+{"docId": "23900312", "status": 200, "cached": false, "pieces": 1, "kept": 1, "rejected": 0, "answerGroups": 25, "at": "2026-11-08 16:35:30"}
+{"docId": "17804181", "status": 200, "cached": false, "pieces": 3, "kept": 3, "rejected": 0, "answerGroups": 20, "at": "2026-11-08 16:35:32"}
+{"docId": "24178507", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 27, "at": "2026-11-08 16:35:34"}
+{"docId": "17774698", "status": 200, "cached": false, "pieces": 5, "kept": 2, "rejected": 3, "answerGroups": 25, "at": "2026-11-08 16:35:35"}
+{"docId": "11622118", "status": 200, "cached": false, "pieces": 3, "kept": 0, "rejected": 3, "answerGroups": 0, "at": "2026-11-08 16:35:37"}
+{"docId": "17680857", "status": 200, "cached": false, "pieces": 5, "kept": 3, "rejected": 2, "answerGroups": 24, "at": "2026-11-08 16:35:39"}
+{"docId": "23822586", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 0, "at": "2026-11-08 16:35:40"}
+{"docId": "23827485", "status": 200, "cached": false, "pieces": 5, "kept": 1, "rejected": 4, "answerGroups": 0, "at": "2026-11-08 16:35:43"}
+{"docId": "23495389", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:36:14"}
+{"docId": "23856598", "status": 200, "cached": true, "pieces": 6, "kept": 3, "rejected": 3, "answerGroups": 28, "at": "2026-11-08 16:36:14"}
+{"docId": "24073753", "status": 200, "cached": true, "pieces": 8, "kept": 4, "rejected": 4, "answerGroups": 28, "at": "2026-11-08 16:36:14"}
+{"docId": "21355936", "status": 200, "cached": true, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:36:14"}
+{"docId": "23482644", "status": 200, "cached": true, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:36:44"}
+{"docId": "23966967", "status": 200, "cached": true, "pieces": 6, "kept": 2, "rejected": 4, "answerGroups": 0, "at": "2026-11-08 16:36:44"}
+{"docId": "24206390", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:37:15"}
+{"docId": "24206392", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:37:16"}
+{"docId": "24206389", "status": 200, "cached": false, "pieces": 3, "kept": 1, "rejected": 2, "answerGroups": 27, "at": "2026-11-08 16:37:18"}
+{"docId": "24206393", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 7, "at": "2026-11-08 16:37:50"}
+{"docId": "24206388", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:37:50"}
+{"docId": "24206394", "status": 200, "cached": false, "pieces": 7, "kept": 3, "rejected": 4, "answerGroups": 28, "at": "2026-11-08 16:37:52"}
+{"docId": "24206387", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:38:24"}
+{"docId": "24206395", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:38:24"}
+{"docId": "24206386", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:38:26"}
+{"docId": "24206396", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 25, "at": "2026-11-08 16:38:58"}
+{"docId": "23777360", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:38:58"}
+{"docId": "23777362", "status": 200, "cached": false, "pieces": 5, "kept": 3, "rejected": 2, "answerGroups": 34, "at": "2026-11-08 16:39:00"}
+{"docId": "23777359", "status": 200, "cached": false, "pieces": 16, "kept": 1, "rejected": 15, "answerGroups": 0, "at": "2026-11-08 16:39:02"}
+{"docId": "23777363", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:39:34"}
+{"docId": "23777358", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:40:05"}
+{"docId": "23777364", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:40:05"}
+{"docId": "23777357", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:40:37"}
+{"docId": "23777365", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:41:07"}
+{"docId": "23777356", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:41:08"}
+{"docId": "23777366", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:41:40"}
+{"docId": "17197197", "status": 200, "cached": false, "pieces": 3, "kept": 3, "rejected": 0, "answerGroups": 37, "at": "2026-11-08 16:41:40"}
+{"docId": "17197199", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:41:42"}
+{"docId": "17197196", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:41:44"}
+{"docId": "17197200", "status": 200, "cached": false, "pieces": 9, "kept": 0, "rejected": 9, "answerGroups": 0, "at": "2026-11-08 16:41:45"}
+{"docId": "17197195", "status": 200, "cached": false, "pieces": 5, "kept": 3, "rejected": 2, "answerGroups": 29, "at": "2026-11-08 16:41:47"}
+{"docId": "17197201", "status": 200, "cached": false, "pieces": 4, "kept": 3, "rejected": 1, "answerGroups": 30, "at": "2026-11-08 16:41:49"}
+{"docId": "17197194", "status": 200, "cached": false, "pieces": 5, "kept": 0, "rejected": 5, "answerGroups": 24, "at": "2026-11-08 16:41:51"}
+{"docId": "17197202", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:41:52"}
+{"docId": "17197193", "status": 200, "cached": false, "pieces": 2, "kept": 2, "rejected": 0, "answerGroups": 30, "at": "2026-11-08 16:41:55"}
+{"docId": "17197203", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:42:26"}
+{"docId": "17774691", "status": 200, "cached": false, "pieces": 2, "kept": 1, "rejected": 1, "answerGroups": 23, "at": "2026-11-08 16:42:27"}
+{"docId": "17774693", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:42:28"}
+{"docId": "17774690", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:42:30"}
+{"docId": "17774694", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:43:02"}
+{"docId": "17774689", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:43:33"}
+{"docId": "17774695", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:43:33"}
+{"docId": "17774688", "status": 200, "cached": false, "pieces": 3, "kept": 2, "rejected": 1, "answerGroups": 26, "at": "2026-11-08 16:43:35"}
+{"docId": "17774696", "status": 200, "cached": false, "pieces": 3, "kept": 2, "rejected": 1, "answerGroups": 26, "at": "2026-11-08 16:43:37"}
+{"docId": "17774687", "status": 200, "cached": false, "pieces": 4, "kept": 2, "rejected": 2, "answerGroups": 31, "at": "2026-11-08 16:43:39"}
+{"docId": "17774697", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:43:40"}
+{"docId": "23995218", "status": 200, "cached": false, "pieces": 5, "kept": 3, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:43:49"}
+{"docId": "23995220", "status": 200, "cached": false, "pieces": 9, "kept": 5, "rejected": 4, "answerGroups": 0, "at": "2026-11-08 16:43:51"}
+{"docId": "23995217", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:44:23"}
+{"docId": "23995221", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:44:53"}
+{"docId": "23995216", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:45:23"}
+{"docId": "23995222", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:45:24"}
+{"docId": "23995215", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 0, "at": "2026-11-08 16:45:26"}
+{"docId": "23995223", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:45:33"}
+{"docId": "23995214", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:45:40"}
+{"docId": "23995224", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:45:40"}
+{"docId": "24073454", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:45:42"}
+{"docId": "24073456", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:45:43"}
+{"docId": "24073453", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 0, "at": "2026-11-08 16:46:07"}
+{"docId": "24073457", "status": 200, "cached": false, "pieces": 6, "kept": 3, "rejected": 3, "answerGroups": 27, "at": "2026-11-08 16:46:07"}
+{"docId": "24073452", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:46:09"}
+{"docId": "24073458", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:46:11"}
+{"docId": "24073451", "status": 200, "cached": false, "pieces": 5, "kept": 2, "rejected": 3, "answerGroups": 27, "at": "2026-11-08 16:46:13"}
+{"docId": "24073459", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:46:44"}
+{"docId": "24073450", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:46:45"}
+{"docId": "24073460", "status": 200, "cached": false, "pieces": 9, "kept": 1, "rejected": 8, "answerGroups": 0, "at": "2026-11-08 16:46:47"}
+{"docId": "24289605", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:47:18"}
+{"docId": "24289607", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 24, "at": "2026-11-08 16:47:49"}
+{"docId": "24289604", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 20, "at": "2026-11-08 16:47:50"}
+{"docId": "24289608", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:48:22"}
+{"docId": "24289603", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 0, "at": "2026-11-08 16:48:22"}
+{"docId": "24289609", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:48:24"}
+{"docId": "24289602", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:48:25"}
+{"docId": "24289610", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 26, "at": "2026-11-08 16:48:57"}
+{"docId": "24289601", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:49:28"}
+{"docId": "24289611", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:49:28"}
+{"docId": "23900311", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:50:00"}
+{"docId": "23900313", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:50:01"}
+{"docId": "23900310", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:50:02"}
+{"docId": "23900314", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:50:36"}
+{"docId": "23900309", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:51:06"}
+{"docId": "23900315", "status": 200, "cached": false, "pieces": 1, "kept": 1, "rejected": 0, "answerGroups": 27, "at": "2026-11-08 16:51:07"}
+{"docId": "23900308", "status": 200, "cached": false, "pieces": 1, "kept": 1, "rejected": 0, "answerGroups": 28, "at": "2026-11-08 16:51:09"}
+{"docId": "23900316", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:51:40"}
+{"docId": "23900307", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:52:11"}
+{"docId": "23900317", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:52:41"}
+{"docId": "17804180", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:52:46"}
+{"docId": "17804182", "status": 200, "cached": false, "pieces": 4, "kept": 0, "rejected": 4, "answerGroups": 33, "at": "2026-11-08 16:52:48"}
+{"docId": "17804179", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:53:20"}
+{"docId": "17804183", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:53:20"}
+{"docId": "17804178", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:53:52"}
+{"docId": "17804184", "status": 200, "cached": false, "pieces": 13, "kept": 2, "rejected": 11, "answerGroups": 0, "at": "2026-11-08 16:53:52"}
+{"docId": "17804177", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:53:54"}
+{"docId": "17804185", "status": 200, "cached": false, "pieces": 5, "kept": 1, "rejected": 4, "answerGroups": 26, "at": "2026-11-08 16:53:56"}
+{"docId": "17804176", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:54:28"}
+{"docId": "17804186", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:54:28"}
+{"docId": "17774699", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 16:54:30"}
+{"docId": "17774700", "status": 200, "cached": false, "pieces": 3, "kept": 1, "rejected": 2, "answerGroups": 16, "at": "2026-11-08 16:54:32"}
+{"docId": "17774701", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:54:33"}
+{"docId": "17774702", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 15, "at": "2026-11-08 16:54:35"}
+{"docId": "17774703", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:54:37"}
+{"docId": "17680856", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 19, "at": "2026-11-08 16:54:40"}
+{"docId": "17680858", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 0, "at": "2026-11-08 16:54:41"}
+{"docId": "17680855", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:54:42"}
+{"docId": "17680859", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:54:44"}
+{"docId": "17680854", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:55:16"}
+{"docId": "17680860", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 17, "at": "2026-11-08 16:55:17"}
+{"docId": "17680853", "status": 200, "cached": false, "pieces": 5, "kept": 3, "rejected": 2, "answerGroups": 26, "at": "2026-11-08 16:55:18"}
+{"docId": "17680861", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:55:50"}
+{"docId": "17680852", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:55:50"}
+{"docId": "17680862", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:55:52"}
+{"docId": "23827484", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:55:54"}
+{"docId": "23827486", "status": 200, "cached": false, "pieces": 5, "kept": 2, "rejected": 3, "answerGroups": 0, "at": "2026-11-08 16:55:56"}
+{"docId": "23827483", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:56:28"}
+{"docId": "23827487", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:56:28"}
+{"docId": "23827482", "status": 200, "cached": false, "pieces": 4, "kept": 1, "rejected": 3, "answerGroups": 0, "at": "2026-11-08 16:56:30"}
+{"docId": "23827488", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:57:02"}
+{"docId": "23827481", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:57:02"}
+{"docId": "23827489", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:57:04"}
+{"docId": "23827480", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:57:07"}
+{"docId": "23827490", "status": 200, "cached": false, "pieces": 3, "kept": 0, "rejected": 3, "answerGroups": 0, "at": "2026-11-08 16:57:08"}
+{"docId": "23856597", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:57:10"}
+{"docId": "23856599", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:57:41"}
+{"docId": "23856596", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:57:42"}
+{"docId": "23856600", "status": 200, "cached": false, "pieces": 21, "kept": 7, "rejected": 14, "answerGroups": 0, "at": "2026-11-08 16:57:44"}
+{"docId": "23856595", "status": 200, "cached": false, "pieces": 5, "kept": 3, "rejected": 2, "answerGroups": 26, "at": "2026-11-08 16:57:46"}
+{"docId": "23856601", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:57:50"}
+{"docId": "23856594", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:57:52"}
+{"docId": "23856602", "status": 200, "cached": false, "pieces": 3, "kept": 3, "rejected": 0, "answerGroups": 37, "at": "2026-11-08 16:57:54"}
+{"docId": "23856593", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:58:26"}
+{"docId": "23856603", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:58:27"}
+{"docId": "24073752", "status": 200, "cached": false, "pieces": 5, "kept": 3, "rejected": 2, "answerGroups": 30, "at": "2026-11-08 16:58:28"}
+{"docId": "24073754", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:59:00"}
+{"docId": "24073751", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:59:00"}
+{"docId": "24073755", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:59:02"}
+{"docId": "24073750", "status": 200, "cached": false, "pieces": 6, "kept": 0, "rejected": 6, "answerGroups": 0, "at": "2026-11-08 16:59:04"}
+{"docId": "24073756", "status": 200, "cached": false, "pieces": 7, "kept": 4, "rejected": 3, "answerGroups": 30, "at": "2026-11-08 16:59:05"}
+{"docId": "24073749", "status": 404, "reason": "页面不可取", "at": "2026-11-08 16:59:07"}
+{"docId": "24073757", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 16:59:39"}
+{"docId": "24073748", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:00:10"}
+{"docId": "24073758", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:00:40"}
+{"docId": "23966966", "status": 200, "cached": false, "pieces": 1, "kept": 1, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:00:41"}
+{"docId": "23966968", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:00:42"}
+{"docId": "23966965", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:00:44"}
+{"docId": "23966969", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:01:16"}
+{"docId": "23966964", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 4, "at": "2026-11-08 17:01:47"}
+{"docId": "23966970", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:01:47"}
+{"docId": "23966963", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:02:19"}
+{"docId": "23966971", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 0, "at": "2026-11-08 17:02:20"}
+{"docId": "23966962", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:02:51"}
+{"docId": "23966972", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:02:51"}
+{"docId": "24206487", "status": 200, "cached": false, "pieces": 8, "kept": 0, "rejected": 8, "answerGroups": 17, "at": "2026-11-08 17:02:54"}
+{"docId": "24206489", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:02:55"}
+{"docId": "24206486", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:02:59"}
+{"docId": "24206490", "status": 200, "cached": false, "pieces": 8, "kept": 0, "rejected": 8, "answerGroups": 28, "at": "2026-11-08 17:02:59"}
+{"docId": "24206485", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:03:32"}
+{"docId": "24206491", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:03:32"}
+{"docId": "24206484", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:03:35"}
+{"docId": "24206492", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:04:06"}
+{"docId": "24206483", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:04:37"}
+{"docId": "24206493", "status": 200, "cached": false, "pieces": 3, "kept": 2, "rejected": 1, "answerGroups": 0, "at": "2026-11-08 17:04:37"}
+{"docId": "23856606", "status": 200, "cached": false, "pieces": 7, "kept": 2, "rejected": 5, "answerGroups": 24, "at": "2026-11-08 17:04:51"}
+{"docId": "23856607", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:05:22"}
+{"docId": "23856592", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:05:22"}
+{"docId": "23856608", "status": 200, "cached": false, "pieces": 8, "kept": 2, "rejected": 6, "answerGroups": 33, "at": "2026-11-08 17:05:24"}
+{"docId": "23856591", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:05:56"}
+{"docId": "23856609", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:05:57"}
+{"docId": "23856590", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:05:58"}
+{"docId": "23856610", "status": 200, "cached": false, "pieces": 12, "kept": 3, "rejected": 9, "answerGroups": 27, "at": "2026-11-08 17:06:00"}
+{"docId": "23856604", "status": 200, "cached": false, "pieces": 2, "kept": 1, "rejected": 1, "answerGroups": 33, "at": "2026-11-08 17:06:02"}
+{"docId": "23856605", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:06:13"}
+{"docId": "23856589", "status": 200, "cached": false, "pieces": 1, "kept": 1, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:06:13"}
+{"docId": "23856588", "status": 200, "cached": false, "pieces": 3, "kept": 0, "rejected": 3, "answerGroups": 22, "at": "2026-11-08 17:06:15"}
+{"docId": "24073762", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:06:34"}
+{"docId": "24073763", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:06:34"}
+{"docId": "24073764", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:07:06"}
+{"docId": "24073747", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:07:37"}
+{"docId": "24073765", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:07:38"}
+{"docId": "24073746", "status": 200, "cached": false, "pieces": 6, "kept": 0, "rejected": 6, "answerGroups": 0, "at": "2026-11-08 17:07:39"}
+{"docId": "24073766", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:08:11"}
+{"docId": "24073744", "status": 200, "cached": false, "pieces": 7, "kept": 0, "rejected": 7, "answerGroups": 0, "at": "2026-11-08 17:08:12"}
+{"docId": "24073743", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:08:13"}
+{"docId": "24073742", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:08:45"}
+{"docId": "24073741", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 20, "at": "2026-11-08 17:09:16"}
+{"docId": "24073759", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:09:16"}
+{"docId": "24073740", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:09:48"}
+{"docId": "24073760", "status": 200, "cached": false, "pieces": 6, "kept": 3, "rejected": 3, "answerGroups": 33, "at": "2026-11-08 17:09:49"}
+{"docId": "24206400", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:09:50"}
+{"docId": "24206401", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 15, "at": "2026-11-08 17:10:22"}
+{"docId": "24206402", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:10:22"}
+{"docId": "24206385", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:10:24"}
+{"docId": "24206403", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:10:56"}
+{"docId": "24206384", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:11:26"}
+{"docId": "24206404", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 15, "at": "2026-11-08 17:11:57"}
+{"docId": "24206383", "status": 200, "cached": false, "pieces": 6, "kept": 0, "rejected": 6, "answerGroups": 0, "at": "2026-11-08 17:11:57"}
+{"docId": "24206382", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:12:29"}
+{"docId": "24206381", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:12:29"}
+{"docId": "24206397", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:12:31"}
+{"docId": "24206380", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 25, "at": "2026-11-08 17:13:03"}
+{"docId": "24206398", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:13:34"}
+{"docId": "24206379", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:13:34"}
+{"docId": "24206399", "status": 200, "cached": false, "pieces": 6, "kept": 2, "rejected": 4, "answerGroups": 18, "at": "2026-11-08 17:13:39"}
+{"docId": "17680847", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:13:41"}
+{"docId": "17680846", "status": 200, "cached": false, "pieces": 2, "kept": 0, "rejected": 2, "answerGroups": 22, "at": "2026-11-08 17:13:43"}
+{"docId": "17680845", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:13:44"}
+{"docId": "17680844", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:14:16"}
+{"docId": "17680843", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:14:34"}
+{"docId": "17680863", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:15:05"}
+{"docId": "17197206", "status": 200, "cached": false, "pieces": 1, "kept": 0, "rejected": 1, "answerGroups": 24, "at": "2026-11-08 17:15:34"}
+{"docId": "17197207", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:16:04"}
+{"docId": "17197192", "status": 200, "cached": false, "pieces": 3, "kept": 2, "rejected": 1, "answerGroups": 31, "at": "2026-11-08 17:16:05"}
+{"docId": "17197208", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:16:07"}
+{"docId": "17197191", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:16:09"}
+{"docId": "17197209", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 24, "at": "2026-11-08 17:16:40"}
+{"docId": "17197190", "status": 200, "cached": false, "pieces": 2, "kept": 1, "rejected": 1, "answerGroups": 30, "at": "2026-11-08 17:16:41"}
+{"docId": "17197210", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 24, "at": "2026-11-08 17:17:13"}
+{"docId": "17804190", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:17:13"}
+{"docId": "17804191", "status": 200, "cached": false, "pieces": 0, "kept": 0, "rejected": 0, "answerGroups": 0, "at": "2026-11-08 17:17:45"}
+{"docId": "17804192", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:17:45"}
+{"docId": "17804175", "status": 404, "reason": "页面不可取", "at": "2026-11-08 17:17:47"}
+{"docId": "17804193", "status": 200, "cached": false, "pieces": 12, "kept": 1, "rejected": 11, "answerGroups": 0, "at": "2026-11-08 17:17:49"}
