@@ -126,9 +126,13 @@ def is_copy_or_memory(question: dict) -> tuple[bool, str]:
     return False, ""
 
 
-def answer_anchored(phrase: str, text_han: str, min_len: int) -> bool:
+def answer_anchored(phrase: str, text_han: str, min_len: int, text_raw: str = "") -> bool:
     cleaned = han_only(phrase)
-    return len(cleaned) >= min_len and cleaned in text_han
+    if cleaned:
+        return len(cleaned) >= min_len and cleaned in text_han
+    # 纯数字/字母答案（如「5」「27」「1.2」）按原样在正文里找
+    raw = str(phrase).strip()
+    return bool(raw) and raw in text_raw
 
 
 def scoring_anchors(scoring: list[str], text_han: str) -> tuple[int, list[str]]:
@@ -180,7 +184,7 @@ def check_choice(question: dict) -> list[dict]:
     return problems
 
 
-def check_fill(question: dict, text_han: str) -> list[dict]:
+def check_fill(question: dict, text_han: str, text_raw: str = "") -> list[dict]:
     problems = []
     stem = question.get("stem") or ""
     blanks = question.get("blanks") or []
@@ -189,7 +193,7 @@ def check_fill(question: dict, text_han: str) -> list[dict]:
         return problems
     if stem.count(PLACEHOLDER) != len(blanks):
         problems.append({"rule": "R7", "detail": f"占位 {stem.count(PLACEHOLDER)} 个 ≠ 答案 {len(blanks)} 个"})
-    missing = [b for b in blanks if not answer_anchored(b, text_han, 1)]
+    missing = [b for b in blanks if not answer_anchored(b, text_han, 1, text_raw)]
     if missing:
         problems.append({"rule": "R7", "detail": f"答案不在正文：{missing}"})
     return problems
@@ -219,7 +223,8 @@ def review_one(draft: dict) -> dict:
     rid = draft.get("id") or "?"
     title = (draft.get("title") or "").strip()
     paragraphs = [str(p) for p in (draft.get("paragraphs") or [])]
-    text_han = han_only("".join(paragraphs))
+    text_raw = "".join(paragraphs)
+    text_han = han_only(text_raw)
     char_count = len(text_han)
     failures: list[dict] = []
 
@@ -288,7 +293,7 @@ def review_one(draft: dict) -> dict:
             if isinstance(question.get("answer"), int):
                 answers_positions.append(question["answer"])
         elif qtype == "fill":
-            for problem in check_fill(question, text_han):
+            for problem in check_fill(question, text_han, text_raw):
                 failures.append({**problem, "detail": f"第 {index} 题：{problem['detail']}"})
         elif qtype == "short":
             for problem in check_short(question, text_han):
