@@ -1,26 +1,21 @@
 {
  "category_page": 25,
- "mixed_page": 205,
+ "mixed_page": 253,
  "category_done": true,
  "halt": null,
  "haltAt": null,
- "accepted": 140,
+ "accepted": 191,
  "rejected": {
-  "课内阅读（教材原文，不可内置）": 44,
-  "题量不足（2 道）": 14,
-  "题量不足（1 道）": 6,
-  "题量不足（0 道）": 1,
-  "题型单一（short）": 20,
-  "批内重复": 1,
-  "题型单一（fill）": 8,
-  "题型单一（未识别）": 2,
-  "题型单一（choice）": 1
+  "站点导航/假正文": 5,
+  "批内重复": 21
  },
  "bodyonly": 0,
- "pagesAttempted": 114,
+ "pagesAttempted": 266,
  "pagesBlocked": 0,
- "candidates": 138,
+ "candidates": 318,
  "dupes": 0,
  "lastReportAt": 0,
- "startedAt": "2026-11-08 10:50:02"
+ "startedAt": "2026-11-08 10:50:02",
+ "sanxia_page": 61,
+ "sanxia_done": true
 }

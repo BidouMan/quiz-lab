@@ -37,8 +37,10 @@ ROOT = rp.ROOT
 OUT = os.path.join(ROOT, "data", "reading-catalog", "szxuexiao-20261108")
 WORK = os.path.join(ROOT, "tools", "reading-intake", "work", "bulk-20261108")
 CATEGORY = "https://appsj.szxuexiao.com/shannianji_s/index{}.html"
+SANXIA = "https://appsj.szxuexiao.com/sannianji/index{}.html"
 MIXED = "https://www.szxuexiao.com/examination/index{}.html"
 CATEGORY_PAGES = 24
+SANXIA_PAGES = 60
 MIXED_PAGES = 719
 TARGET = 300
 REPORT_EVERY = 50
@@ -64,6 +66,8 @@ def paths():
         "cand": os.path.join(OUT, "candidates.jsonl"),
         "attempts": os.path.join(OUT, "attempts.jsonl"),
         "passages": os.path.join(OUT, "passages.jsonl"),
+        "intext": os.path.join(OUT, "passages-intext.jsonl"),
+        "down": os.path.join(OUT, "passages-down.jsonl"),
         "rejected": os.path.join(OUT, "rejected.jsonl"),
         "bodyonly": os.path.join(OUT, "bodyonly.jsonl"),
         "progress": os.path.join(OUT, "progress.md"),
@@ -95,10 +99,13 @@ def append_jsonl(path, rec):
 def load_state():
     p = paths()["state"]
     if os.path.exists(p):
-        return json.load(open(p, encoding="utf-8"))
+        st = json.load(open(p, encoding="utf-8"))
+        st.setdefault("sanxia_page", 1)
+        st.setdefault("sanxia_done", False)
+        return st
     return {
-        "category_page": 1, "mixed_page": 1,
-        "category_done": False,
+        "category_page": 1, "mixed_page": 1, "sanxia_page": 1,
+        "category_done": False, "sanxia_done": False,
         "halt": None, "haltAt": None,
         "accepted": 0, "rejected": {}, "bodyonly": 0,
         "pagesAttempted": 0, "pagesBlocked": 0,
@@ -122,16 +129,15 @@ def semester(title):
     return "未知"
 
 
-def title_ok(title):
+def title_ok(title, want_semester="上"):
     if "三年级" not in title or "语文" not in title:
         return False
     if re.search(r"(数学|英语|科学|道法|道德与法治|美术|音乐|体育|信息技术)", title):
         return False
     if re.search(r"(升四|二升三|三升四)", title):
         return False
-    if semester(title) == "下":
-        return False
-    return True
+    s = semester(title)
+    return s in ("上", "未知") if want_semester == "上" else s == want_semester
 
 
 def parse_items(html):
@@ -150,17 +156,18 @@ def parse_items(html):
     return items
 
 
-def record_candidates(items, list_url, st, seen_ids):
+def record_candidates(items, list_url, st, seen_ids, want_semester="上"):
     added = 0
     for pid, title in items.items():
         if pid in seen_ids:
             continue
-        if not title_ok(title):
+        if not title_ok(title, want_semester):
             continue
         seen_ids.add(pid)
         append_jsonl(paths()["cand"], {
             "id": pid, "url": f"https://appsj.szxuexiao.com/html/{pid}.html",
             "title": title, "semester": semester(title),
+            "term": "3B" if want_semester == "下" else "3A",
             "listUrl": list_url, "discoveredAt": now(),
         })
         added += 1
@@ -194,6 +201,36 @@ def discover_category(st, max_pages=8, seen_ids=None):
         print(f"分类页 {page}/{CATEGORY_PAGES} 新增候选 {added}", flush=True)
     if st["category_page"] > CATEGORY_PAGES:
         st["category_done"] = True
+    save_state(st)
+    return got
+
+
+def discover_sanxia(st, max_pages=6, seen_ids=None):
+    """「三年级」分类里只挑下册语文，单独入池。"""
+    got = 0
+    while st["sanxia_page"] <= SANXIA_PAGES and got < max_pages:
+        page = st["sanxia_page"]
+        url = SANXIA.format("" if page == 1 else f"_{page}")
+        raw = os.path.join(WORK, "list", f"sanxia-{page}.html")
+        status, secs, size = rp.fetch(url, raw)
+        if status != 200:
+            if status == 404:
+                st["sanxia_done"] = True
+                st["sanxia_page"] = SANXIA_PAGES + 1
+                print(f"三年级分类页 {page} 404，视为到底")
+                break
+            st["halt"] = f"三年级分类页 {page} HTTP {status}"
+            st["haltAt"] = now()
+            save_state(st)
+            print(f"! 停手：{st['halt']}")
+            return got
+        html = rp.decode(open(raw, "rb").read())
+        added = record_candidates(parse_items(html), url, st, seen_ids, want_semester="下")
+        st["sanxia_page"] = page + 1
+        got += 1
+        print(f"三下分类页 {page} 新增候选 {added}", flush=True)
+    if st["sanxia_page"] > SANXIA_PAGES:
+        st["sanxia_done"] = True
     save_state(st)
     return got
 
@@ -245,29 +282,108 @@ def existing_shas():
     return shas
 
 
-def judge(piece, seen_sha, pre_sha):
-    """返回 (accept, reason)。reason 为空表示入池。"""
+def judge(piece, seen_sha, pre_sha, c):
+    """返回 (bucket, reason)。bucket: up/in/down/reject。"""
     body = piece["body"]
     sha = body_sha(body)
     if sha in pre_sha:
-        return False, "与现有 118 篇重复"
+        return "reject", "与现有 118 篇重复"
     if sha in seen_sha:
-        return False, "批内重复"
-    if piece.get("textbook"):
-        return False, "课内阅读（教材原文，不可内置）"
+        return "reject", "批内重复"
     if piece["chars"] > rp.TOO_LONG:
-        return False, "超 1500 字巨篇"
+        return "reject", "超 1500 字巨篇"
     if piece.get("merged"):
-        return False, "多篇粘连，切不开"
+        return "reject", "多篇粘连，切不开"
     if piece.get("boilerplate"):
-        return False, "站点导航/假正文"
+        return "reject", "站点导航/假正文"
     if piece["chars"] < 60:
-        return False, "正文残片（<60 字）"
-    if piece["questions"] < 3:
-        return False, f"题量不足（{piece['questions']} 道）"
-    if len(piece["qTypes"]) < 2:
-        return False, f"题型单一（{'/'.join(piece['qTypes']) or '未识别'}）"
-    return True, ""
+        return "reject", "正文残片（<60 字）"
+    if piece.get("textbook"):
+        return "in", ""          # 课内原文单独标，不当作淘汰理由
+    if c.get("semester") == "下":
+        return "down", ""
+    return "up", ""              # 题少/无题也收，缺的后期补
+
+
+# -------- 答案对位：把整卷答案按 (一)(二) 小节拆回对应短文 --------
+SUBSPLIT = re.compile(r"[（(]\s*([一二三四五六七八九十])\s*[)）]")
+ITEM_NUM = re.compile(r"(?:^|[^\d])(\d{1,2})(?=[\s.、．:：])")
+
+
+def split_subsections(text):
+    parts = SUBSPLIT.split(text)
+    if len(parts) < 3:
+        return []
+    return [(parts[i], parts[i + 1]) for i in range(1, len(parts) - 1, 2)]
+
+
+def count_items(text):
+    """答案条目数：取最长的一段连续题号（支持 1、/1./1  空格 三种写法）。"""
+    nums = [int(x) for x in ITEM_NUM.findall(text)]
+    if not nums:
+        return 0
+    best = run = 1
+    for a, b in zip(nums, nums[1:]):
+        run = run + 1 if b == a + 1 else 1
+        best = max(best, run)
+    return best
+
+
+def has_restart(text):
+    """答案里题号出现回落（1,2,3 → 1,2）说明混了多篇答案，不能整段认领。"""
+    nums = [int(x) for x in ITEM_NUM.findall(text)]
+    return any(b <= a and b <= 3 for a, b in zip(nums, nums[1:]))
+
+
+def _unmatch(p):
+    p["answerText"] = ""
+    p["answerScope"] = "unmatched"
+    p["answerMatched"] = False
+
+
+def _match(p, text, scope):
+    p["answerText"] = text
+    p["answerScope"] = scope
+    p["answerMatched"] = True
+
+
+def align_answers(pieces):
+    """答案能对回本短文才保留；拆不开就标 unmatched，不留整卷答案混淆。
+
+    整卷答案通常按 (一)(二) 分小节，与页内短文顺序一一对应。
+    只有在「小节数 ≥ 短文数」且「答案条目数 ≈ 本题题量」时才认领。
+    """
+    for p in pieces:
+        p["answerText"] = trim_answer(p.get("answerText", ""))
+        p["answerPresent"] = bool(p["answerText"])
+    answered = [p for p in pieces if p["answerPresent"]]
+    if not answered:
+        return
+    full = max(answered, key=lambda p: len(p["answerText"]))["answerText"]
+    subs = split_subsections(full)
+    if subs:
+        take = subs[-len(answered):] if len(subs) >= len(answered) else subs
+        for i, p in enumerate(answered):
+            if i >= len(take):
+                _unmatch(p)
+                continue
+            cand = take[i][1].strip()
+            n = count_items(cand)
+            if len(cand) <= 800 and n and abs(n - p["questions"]) <= 1:
+                _match(p, cand, "subsection")
+            else:
+                _unmatch(p)
+        return
+    # 没有小节标记：只认领短段落（整卷答案长且含多个大题号的一律不认）
+    for p in answered:
+        t = p["answerText"]
+        n = count_items(t)
+        heads = set(re.findall(r"[一二三四五六七八九十]{1,3}\s*[、．]", t))
+        if (len(t) <= 800 and len(heads) < 2 and not has_restart(t)
+                and n and abs(n - p["questions"]) <= 1):
+            _match(p, t, "section" if p["answerScope"] == "section" else "whole")
+        else:
+            _unmatch(p)
 
 
 def harvest_page(c, st, seen_sha, pre_sha, accepted_count):
@@ -310,39 +426,48 @@ def harvest_page(c, st, seen_sha, pre_sha, accepted_count):
     return acc, rej, bo, None
 
 
-def write_pieces(c, title, pieces, st, seen_sha, pre_sha, accepted_count):
+def write_pieces(c, title, pieces, st, seen_sha, pre_sha, counters):
     acc = rej = bo = 0
     pid = c["id"]
+    align_answers(pieces)
+    term = c.get("term") or ("3B" if c.get("semester") == "下" else "3A")
     for piece in pieces:
-        accept, reason = judge(piece, seen_sha, pre_sha)
+        bucket, reason = judge(piece, seen_sha, pre_sha, c)
         sha = body_sha(piece["body"])
-        answer_text = trim_answer(piece["answerText"])
+        lesson = None
+        m = re.search(r"《([^》]{2,20})》", piece["header"] or "")
+        if m:
+            lesson = m.group(1)
         base = {
             "source": "szxuexiao",
             "url": c["url"],
             "pageTitle": title,
             "pageId": pid,
             "semester": c.get("semester"),
+            "term": term,
             "listUrl": c.get("listUrl"),
             "chars": piece["chars"],
             "questions": piece["questions"],
             "qTypes": piece["qTypes"],
             "locate": piece["locate"],
-            "hasAnswer": bool(answer_text),
+            "hasAnswer": piece.get("answerPresent", False),
             "answerScope": piece["answerScope"],
-            "answerMatched": piece["answerScope"] == "section",
+            "answerMatched": bool(piece.get("answerMatched")),
             "header": piece["header"],
+            "lesson": lesson,
             "sha256": sha,
             "fetchedAt": now(),
         }
-        if accept:
+        if bucket != "reject":
             seen_sha.add(sha)
-            accepted_count[0] += 1
-            append_jsonl(paths()["passages"], {
-                "id": f"szx-{accepted_count[0]:04d}", **base,
-                "text": piece["body"], "questionText": piece["questionText"],
-                "answerText": answer_text,
-            })
+            prefix = {"up": "szx", "in": "itx", "down": "sxb"}[bucket]
+            counters[bucket] += 1
+            rec = {"id": f"{prefix}-{counters[bucket]:04d}", **base,
+                   "scope": "in-text" if bucket == "in" else "extra-curricular",
+                   "text": piece["body"], "questionText": piece["questionText"],
+                   "answerText": piece["answerText"]}
+            append_jsonl(paths()["intext" if bucket == "in" else
+                                "down" if bucket == "down" else "passages"], rec)
             acc += 1
         else:
             if piece["questions"] == 0 and piece["chars"] >= 60:
@@ -357,27 +482,41 @@ def write_pieces(c, title, pieces, st, seen_sha, pre_sha, accepted_count):
 
 
 # ---------------------------------------------------------------- 进度
+def _pool_stats(items):
+    ans = [x for x in items if x.get("hasAnswer")]
+    matched = [x for x in items if x.get("answerMatched")]
+    unmatched = [x for x in items if x.get("answerScope") == "unmatched"]
+    q3 = [x for x in items if x.get("questions", 0) >= 3]
+    return len(items), len(q3), len(ans), len(matched), len(unmatched)
+
+
 def build_progress(st):
     p = paths()
     passes = read_jsonl(p["passages"])
+    intext = read_jsonl(p["intext"])
+    down = read_jsonl(p["down"])
     rej = read_jsonl(p["rejected"])
     bodyonly = read_jsonl(p["bodyonly"])
-    with_ans = [x for x in passes if x.get("hasAnswer")]
-    matched = [x for x in passes if x.get("answerMatched")]
     reasons = Counter(x.get("reason", "?") for x in rej)
     lines = [
         "# szxuexiao 放量进度",
         "",
         f"更新：{now()}　启动：{st.get('startedAt')}",
         "",
-        f"- **带题入池：{len(passes)} / {TARGET}**（{len(passes)/TARGET:.1%}）",
-        f"- 带答案：{len(with_ans)}（{len(with_ans)/len(passes):.0%} of 入池）"
-        if passes else "- 带答案：0",
-        f"- 答案能对回本题（section）：{len(matched)}",
+        f"- **课外三上入池：{len(passes)} / {TARGET}**（{len(passes)/TARGET:.1%}）",
+        "",
+        "| 池 | 总篇 | ≥3题 | 有答案 | 已对位 | 拆不开 |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for name, items in (("课外三上", passes), ("课内原文", intext), ("三下", down)):
+        n, q3, a, m, u = _pool_stats(items)
+        lines.append(f"| {name} | {n} | {q3} | {a} | {m} | {u} |")
+    lines += [
         f"- 纯正文暂存（无题）：{len(bodyonly)}",
-        f"- 已抓正文页：{st['pagesAttempted']}，其中阻断/无板块：{st['pagesBlocked']}",
-        f"- 候选：{st['candidates']}，分类页 {min(st['category_page']-1, CATEGORY_PAGES)}/{CATEGORY_PAGES}，"
-        f"混排页 {min(st['mixed_page']-1, MIXED_PAGES)}/{MIXED_PAGES}",
+        f"- 已抓正文页：{st['pagesAttempted']}，阻断：{st['pagesBlocked']}",
+        f"- 候选：{st['candidates']}，三上分类 {min(st['category_page']-1, CATEGORY_PAGES)}/{CATEGORY_PAGES}，"
+        f"三下分类 {min(st.get('sanxia_page',1)-1, SANXIA_PAGES)}，"
+        f"混排 {min(st['mixed_page']-1, MIXED_PAGES)}/{MIXED_PAGES}",
         "",
         "## 筛除原因分布",
         "",
@@ -468,8 +607,14 @@ def run_cmd(minutes):
         return
     pre_sha = existing_shas()
     seen_sha = {x["sha256"] for x in read_jsonl(paths()["passages"])}
+    seen_sha |= {x["sha256"] for x in read_jsonl(paths()["intext"])}
+    seen_sha |= {x["sha256"] for x in read_jsonl(paths()["down"])}
     st["accepted"] = len(read_jsonl(paths()["passages"]))  # 以文件为准，防中断后计数漂移
-    accepted = [st["accepted"]]
+    counters = {
+        "up": len(read_jsonl(paths()["passages"])),
+        "in": len(read_jsonl(paths()["intext"])),
+        "down": len(read_jsonl(paths()["down"])),
+    }
     seen_ids = load_seen_ids()
     t0 = time.time()
     deadline = t0 + minutes * 60
@@ -483,7 +628,7 @@ def run_cmd(minutes):
             if time.time() > deadline:
                 print(f"到时间上限（{minutes} 分钟），本次停。", flush=True)
                 return False
-            acc, rej, bo, blocked = harvest_page(c, st, seen_sha, pre_sha, accepted)
+            acc, rej, bo, blocked = harvest_page(c, st, seen_sha, pre_sha, counters)
             total_pages += 1
             if blocked and ("验证码" in blocked or "限流" in blocked or "拒绝" in blocked):
                 st["halt"] = blocked
@@ -492,8 +637,8 @@ def run_cmd(minutes):
                 print(f"\n! 撞墙停手：{blocked}  {c['url']}", flush=True)
                 return False
             if acc or rej:
-                print(f"[{accepted[0]} 入池] {c['id']} +{acc}/-{rej}  {c['title'][:40]}",
-                      flush=True)
+                print(f"[{counters['up']} 课外/{counters['in']} 课内/{counters['down']} 三下] "
+                      f"{c['id']} +{acc}/-{rej}  {c['title'][:40]}", flush=True)
             elif blocked:
                 print(f"[跳过] {c['id']} {blocked}", flush=True)
             maybe_report(st)
@@ -506,6 +651,8 @@ def run_cmd(minutes):
     while time.time() < deadline:
         if not st.get("category_done"):
             got = discover_category(st, max_pages=4, seen_ids=seen_ids)
+        elif not st.get("sanxia_done"):
+            got = discover_sanxia(st, max_pages=4, seen_ids=seen_ids)
         else:
             got = discover_mixed(st, max_pages=12, seen_ids=seen_ids)
         if st.get("halt"):
@@ -517,20 +664,20 @@ def run_cmd(minutes):
             break
     maybe_report(st, force=True)
     print(f"本次共抓正文页 {total_pages}，用时 {time.time()-t0:.0f}s")
-    if accepted[0] >= 20:
+    if counters["up"] >= 20:
         make_review()
 
 
 def reclassify_cmd():
     """用已落盘的原始 HTML 重跑判定（改了启发式，不用重新联网）。"""
     st = load_state()
-    for key in ("passages", "rejected", "bodyonly", "attempts"):
+    for key in ("passages", "intext", "down", "rejected", "bodyonly", "attempts"):
         open(paths()[key], "w", encoding="utf-8").close()
     st.update({"accepted": 0, "rejected": {}, "bodyonly": 0,
                "pagesAttempted": 0, "pagesBlocked": 0, "lastReportAt": 0})
     pre_sha = existing_shas()
     seen_sha = set()
-    accepted = [0]
+    counters = {"up": 0, "in": 0, "down": 0}
     cands = read_jsonl(paths()["cand"])
     for c in cands:
         raw = os.path.join(WORK, "pages", f"{c['id']}.html")
@@ -543,7 +690,7 @@ def reclassify_cmd():
         pieces = rp.extract_pieces(rp.html_to_text(html), c["title"])
         if not pieces:
             continue
-        acc, rej, bo = write_pieces(c, c["title"], pieces, st, seen_sha, pre_sha, accepted)
+        acc, rej, bo = write_pieces(c, c["title"], pieces, st, seen_sha, pre_sha, counters)
         append_jsonl(paths()["attempts"], {
             "id": c["id"], "url": c["url"], "title": c["title"], "status": 200,
             "accepted": acc, "rejected": rej, "pieces": len(pieces),

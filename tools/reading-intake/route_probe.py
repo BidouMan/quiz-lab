@@ -270,7 +270,9 @@ TOO_LONG = 1500
 
 def analyse_piece(body, qs, ans=(), header="", title_hint=0):
     chars = char_count(body)
-    n_q = len([1 for ln in qs if is_question_line(ln)])
+    n_all = len([1 for ln in qs if is_question_line(ln)])
+    n_top = len([1 for ln in qs if re.match(r"^\s*\d{1,2}\s*[.、．]", ln)])
+    n_q = n_top if n_top >= 2 else n_all   # 小题 (1)(2) 不重复计入大题数
     types = q_types(qs)
     locate = bool(re.search(r"(文中|第[一二三四五六七八]段|画线|波浪线|横线|"
                             r"短文中|从文中)", "\n".join(list(body[-200:].split("\n"))[-2:] + list(qs))))
