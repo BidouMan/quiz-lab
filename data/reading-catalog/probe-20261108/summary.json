@@ -1,0 +1,50 @@
+{
+ "r1": {
+  "attempted": 13,
+  "body": 8,
+  "pool": 11,
+  "withQ": 10,
+  "qualified": 9,
+  "bodyOnly": 1,
+  "textbook": 3,
+  "tooLongOrMerged": 0,
+  "fragments": 0,
+  "machineSeconds": 2.6
+ },
+ "r2": {
+  "attempted": 2,
+  "body": 2,
+  "pool": 3,
+  "withQ": 3,
+  "qualified": 2,
+  "bodyOnly": 0,
+  "textbook": 0,
+  "tooLongOrMerged": 0,
+  "fragments": 0,
+  "machineSeconds": 17.6
+ },
+ "r3": {
+  "attempted": 20,
+  "body": 20,
+  "pool": 19,
+  "withQ": 0,
+  "qualified": 0,
+  "bodyOnly": 19,
+  "textbook": 0,
+  "tooLongOrMerged": 1,
+  "fragments": 0,
+  "machineSeconds": 10.7
+ },
+ "r4": {
+  "attempted": 8,
+  "body": 2,
+  "pool": 0,
+  "withQ": 0,
+  "qualified": 0,
+  "bodyOnly": 0,
+  "textbook": 0,
+  "tooLongOrMerged": 1,
+  "fragments": 1,
+  "machineSeconds": 1.5
+ }
+}
