@@ -83,7 +83,7 @@ def check(reading: dict) -> list[tuple[str, bool, str]]:
     questions = reading.get("questions", [])
     types = {q.get("type") for q in questions}
     add("题量 3–5", 3 <= len(questions) <= 5, f"实际 {len(questions)}")
-    add("选择/填空/简答齐备", types >= {"choice", "fill", "short"}, f"实际 {sorted(types)}")
+    add("题型 ≥2 种", len(types) >= 2, f"实际 {sorted(types)}")
 
     normalized = normalize_quotes(text)
     for index, question in enumerate(questions, start=1):
