@@ -46,6 +46,10 @@ TERMS = ["总分总", "总分", "分总", "借景抒情", "托物言志", "承�
 FAKE_OPTION = ["凑够字数", "找不到别的话", "节省篇幅", "写得很简单", "才多写",
                "不写人的反应", "写成同一个地方", "凑数"]
 
+# 开放型问法：答案不唯一，AI 只判对/错时容易误判
+OPEN_RE = re.compile(r"联系(?:自己|你的|生活)|结合实际|谈谈你的|你的看法|你觉得|你认为|"
+                     r"想象一下|还可以|如果是你|劝一劝|说一说你")
+
 TYPE_ORDER = ["choice", "fill", "short", "judge", "other"]
 SKILL_ORDER = [f"SK{i}" for i in range(1, 8)]
 SKILL_MAP = {"提取信息": "SK1", "梳理概括": "SK2", "词句理解": "SK3",
@@ -237,6 +241,14 @@ def analyze(groups, page_groups, mounted, gate, drafts, downlisted):
         }
         block["scoring"]["withQuote"]["pct"] = pct(block["scoring"]["withQuote"]["n"], len(shorts))
         block["scoring"]["withRun8"]["pct"] = pct(block["scoring"]["withRun8"]["n"], len(shorts))
+        # 主观题参考答案覆盖率（AI 按「对/错」批改时的主要依据）
+        with_answer = sum(1 for q, _ in shorts if (q.get("answer") or "").strip())
+        block["shortAnswer"] = {"n": with_answer, "pct": pct(with_answer, len(shorts)),
+                                "base": len(shorts)}
+        open_n = sum(1 for q, _ in shorts if OPEN_RE.search(q["stem"]))
+        block["openEnded"] = {"n": open_n, "pct": pct(open_n, len(shorts)),
+                              "keys": [key for _, q, key, _ in rows
+                                       if q["type"] == "short" and OPEN_RE.search(q["stem"])]}
 
         # 7 选择题选项
         choices = [q for q in qs if q["type"] == "choice"]
@@ -475,6 +487,8 @@ def main():
     fmt_table("6 主观题评分点", [
         ("2 条", lambda b: f"{b['scoring']['counts'].get('2', 0)}"),
         ("3 条", lambda b: f"{b['scoring']['counts'].get('3', 0)}"),
+        ("有参考答案 answer", lambda b: pctcell(b["shortAnswer"])),
+        ("开放型问法（答案不唯一）", lambda b: pctcell(b["openEnded"])),
         ("评分点带“…”原文引证", lambda b: pctcell(b["scoring"]["withQuote"])),
         ("评分点含 ≥8 字原文片段", lambda b: pctcell(b["scoring"]["withRun8"])),
     ])
