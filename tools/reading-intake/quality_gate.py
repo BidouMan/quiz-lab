@@ -17,7 +17,7 @@
   R10 选项长度比 > 2.0、含「以上都对/无法判断」类选项、同篇正确项位置连续 3 题相同 → fail
   R11 skill 字段缺失或非法（无法归入 SK1–SK7）→ fail
   R12 难度分层（易/中/难，仅记录，不判 fail）
-  R13 主观题缺参考答案（仅记录；全库补齐后再升级为 fail）
+  R13 主观题缺参考答案 → fail（全库已补齐，答案页直接给家长核对）
 
 用法：
   python3 quality_gate.py                # 写 quality-gate.jsonl 并打印统计
@@ -255,6 +255,12 @@ def review_one(draft: dict) -> dict:
     if illegal:
         failures.append({"rule": "R11", "detail": f"{illegal} 道题 skill 字段缺失/非法"})
 
+    # R13 主观题参考答案（全库已补齐，缺答案即 fail）
+    missing_answer = [i for i, q in enumerate(questions, start=1)
+                      if q.get("type") == "short" and not (q.get("answer") or "").strip()]
+    if missing_answer:
+        failures.append({"rule": "R13", "detail": f"主观题缺参考答案：{missing_answer}"})
+
     skills = {item["skill"] for item in skills_detail if item["skill"]}
     # SK4 简答若问「体会/感受/心情/品质」，按 SK5 口径视为达标
     subjective35 = any(
@@ -324,7 +330,7 @@ def review_one(draft: dict) -> dict:
         flags.append("R6")
     if any(q.get("type") == "choice" for q in questions):
         flags.append("R10")
-    # R13 主观题缺参考答案：先只记录，全库补齐后再升级为 fail
+    # R13 缺答案已作为 fail 规则记入 failures，这里不再列入人工复核提示
     if any(q.get("type") == "short" and not (q.get("answer") or "").strip()
            for q in questions):
         flags.append("R13")
