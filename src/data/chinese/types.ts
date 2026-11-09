@@ -139,6 +139,9 @@ export type GaibingSubkind = '成分残缺' | '搭配不当' | '语序颠倒' | 
 /** 判分方式：auto 可机械判分；rubric 为开放题，只给参考评分点、不自动判分 */
 export type ChineseSentenceJudging = 'auto' | 'rubric'
 
+/** 主观题评分要点：至少 2 条，供家长或外部 AI 批改，不作为唯一答案 */
+export type RubricPoints = [string, string, ...string[]]
+
 /** 答案声明：unique 答案唯一；multiple 允许多种写法（答案集尽量穷举，或给出示例） */
 export type ChineseSentenceAnswerKind = 'unique' | 'multiple'
 
@@ -166,19 +169,30 @@ interface SentenceItemBase {
   judging: ChineseSentenceJudging
   /** 答案声明：唯一或多解 */
   answerKind: ChineseSentenceAnswerKind
-  /** 本题声明的合法答案数量；unique 必须为 1，multiple 至少为 2 */
+  /**
+   * 客观题：本题声明的合法答案数量，unique 必须为 1，multiple 至少为 2。
+   * 主观题：不锁答案数，只记录参考示例数量，可为 0。
+   */
   answerCount: number
 }
 
-/** 修改病句：broken 为病句，fixed 为主答案，acceptable 为其他可接受改法（尽量穷举） */
+/**
+ * 修改病句：broken 为病句。
+ * auto（客观题）：fixed 为主答案，acceptable 为其他可接受改法，均必填。
+ * rubric（成分残缺等开放题）：rubric 至少 2 条；fixed/acceptable 只作参考，可缺省。
+ */
 export interface GaibingItem extends SentenceItemBase {
   kind: 'gaibing'
   subkind: GaibingSubkind
   /** 题干指令；开放题在这里写明「补出主语即可，答案不唯一」 */
   instruction: string
   broken: string
-  fixed: string
-  acceptable: string[]
+  /** 客观题必填；开放题可保留作参考 */
+  fixed?: string
+  /** 客观题的可接受改法；开放题可保留作参考 */
+  acceptable?: string[]
+  /** 开放题必填（≥2 条），gate 与测试会强制检查 */
+  rubric?: RubricPoints
   /** 被替换/删除的原片段；成分残缺时为空串 */
   defect: string
   /** 替换成的片段；删除类为空串，成分残缺时为补上的成分 */
@@ -186,15 +200,17 @@ export interface GaibingItem extends SentenceItemBase {
   reason: string
 }
 
-/** 扩写句子：base 为原句，hints 为提示角，samples 为不同写法的参考示例 */
+/** 扩写句子：base 为原句，hints 为提示角，samples 为参考示例（可选） */
 export interface KuoxieItem extends SentenceItemBase {
   kind: 'kuoxie'
   base: string
   keep: string[]
   /** 提示角：时间、地点、样子、动作、心情等，学生任选，不强制用词 */
   hints: string[]
-  samples: string[]
-  rubric: string[]
+  /** 参考示例，可保留但不作为标准答案 */
+  samples?: string[]
+  /** 评分要点，至少 2 条 */
+  rubric: RubricPoints
 }
 
 /** 关联词填空：text 中的「（ ）」按顺序对应答案组合里的每个词 */
@@ -221,16 +237,18 @@ export interface BiaodianItem extends SentenceItemBase {
   rule: string
 }
 
-/** 比喻与拟人仿写：samples 为不同写法的参考句；keywords 仅为参考词，不作唯一判定 */
+/** 比喻与拟人仿写：samples 为参考句（可选）；keywords 仅为参考词，不作唯一判定 */
 export interface FangxieItem extends SentenceItemBase {
   kind: 'fangxie'
   mode: '比喻' | '拟人'
   example: string
   prompt: string
-  samples: string[]
+  /** 参考示例，可保留但不作为标准答案 */
+  samples?: string[]
   /** 参考词，帮助学生打开思路；判分看评分点，不卡词表 */
   keywords: string[]
-  rubric: string[]
+  /** 评分要点，至少 2 条 */
+  rubric: RubricPoints
   guide: string
 }
 
@@ -263,7 +281,19 @@ export interface ChineseSentenceBankMeta {
 
 // ==================== 课外阅读短文库 ====================
 
-export type ReadingTheme = '写人' | '写景' | '写事' | '状物' | '寓言' | '科普'
+export type ReadingTheme =
+  | '写人'
+  | '写景'
+  | '写事'
+  | '状物'
+  | '寓言'
+  | '科普'
+  | '非连续'
+  | '童话'
+  | '记事'
+
+/** 三上阅读考点代号，与教研 SK1–SK7 对应 */
+export type ReadingSkillCode = 'SK1' | 'SK2' | 'SK3' | 'SK4' | 'SK5' | 'SK6' | 'SK7'
 
 export interface ReadingChoiceQuestion {
   type: 'choice'
@@ -272,6 +302,8 @@ export interface ReadingChoiceQuestion {
   /** 正确选项下标，从 0 开始 */
   answer: number
   explain: string
+  /** 本题考点（命题稿元数据，出卷筛选时读取） */
+  skill?: ReadingSkillCode
 }
 
 export interface ReadingFillQuestion {
@@ -280,14 +312,19 @@ export interface ReadingFillQuestion {
   /** 逐空答案，可枚举 */
   blanks: string[]
   explain: string
+  /** 本题考点（命题稿元数据，出卷筛选时读取） */
+  skill?: ReadingSkillCode
 }
 
 export interface ReadingShortQuestion {
   type: 'short'
   stem: string
-  answer: string
-  /** 评分点，逐条对应 1 分；简答题按点给分 */
-  scoring: string[]
+  /** 参考答案（可选，仅作批改参考，不作为唯一标准答案） */
+  answer?: string
+  /** 评分要点，至少 2 条；简答题按点给分 */
+  scoring: RubricPoints
+  /** 本题考点（命题稿元数据，出卷筛选时读取） */
+  skill?: ReadingSkillCode
 }
 
 export type ReadingQuestion = ReadingChoiceQuestion | ReadingFillQuestion | ReadingShortQuestion
@@ -301,6 +338,10 @@ export interface ChineseReading {
   status: VerifyStatus
   sources: SourceRef[]
   questions: ReadingQuestion[]
+  /** 本文覆盖的考点集合（去重升序）；精选旧稿可能没有 */
+  skills?: ReadingSkillCode[]
+  /** 命题稿难度：A 易 / B 中 / C 难；精选旧稿可能没有 */
+  difficulty?: ChineseLevel
   /** 本文的复核记录 */
   review: string
 }

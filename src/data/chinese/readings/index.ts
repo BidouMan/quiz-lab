@@ -11,6 +11,7 @@ import { FABLE_READINGS } from './fables.ts'
 import { SCIENCE_READINGS } from './science.ts'
 import { IMPORTED_READINGS } from './imported.ts'
 import { MOUNTED_READINGS, PENDING_READINGS } from './mounted.ts'
+import { ORIGINAL_READING_TAGS } from './tags.ts'
 
 export {
   PEOPLE_READINGS,
@@ -24,7 +25,17 @@ export {
   PENDING_READINGS,
 }
 
-export const READING_THEMES: ReadingTheme[] = ['写人', '写景', '写事', '状物', '寓言', '科普']
+export const READING_THEMES: ReadingTheme[] = [
+  '写人',
+  '写景',
+  '写事',
+  '状物',
+  '寓言',
+  '科普',
+  '非连续',
+  '童话',
+  '记事',
+]
 
 export const READING_BANK: ChineseReading[] = [
   ...PEOPLE_READINGS,
@@ -34,7 +45,19 @@ export const READING_BANK: ChineseReading[] = [
   ...FABLE_READINGS,
   ...SCIENCE_READINGS,
   ...IMPORTED_READINGS,
-]
+].map((reading) => {
+  const tag = ORIGINAL_READING_TAGS[reading.id]
+  if (!tag) return reading
+  return {
+    ...reading,
+    skills: tag.skills,
+    difficulty: tag.difficulty,
+    questions: reading.questions.map((question, index) => ({
+      ...question,
+      skill: tag.questionSkills[index],
+    })),
+  }
+})
 
 /** 正式题库：精选库 + quality_gate 通过且未下架的命题稿，计入合格挂载。 */
 export const QUALIFIED_READING_BANK: ChineseReading[] = [
@@ -97,6 +120,9 @@ export function readingCounts(): Record<ReadingTheme, number> {
     状物: 0,
     寓言: 0,
     科普: 0,
+    非连续: 0,
+    童话: 0,
+    记事: 0,
   }
   for (const reading of READING_BANK) counts[reading.theme] += 1
   return counts

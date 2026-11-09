@@ -7,6 +7,8 @@ const rows = READING_BANK.map((reading) => ({
   theme: reading.theme,
   paragraphs: reading.paragraphs,
   sources: reading.sources,
+  skills: reading.skills ?? null,
+  difficulty: reading.difficulty ?? null,
   questions: reading.questions.map((question) => ({
     type: question.type,
     stem: question.stem,

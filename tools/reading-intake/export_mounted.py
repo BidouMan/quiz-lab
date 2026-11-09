@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
-"""把 quiz-drafts（RD-301–RD-500）批量导出为前端可用的题库文件。
-
-背景：199 份命题稿字段齐全，但应用题库（imported.ts 里的 20 篇）是另一批
-试点稿。为让孩子能实际做题，这里按 `ChineseReading` 的 7 个字段生成
-`src/data/chinese/readings/mounted.ts`，并在 `index.ts` 里与精选库合并成
-`PRACTICE_READING_BANK` 供出卷使用。
+"""把 quiz-drafts 批量导出为前端可用的题库文件。
 
 只做字段白名单导出，不手改任何一题：
-  - 命题稿里的 score / origin / skill / answerSource 等属于命题过程元数据，
-    前端类型没有对应字段，丢弃；原件仍保留在 data/reading-catalog/quiz-drafts/。
-  - 21 份主题越界（童话 17 / 记事 3 / 非连续 1）按既定映射改为六类主题，
-    并在 review 末尾标注，便于抽查。
+  - 命题稿里的 score / origin / answerSource 仍属于命题过程元数据，前端不需要，丢弃。
+  - 保留 skill（逐题考点 + 每篇考点集合）、原始 theme（九类不再合并）、difficulty（易/中/难 → A/B/C）。
+  - 原件仍保留在 data/reading-catalog/quiz-drafts/。
 
 用法：
   python3 export_mounted.py [--dry-run]
@@ -28,8 +22,14 @@ DOWNLIST = os.path.join(ROOT, "data", "reading-catalog", "downlisted.json")
 GATE = os.path.join(ROOT, "data", "reading-catalog", "quality-gate.jsonl")
 TARGET = os.path.join(ROOT, "src", "data", "chinese", "readings", "mounted.ts")
 
-THEMES = {"写人", "写景", "写事", "状物", "寓言", "科普"}
-THEME_MAP = {"童话": "寓言", "记事": "写事", "非连续": "科普"}
+THEMES = {"写人", "写景", "写事", "状物", "寓言", "科普", "非连续", "童话", "记事"}
+SKILL_MAP = {
+    "提取信息": "SK1", "梳理概括": "SK2", "词句理解": "SK3",
+    "推断体会": "SK4", "主旨情感": "SK5", "写法结构": "SK6",
+    "非连续性文本": "SK7",
+}
+SKILL_ORDER = [f"SK{i}" for i in range(1, 8)]
+DIFFICULTY_MAP = {"易": "A", "中": "B", "难": "C"}
 PLACEHOLDER = "（ ）"
 
 
@@ -42,6 +42,10 @@ def export_question(q, rid):
     stem = (q.get("stem") or "").strip()
     if not stem:
         fail(f"{rid} 题干为空")
+    skill = (q.get("skill") or "").strip()
+    if skill not in SKILL_MAP:
+        fail(f"{rid} 考点缺失或非法：{skill!r}（{stem[:18]}）")
+    skill_code = SKILL_MAP[skill]
     if qtype == "choice":
         options = q.get("options") or []
         if len(options) != 4 or any(not str(o).strip() for o in options):
@@ -55,7 +59,7 @@ def export_question(q, rid):
         if not explain:
             fail(f"{rid} 选择题缺答案说明：{stem}")
         return {"type": "choice", "stem": stem, "options": options,
-                "answer": answer, "explain": explain}
+                "answer": answer, "explain": explain, "skill": skill_code}
     if qtype == "fill":
         blanks = q.get("blanks") or []
         if not blanks or any(not str(b).strip() for b in blanks):
@@ -65,12 +69,13 @@ def export_question(q, rid):
         explain = (q.get("explain") or "").strip()
         if not explain:
             fail(f"{rid} 填空题缺答案说明：{stem}")
-        return {"type": "fill", "stem": stem, "blanks": blanks, "explain": explain}
+        return {"type": "fill", "stem": stem, "blanks": blanks,
+                "explain": explain, "skill": skill_code}
     if qtype == "short":
         scoring = [(s or "").strip() for s in (q.get("scoring") or [])]
         if not 2 <= len(scoring) <= 3 or any(not s for s in scoring):
             fail(f"{rid} 简答题评分点不是 2–3 条：{stem}")
-        item = {"type": "short", "stem": stem, "scoring": scoring}
+        item = {"type": "short", "stem": stem, "scoring": scoring, "skill": skill_code}
         answer = (q.get("answer") or "").strip()
         if answer:
             item["answer"] = answer
@@ -78,7 +83,7 @@ def export_question(q, rid):
     fail(f"{rid} 未知题型：{qtype}")
 
 
-def export_reading(draft, pending=False):
+def export_reading(draft, difficulty="中", pending=False):
     rid = draft.get("id") or ""
     if not re.match(r"^RD-\d{3}$", rid):
         fail(f"编号异常：{rid}")
@@ -88,12 +93,11 @@ def export_reading(draft, pending=False):
         fail(f"{rid} 标题或正文为空")
     theme = draft.get("theme")
     if theme not in THEMES:
-        if theme not in THEME_MAP:
-            fail(f"{rid} 主题越界且未约定映射：{theme}")
-        theme = THEME_MAP[theme]
+        fail(f"{rid} 主题越界：{theme}（需先在题型/主题枚举中登记）")
     questions = [export_question(q, rid) for q in (draft.get("questions") or [])]
     if not 3 <= len(questions) <= 5:
         fail(f"{rid} 题量不是 3–5 题")
+    skills = sorted({q["skill"] for q in questions}, key=SKILL_ORDER.index)
     sources = []
     for src in draft.get("sources") or []:
         label = (src.get("label") or "").strip()
@@ -109,8 +113,6 @@ def export_reading(draft, pending=False):
     review = (draft.get("review") or "").strip()
     if not review:
         fail(f"{rid} 缺复核记录")
-    if draft.get("theme") != theme:
-        review += f"（题库挂载：主题 {draft['theme']} 映射为 {theme}，应用题库仅六类主题。）"
     if pending:
         review += "（待修区：quality_gate 未通过，题目待修补；仅供练习，不计入合格挂载，不参与精选/考试模式。）"
     return {
@@ -121,6 +123,8 @@ def export_reading(draft, pending=False):
         "status": "pending" if pending else (draft.get("status") or "verified"),
         "sources": sources,
         "questions": questions,
+        "skills": skills,
+        "difficulty": DIFFICULTY_MAP.get(difficulty, "B"),
         "review": review,
     }
 
@@ -136,9 +140,12 @@ def main():
             downlisted = {item["id"] for item in json.load(f).get("readings", [])}
 
     passed = None
+    difficulties = {}
     if os.path.exists(GATE):
         with open(GATE, encoding="utf-8") as f:
-            passed = {json.loads(line)["id"] for line in f if line.strip() and json.loads(line)["pass"]}
+            rows = [json.loads(line) for line in f if line.strip()]
+        passed = {row["id"] for row in rows if row["pass"]}
+        difficulties = {row["id"]: row.get("difficulty", "中") for row in rows}
 
     official, pending = [], []
     ids = set()
@@ -150,7 +157,8 @@ def main():
             skipped += 1
             continue
         is_official = passed is None or draft.get("id") in passed
-        item = export_reading(draft, pending=not is_official)
+        item = export_reading(draft, difficulty=difficulties.get(draft.get("id"), "中"),
+                              pending=not is_official)
         if item["id"] in ids:
             fail(f"编号重复：{item['id']}")
         ids.add(item["id"])
@@ -159,6 +167,7 @@ def main():
     header = (
         "// 由 tools/reading-intake/export_mounted.py 自动生成，请改 quiz-drafts 后重跑，不要手改。\n"
         "// MOUNTED_READINGS 为正式题库（quality_gate 通过）；PENDING_READINGS 为待修区（可练习，不计入合格数）。\n"
+        "// 保留逐题 skill（SK1–SK7）、每篇 skills/difficulty 与原始九类 theme，供出卷按主题/考点/难度筛选。\n"
         "import type { ChineseReading } from '../types.ts'\n\n"
     )
     body = (
@@ -178,11 +187,17 @@ def main():
     readings = official + pending
     themes = Counter(r["theme"] for r in readings)
     qtypes = Counter(q["type"] for r in readings for q in r["questions"])
+    skills_pages = Counter(code for r in readings for code in r["skills"])
+    skills_questions = Counter(q.get("skill") for r in readings for q in r["questions"])
     chars = [len(re.findall(r"[\u4e00-\u9fff]", "".join(r["paragraphs"]))) for r in readings]
     print("主题：", " ".join(f"{k}{v}" for k, v in themes.items()))
+    print("考点覆盖（篇/题）：", " ".join(f"{k} {skills_pages[k]}/{skills_questions[k]}"
+                                     for k in sorted(skills_questions)))
+    print("难度：", dict(Counter(r["difficulty"] for r in readings)))
     print("题量：", sum(qtypes.values()), "题", dict(qtypes))
     print(f"正文汉字：min {min(chars)} / median {sorted(chars)[len(chars) // 2]} / max {max(chars)}")
-    print(f"编号：{min(ids)} – {max(ids)}；未挂载 {len([n for n in range(301, 501) if f'RD-{n}' not in ids])} 个（缺号 + 已下架）")
+    numeric = sorted(int(i.split("-")[1]) for i in ids)
+    print(f"编号：RD-{numeric[0]} – RD-{numeric[-1]}；共 {len(numeric)} 篇")
 
 
 if __name__ == "__main__":

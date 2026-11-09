@@ -15,29 +15,34 @@
         "locator": "RD-01"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "修鞋爷爷的工具箱给人什么印象？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "爷爷修鞋前，先把鞋（ ）看了两遍。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "修鞋爷爷只收了（ ）元钱。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "从哪些地方可以看出修鞋爷爷做事细心？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -58,35 +63,41 @@
         "locator": "RD-02"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "小满的彩笔盒有什么特点？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小满的图画只涂了（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小满每天放学都要帮（ ）买菜。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "短文写了小满的哪两件事？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       },
       {
         "type": "short",
         "stem": "你觉得小满是个怎样的孩子？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -107,29 +118,34 @@
         "locator": "RD-03"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "奶奶眼睛不好以后，用什么办法继续给“我”讲故事？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "奶奶讲《西游记》讲到孙悟空翻跟头时，会用手在桌上（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "奶奶的旧木箱里装的是（ ）和笔记。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "从奶奶讲故事的动作中，可以看出她怎样？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -150,29 +166,35 @@
         "locator": "RD-04"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "下雨天，交警叔叔怎样做？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "交警叔叔提醒大家：“慢一点，（ ）再走。”",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "短文写了交警叔叔的哪两件事？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       },
       {
         "type": "short",
         "stem": "为什么说“他的话却让人心里踏实”？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -193,29 +215,34 @@
         "locator": "RD-05"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "雨后校园的空气里有什么味道？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "梧桐叶上的水珠滚下来，在（ ）上砸出小小的水花。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "月季花瓣上沾着雨点，红得（ ）了。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "短文从哪些方面写了雨后的校园？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -236,29 +263,35 @@
         "locator": "RD-06"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5",
+      "SK6"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "文中把苹果比作什么？",
-        "skill": null,
+        "skill": "SK6",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "葡萄上面蒙着一层（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "果农伯伯推着小车时，果园里有什么声音？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "用一句话说说秋天的果园给你什么感觉。",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -279,29 +312,34 @@
         "locator": "RD-07"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK6"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "天空的颜色中，没有出现哪一种？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "船头的灯光映在水里，像一粒粒（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "爸爸指着江面，让“我”看灯的（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "短文写了江边傍晚的哪些景物？是按什么顺序写的？",
-        "skill": null,
+        "skill": "SK6",
         "origin": null
       }
     ]
@@ -322,29 +360,34 @@
         "locator": "RD-08"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "短文写的是什么季节的景色？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "树枝上的雪像开满了（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "雪地里走路会发出“（ ）”的响声。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "雪后的山村有哪些声音？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       }
     ]
@@ -365,29 +408,35 @@
         "locator": "RD-09"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "“我”第一次切西红柿时切得怎样？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "鸡蛋液倒进锅里，发出“（ ）”一声。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "妈妈是怎样教“我”做菜的？请写出两点。",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       },
       {
         "type": "short",
         "stem": "“我心里美滋滋的”是因为什么？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -408,29 +457,34 @@
         "locator": "RD-10"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK3"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "接力棒为什么掉在地上？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "“我”跑到一半时，腿开始（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "同学们在跑道边做了什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "老师说的话是什么意思？",
-        "skill": null,
+        "skill": "SK3",
         "origin": null
       }
     ]
@@ -451,29 +505,35 @@
         "locator": "RD-11"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "书包是谁送回来的？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "书包里的水杯和（ ）都还在。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "那位阿姨做了什么事？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       },
       {
         "type": "short",
         "stem": "“我”为什么决定以后也要像那位阿姨一样？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -494,29 +554,34 @@
         "locator": "RD-12"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "停电后，家里用什么照明？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "爸爸讲他小时候点（ ）读书的事。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "妈妈教“我”用蜡烛油捏了一个（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "“我”为什么有点舍不得电来？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -537,29 +602,35 @@
         "locator": "RD-13"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "小台灯的灯座上有什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "台灯的光不刺眼，照在（ ）上，字看得很清楚。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "短文写了小台灯的哪些部分？请写出两个，并说说其中一个的样子。",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       },
       {
         "type": "short",
         "stem": "为什么“我”没有换掉旧台灯？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -580,29 +651,34 @@
         "locator": "RD-14"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK3"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "针线盒里没有下列哪样东西？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "奶奶说针线盒是她的“（ ）”。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "奶奶用针线盒能做哪些事？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "为什么说针线盒是奶奶的“小药箱”？",
-        "skill": null,
+        "skill": "SK3",
         "origin": null
       }
     ]
@@ -623,29 +699,34 @@
         "locator": "RD-15"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "绿萝是什么时候来到教室的？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "绿萝的叶子像一个个绿色的（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "阳光穿过叶片时，（ ）清清楚楚。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "绿萝蔫了以后，老师怎样做？结果怎样？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -666,29 +747,35 @@
         "locator": "RD-16"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4",
+      "SK5"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "这只旧闹钟有什么毛病？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "爷爷年轻时在（ ）上班。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "爷爷为什么舍不得换掉旧闹钟？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       },
       {
         "type": "short",
         "stem": "爷爷从闹钟悟出了什么道理？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -709,29 +796,35 @@
         "locator": "RD-17"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2",
+      "SK5"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "小蚂蚁发现自己搬不动米粒后，做了什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "蚂蚁们用一片（ ）把米粒拖过了水沟。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "蚂蚁们是怎样把米粒搬回洞的？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       },
       {
         "type": "short",
         "stem": "这个故事告诉我们什么道理？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -752,29 +845,34 @@
         "locator": "RD-18"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "小猴子学小鸟飞，结果怎样？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "老山羊说，它的蹄子能（ ）石头。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "老山羊为什么能在陡坡上走稳？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "小猴子后来有什么变化？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -795,29 +893,35 @@
         "locator": "RD-19"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "风筝为什么开始往下掉？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "风筝最后挂在一棵（ ）上。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "风筝第一次飞时是怎样的态度？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       },
       {
         "type": "short",
         "stem": "第二年风筝有什么变化？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -838,29 +942,34 @@
         "locator": "RD-20"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "小刺猬为什么难过？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小刺猬用鼻子拱开了缠住小兔的（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "小刺猬的刺有哪些用处？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "小刺猬明白了什么？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -881,29 +990,34 @@
         "locator": "RD-21"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK3"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "花离得近时，蜜蜂跳什么舞？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "蜜蜂跳摆尾舞时，先走一段（ ），再绕回来。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "蜜蜂的舞蹈能告诉同伴哪些信息？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "为什么说蜜蜂用舞蹈把消息传得很清楚？",
-        "skill": null,
+        "skill": "SK3",
         "origin": null
       }
     ]
@@ -924,29 +1038,33 @@
         "locator": "RD-22"
       }
     ],
+    "skills": [
+      "SK1"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "清晨，树叶上常常有小水珠。这些小水珠主要是怎么来的？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "树叶上有许多小小的（ ），小得用眼睛看不见。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "水从气孔变成水汽跑到空气里，这个过程叫（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "树叶“出汗”对树有什么好处？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       }
     ]
@@ -967,29 +1085,34 @@
         "locator": "RD-23"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "蚂蚁用什么和同伴“说话”？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "蚂蚁还会在路上留下（ ），同伴顺着它就能找到食物。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "蚂蚁搬东西时为什么能搬动比自己大的食物？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       },
       {
         "type": "short",
         "stem": "遇到太大的食物，蚂蚁怎么做？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       }
     ]
@@ -1010,29 +1133,34 @@
         "locator": "RD-24"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "月亮为什么会发光？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "月亮绕着（ ）转。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "月相变化大约（ ）个月一圈。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "用自己的话说说月亮为什么会由圆变弯。",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1060,29 +1188,34 @@
         "locator": "RD-026"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "乒乓球为什么能一下子冲上浪尖？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "浪头把乒乓球打进漩涡后，它没能继续向上，而是（ ）数十米。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "黄河鲤鱼指出，乒乓球刚才能逆流而上，其实是（ ）造成的。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "这则寓言讽刺了什么样的人？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -1107,29 +1240,34 @@
         "locator": "RD-028"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "C",
     "questions": [
       {
         "type": "choice",
         "stem": "小山羊为什么要偷来一张狗皮披在身上？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "狼王在朦胧中发现，这只“牧羊犬”其实是一只（ ）的羊。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小山羊被狼王咬住喉咙，多亏（ ）及时赶到，才救了它。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "小山羊的结局说明了什么道理？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -1153,29 +1291,34 @@
         "locator": "RD-035"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "百灵鸟给大树唱赞歌，大树听了以后是什么反应？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "啄木鸟说自己以（ ）为天职，不会放过蛀虫。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "智者把恭维比作一只美丽的（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "大树为什么赶走啄木鸟？这样做带来了什么后果？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1198,29 +1341,34 @@
         "locator": "RD-043"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "公鸡的尾巴是怎么没的？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "公鸡为了掩饰，说外面的公鸡都把（ ）拨掉了，这样才摩登。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "第二天，公鸡们再次见面，个个的尾部都是（ ）的。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "这则寓言批评了生活中的哪种现象？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -1244,29 +1392,34 @@
         "locator": "RD-027"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "小燕子为什么想到大海上去练习飞翔？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "父母告诫小燕子，燕子自幼生长在（ ），并不具备鹰和海鸥的条件。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小燕子惊恐地大喊“（ ）”，却没有人来救它。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "暴风雨来临时，雄鹰、海鸥和小燕子的表现有什么不同？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -1290,29 +1443,34 @@
         "locator": "RD-044"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "最常出现在高枝上的鸟是哪一种？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "麻雀每天早上抢先落到高枝上，（ ）地鸣啭一番。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "画眉对麻雀登高枝的怪现象，一直持（ ）态度。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "麻雀登高枝为什么遭到画眉和啄木鸟的蔑视？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1335,29 +1493,34 @@
         "locator": "RD-049"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "小岩羊被金鵰叼住后，用什么办法脱身？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小岩羊发现一个岩洞，立即钻进去（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小岩羊掉进大河后，从深水里（ ），急忙朝岸上游去。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "小岩羊为什么能够绝处逢生？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -1385,29 +1548,34 @@
         "locator": "RD-055"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "老狼告诉小狼，狼群天生是什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "牧羊人急忙取出（ ），射出一块石头。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小狼最后疑惑：草原上遍地都是羊，却没有（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "老狼说自己是草原上的强者，小狼为什么会产生怀疑？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1436,29 +1604,34 @@
         "locator": "RD-056"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "C",
     "questions": [
       {
         "type": "choice",
         "stem": "狐狸为什么蹲在树底下流口水？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "蜡嘴雀说，果农特意留下柿子，是为它们（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "蜡嘴雀还会帮助果农捕捉（ ），保障柿子丰收。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "听了蜡嘴雀的话，狐狸明白了什么？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -1484,29 +1657,34 @@
         "locator": "RD-058"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "毛驴是怎样登上舞台的？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "毛驴站在台上，感觉视野开阔，大有（ ）之感。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "乌鸦提醒毛驴，它能俯视骆驼，全靠蹄下踩着的（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "这则寓言告诉我们什么道理？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -1535,29 +1713,34 @@
         "locator": "RD-072"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "猴王许诺，谁帮它摘下月亮就怎样？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "猴子们先搭背上肩，可伸伸手离月亮（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "众猴爬上一棵最高最粗的（ ），再一个个摞叠而上。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "猴王为什么最后叫停了摘月亮的办法？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1585,29 +1768,34 @@
         "locator": "RD-073"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "皮球为什么会掉进深渊？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "松鼠被誉为（ ），能维持生态平衡。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "松鼠掉进深渊后，皮球主动说：“还是我来（ ）吧！”",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "这则寓言告诉我们什么道理？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -1645,29 +1833,34 @@
         "locator": "RD-076"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "面对喇叭花的嘲笑，竹笋选择怎么做？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "大雨过后，喇叭花东倒西歪，花瓣落了（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "竹笋钻出地面后，一夜之间窜得比（ ）还高。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "竹笋为什么能在大雨后长得又高又稳？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1695,29 +1888,34 @@
         "locator": "RD-077"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "小野每天给麻雀阿灰做什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "阿灰翅膀尖上有一道（ ）的伤疤。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小野最后在山坡的（ ）里，找到了阿灰藏米的小房子。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "小野为什么说阿灰不是飞走了？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1739,29 +1937,34 @@
         "locator": "RD-084"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "母狮们主要啃咬莽蛇的哪些部位？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "小狮子不安于灌木丛的隐避，走到（ ）的草地上玩耍。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "第一只赶到的大母狮见莽蛇已经（ ）孩子的身体。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "群狮救下小狮子，靠的是什么？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -1785,29 +1988,34 @@
         "locator": "RD-091"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK2"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "老汉栽下的两棵树苗，最初有什么相同之处？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "一棵树把风雨看作舒活筋骨、洗去（ ）的好事。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "另一棵树嫌鸟屎弄脏身子，不久就把小鸟（ ）了。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "两棵树为什么最后差距这么大？",
-        "skill": null,
+        "skill": "SK2",
         "origin": null
       }
     ]
@@ -1830,29 +2038,34 @@
         "locator": "RD-096"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "女生向心理学老师提出的问题是什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "老师劝狂热的朋友（ ）一点，劝消沉的朋友振作起来。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "老师说，狂热的那位朋友摔死在（ ）下。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "老师为什么说狂热和消沉都可悲？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1875,29 +2088,34 @@
         "locator": "RD-098"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK5"
+    ],
+    "difficulty": "A",
     "questions": [
       {
         "type": "choice",
         "stem": "啄木鸟啄开树皮后，看到了什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "大树说，最早从它根部吮吸养分的是（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "大树感恩地称啄木鸟为“救命（ ）”。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "这则寓言借大树获救说明了什么？",
-        "skill": null,
+        "skill": "SK5",
         "origin": null
       }
     ]
@@ -1920,29 +2138,34 @@
         "locator": "RD-103"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "文中的黑子是什么动物？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "骆驼说驴子走进磨房，总是（ ）地拉磨。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "骆驼说老牛要是拉犁耕地，比（ ）更胜一筹。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "黑子为什么让人蔑视？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]
@@ -1965,29 +2188,34 @@
         "locator": "RD-106"
       }
     ],
+    "skills": [
+      "SK1",
+      "SK4"
+    ],
+    "difficulty": "B",
     "questions": [
       {
         "type": "choice",
         "stem": "兔子和乌龟比赛做什么？",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "兔子到了夏锄时令，东奔西窜紧忙活，很快（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "fill",
         "stem": "乌龟的甜瓜堆得大，兔子的甜瓜堆得（ ）。",
-        "skill": null,
+        "skill": "SK1",
         "origin": null
       },
       {
         "type": "short",
         "stem": "乌龟为什么认为自己并没有输？",
-        "skill": null,
+        "skill": "SK4",
         "origin": null
       }
     ]

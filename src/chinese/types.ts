@@ -18,6 +18,8 @@ import type {
   ReadingChoiceQuestion,
   ReadingFillQuestion,
   ReadingShortQuestion,
+  ReadingSkillCode,
+  ReadingTheme,
 } from '../data/chinese/types.ts'
 
 /** 可进卷的题型；reading 的 count 为篇数，writing 为篇数，lianmian 为 1 */
@@ -56,6 +58,10 @@ export interface ChineseSectionConfig {
   perItemScore: number
   /** 可选：覆盖全局难度，只对确有逐题难度标注的题型生效 */
   levels?: ChineseLevel[]
+  /** 仅 reading 可用：按主题筛选（OR，留空不筛选） */
+  themes?: ReadingTheme[]
+  /** 仅 reading 可用：按考点筛选（OR，留空不筛选） */
+  skills?: ReadingSkillCode[]
 }
 
 /** 出卷配置：整份可 JSON 序列化，界面只需要构造它 */
@@ -159,6 +165,8 @@ export interface ReadingPaperItem extends ChineseItemMeta {
   theme: ChineseReading['theme']
   paragraphs: string[]
   questions: ChineseReadingPaperQuestion[]
+  /** 本文覆盖的考点集合（SK1–SK7），出卷按考点筛选时读取 */
+  skills: ReadingSkillCode[]
   /** 篇内题量，便于界面摘要 */
   questionCount: number
   /** 质检状态：qualified 正式题库；pending-repair 待修区（可练习，不计入合格数） */

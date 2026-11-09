@@ -32,95 +32,175 @@ console.log({
   PRACTICE: PRACTICE_READING_BANK.length,
 })
 console.log('materials.inventory.reading =', chineseMaterialInventory().reading)
-console.log('readingCandidates =', readingCandidates().length,
-  'qualified =', qualifiedReadingCandidates().length,
-  'pending-repair =', readingCandidates().filter((x) => x.quality === 'pending-repair').length)
-const pendingIds = readingCandidates().filter((x) => x.quality === 'pending-repair').map((x) => x.id)
-const leaked = qualifiedReadingCandidates().filter((x) => downlisted.includes(x.id) || pendingIds.includes(x.id))
-console.log('候选池混入下架/待修 =', leaked.length)
+const candidates = readingCandidates()
+console.log(
+  'readingCandidates =',
+  candidates.length,
+  'qualified =',
+  qualifiedReadingCandidates().length,
+  'pending-repair =',
+  candidates.filter((x) => x.quality === 'pending-repair').length,
+)
 
-const byTheme = new Map()
-for (const item of qualifiedReadingCandidates()) {
-  byTheme.set(item.theme, (byTheme.get(item.theme) ?? 0) + 1)
-}
-console.log('主题候选数 =', Object.fromEntries(byTheme))
+line('字段可见性（mounted 268 篇）')
+const mountedIds = new Set(MOUNTED_READINGS.map((x) => x.id))
+const withSkills = candidates.filter((x) => x.skills.length > 0).length
+const missingSkill = candidates
+  .filter((x) => mountedIds.has(x.id) && x.skills.length === 0)
+  .map((x) => x.id)
+const selectedMissingSkills = candidates.filter((x) => x.skills.length === 0).length
+console.log({
+  candidatesWithSkills: withSkills,
+  mountedMissingSkills: missingSkill.length,
+  selectedBankWithoutSkill: selectedMissingSkills - missingSkill.length,
+  levels: Object.fromEntries(
+    ['A', 'B', 'C'].map((lv) => [lv, candidates.filter((x) => x.level === lv).length]),
+  ),
+  themes: Object.fromEntries(
+    [...new Set(candidates.map((x) => x.theme))].map((t) => [
+      t,
+      candidates.filter((x) => x.theme === t).length,
+    ]),
+  ),
+})
 
-function summarize(result) {
+const skillPoolSize = (skills) =>
+  qualifiedReadingCandidates().filter((x) => x.skills.some((s) => skills.includes(s))).length
+const themePoolSize = (themes) =>
+  qualifiedReadingCandidates().filter((x) => themes.includes(x.theme)).length
+console.log(
+  '按考点可出卷篇数 =',
+  Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map((i) => [`SK${i}`, skillPoolSize([`SK${i}`])])),
+)
+console.log(
+  '按主题可出卷篇数 =',
+  Object.fromEntries([...new Set(candidates.map((x) => x.theme))].map((t) => [t, themePoolSize([t])]),
+))
+
+function summarize(result, filter) {
   const readingItems = result.items.filter((x) => x.typeId === 'reading')
   const questions = readingItems.flatMap((x) => x.questions)
   const qtypes = { choice: 0, fill: 0, short: 0 }
   for (const q of questions) qtypes[q.type] += 1
+  const hitSkills = new Set(readingItems.flatMap((x) => x.skills))
   return {
-    sections: result.sections.map((s) => `${s.typeId}:${s.selected}/${s.requested}`),
-    items: result.items.length,
-    readingIds: readingItems.map((x) => x.id),
-    readingQuestions: questions.length,
+    selected: readingItems.length,
+    questions: questions.length,
     qtypes,
-    readingLevels: [...new Set(readingItems.map((x) => x.level))],
-    gaps: result.gaps.map((g) => `${g.typeId} 缺 ${g.missing}`),
+    themes: [...new Set(readingItems.map((x) => x.theme))],
+    levels: [...new Set(readingItems.map((x) => x.level))],
+    skills: [...hitSkills].sort(),
+    ids: readingItems.map((x) => x.id),
+    filter,
+    gaps: result.gaps.map((g) => g.message),
+    notes: result.notes,
   }
 }
 
-line('卷 A：只出课外阅读 5 篇')
-const paperA = buildChinesePaper({
-  version: 1, grade: '3A', title: '三上课外阅读专练', seed: 20261109,
-  difficulty: 'mixed', totalItems: 5, includeAnswers: true,
-  sections: [{ typeId: 'reading', count: 5, perItemScore: 12 }],
-})
-console.log(summarize(paperA))
-console.log('篇内重复 =', new Set(paperA.items.map((x) => x.key)).size !== paperA.items.length)
+function assert(cond, msg) {
+  if (!cond) {
+    console.log('  ✗ 断言失败：' + msg)
+    process.exitCode = 1
+  }
+}
 
-line('卷 B：字词+积累+句子+阅读+习作混合')
-const paperB = buildChinesePaper({
-  version: 1, grade: '3A', title: '三上语文综合练习', seed: 20261109,
-  difficulty: 'mixed', totalItems: 12, includeAnswers: true,
-  sections: [
-    { typeId: 'kanpinyin', count: 5, perItemScore: 1 },
-    { typeId: 'gushi-fill', count: 2, perItemScore: 2 },
-    { typeId: 'gaibing', count: 2, perItemScore: 2 },
-    { typeId: 'reading', count: 2, perItemScore: 12 },
-    { typeId: 'writing', count: 1, perItemScore: 30 },
-  ],
-})
-console.log(summarize(paperB))
+function specialPaper({ title, skills, themes, difficulty = 'mixed', count = 3, seed = 20261109 }) {
+  const result = buildChinesePaper({
+    version: 1,
+    grade: '3A',
+    title,
+    seed,
+    difficulty,
+    totalItems: count,
+    includeAnswers: true,
+    sections: [{ typeId: 'reading', count, perItemScore: 12, skills, themes }],
+  })
+  const s = summarize(result, { skills, themes, difficulty })
+  console.log(`${title}: 篇 ${s.selected}/${count}，题 ${s.questions}（选${s.qtypes.choice}/填${s.qtypes.fill}/简${s.qtypes.short}），`
+    + `主题 ${s.themes.join('/')}，难度 ${s.levels.join('/')}，考点 ${s.skills.join('/')}`)
+  console.log('  篇目：' + s.ids.join(' '))
+  if (s.gaps.length) console.log('  缺口：' + s.gaps.join(' | '))
+  // 不含无关篇：每篇必须命中筛选条件，且不混入下架/待修
+  const itemMap = new Map(candidates.map((x) => [x.id, x]))
+  for (const id of s.ids) {
+    const item = itemMap.get(id)
+    assert(item, `篇目 ${id} 不在候选池`)
+    if (!item) continue
+    if (skills) assert(item.skills.some((k) => skills.includes(k)), `${id} 未命中所选考点 ${skills}`)
+    if (themes) assert(themes.includes(item.theme), `${id} 主题 ${item.theme} 不在 ${themes}`)
+    if (difficulty !== 'mixed') assert(item.level === difficulty, `${id} 难度 ${item.level} 不是 ${difficulty}`)
+    assert(!downlisted.includes(id), `${id} 是下架稿`)
+    assert(item.quality === 'qualified', `${id} 是待修稿`)
+  }
+  assert(new Set(s.ids).size === s.ids.length, `${title} 篇内重复`)
+  return s
+}
 
-line('连出 10 套阅读卷（每套 3 篇）')
+line('专项卷：SK2')
+specialPaper({ title: 'SK2 专项卷', skills: ['SK2'] })
+line('专项卷：SK4')
+specialPaper({ title: 'SK4 专项卷', skills: ['SK4'] })
+line('专项卷：SK7')
+specialPaper({ title: 'SK7 专项卷', skills: ['SK7'] })
+line('专项卷：写景主题')
+specialPaper({ title: '写景主题卷', themes: ['写景'] })
+line('专项卷：难度易（A 档）')
+specialPaper({ title: '难度易卷', difficulty: 'A' })
+line('专项卷：SK2 + 写景（组合筛选）')
+specialPaper({ title: 'SK2+写景组合卷', skills: ['SK2'], themes: ['写景'] })
+line('素材不足：记事主题请求 5 篇（实际仅 2 篇）')
+specialPaper({ title: '记事主题卷（不足）', themes: ['记事'], count: 5 })
+
+line('SK7 可出卷上限')
+const sk7Pool = qualifiedReadingCandidates().filter((x) => x.skills.includes('SK7'))
+const sk7Paper = buildChinesePaper({
+  version: 1, grade: '3A', title: 'SK7 全量卷', seed: 20261110,
+  difficulty: 'mixed', totalItems: 20, includeAnswers: true,
+  sections: [{ typeId: 'reading', count: 20, perItemScore: 12, skills: ['SK7'] }],
+})
+const sk7 = summarize(sk7Paper, { skills: ['SK7'] })
+console.log(`候选 ${sk7Pool.length} 篇，请求 20 篇，实排 ${sk7.selected} 篇，缺口 ${sk7.gaps.length}`)
+console.log('  篇目：' + sk7.ids.join(' '))
+
+line('SK7 超额请求 25 篇（候选仅 20）')
+const sk7Over = buildChinesePaper({
+  version: 1, grade: '3A', title: 'SK7 超额卷', seed: 20261111,
+  difficulty: 'mixed', totalItems: 25, includeAnswers: true,
+  sections: [{ typeId: 'reading', count: 25, perItemScore: 12, skills: ['SK7'] }],
+})
+const sk7o = summarize(sk7Over, { skills: ['SK7'] })
+console.log(`实排 ${sk7o.selected}/25 篇，缺口：${sk7o.gaps.join(' | ')}`)
+
+line('连出 10 套 SK2 专项卷（每套 3 篇）')
 const seen = new Map()
-let crossRepeat = 0
 for (let i = 1; i <= 10; i += 1) {
   const result = buildChinesePaper({
-    version: 1, grade: '3A', title: `阅读卷 ${i}`, seed: 20261109 + i * 7919,
+    version: 1, grade: '3A', title: `SK2 专项卷 ${i}`, seed: 20261109 + i * 7919,
     difficulty: 'mixed', totalItems: 3, includeAnswers: true,
-    sections: [{ typeId: 'reading', count: 3, perItemScore: 12 }],
+    sections: [{ typeId: 'reading', count: 3, perItemScore: 12, skills: ['SK2'] }],
   })
-  const s = summarize(result)
-  if (new Set(s.readingIds).size !== s.readingIds.length) console.log(`卷 ${i} 篇内重复`, s.readingIds)
-  for (const id of s.readingIds) {
-    if (seen.has(id)) crossRepeat += 1
-    seen.set(id, (seen.get(id) ?? 0) + 1)
-  }
-  if (s.readingIds.some((id) => downlisted.includes(id))) console.log(`卷 ${i} 混入下架稿`, s.readingIds)
+  const s = summarize(result, { skills: ['SK2'] })
+  if (new Set(s.ids).size !== s.ids.length) console.log(`  卷 ${i} 篇内重复`, s.ids)
+  for (const id of s.ids) seen.set(id, (seen.get(id) ?? 0) + 1)
+  console.log(`  卷 ${i}: ${s.ids.join(' ')}`)
 }
-console.log('跨卷重复篇数（10 套共 30 篇中）=', crossRepeat, '去重篇数 =', seen.size)
+const repeats = [...seen.values()].filter((n) => n > 1).length
+console.log('10 套共 30 篇位置，去重篇数 =', seen.size, '，被重复使用的篇数 =', repeats,
+  '，跨卷重复位置 =', 30 - seen.size)
 
-line('按主题取篇（数据层可筛选，出卷配置暂无此字段）')
-for (const theme of byTheme.keys()) {
-  const pool = qualifiedReadingCandidates().filter((x) => x.theme === theme)
-  const picked = pool.slice(0, 2)
-  console.log(theme, '池', pool.length, '示例', picked.map((x) => `${x.id}《${x.title}》${x.questionCount}题`).join('；'))
+line('连出 10 套 SK7 专项卷（每套 3 篇）')
+const seen7 = new Map()
+for (let i = 1; i <= 10; i += 1) {
+  const result = buildChinesePaper({
+    version: 1, grade: '3A', title: `SK7 专项卷 ${i}`, seed: 20261109 + i * 7919,
+    difficulty: 'mixed', totalItems: 3, includeAnswers: true,
+    sections: [{ typeId: 'reading', count: 3, perItemScore: 12, skills: ['SK7'] }],
+  })
+  for (const id of result.items.map((x) => x.id)) seen7.set(id, (seen7.get(id) ?? 0) + 1)
 }
+console.log('10 套共 30 篇位置，去重篇数 =', seen7.size, '，被重复使用的篇数 =',
+  [...seen7.values()].filter((n) => n > 1).length, '，跨卷重复位置 =', 30 - seen7.size)
 
-line('按考点取篇（仅 268 篇挂载稿有 skill 标注）')
-const skillMap = new Map()
-for (const item of qualifiedReadingCandidates()) {
-  for (const q of item.questions) {
-    const skill = q.skill
-    if (!skill) continue
-    if (!skillMap.has(skill)) skillMap.set(skill, new Set())
-    skillMap.get(skill).add(item.id)
-  }
-}
-console.log(Object.fromEntries([...skillMap].map(([k, v]) => [k, v.size])))
-console.log('无 skill 标注篇数 =', qualifiedReadingCandidates().filter((x) => x.questions.every((q) => !q.skill)).length)
+line('gate 统计')
 console.log('gate pass 数 =', gatePass.size, 'gate fail 数 =', gate.length - gatePass.size,
   'downlisted =', downlisted.length)

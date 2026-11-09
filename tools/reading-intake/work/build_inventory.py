@@ -22,6 +22,7 @@ BANK44 = os.path.join(ROOT, "tools", "reading-intake", "work", "bank44.json")
 PRIORITY = os.path.join(ROOT, "data", "reading-catalog", "REVIEW-PRIORITY.md")
 OUT_HTML = os.path.join(ROOT, "docs", "reading-bank-inventory.html")
 OUT_CSV = os.path.join(ROOT, "docs", "reading-bank-inventory.csv")
+OUT_CSV_SKILLS = os.path.join(ROOT, "docs", "reading-bank-inventory-skills.csv")
 
 HANZI = re.compile(r"[\u4e00-\u9fff]")
 SKILL_NAME = {
@@ -124,8 +125,8 @@ def main() -> None:
             "chars": han("".join(item.get("paragraphs") or [])),
             "qcount": len(questions),
             "qtypes": qtypes(questions),
-            "skills": "—",
-            "difficulty": "—",
+            "skills": " · ".join(item.get("skills") or []) or "—",
+            "difficulty": {"A": "易", "B": "中", "C": "难"}.get(item.get("difficulty"), "—"),
             "site": "原创（项目内）",
             "status": "正式·精选",
             "priority": "优先" if item["id"] in priority else "常规",
@@ -145,7 +146,7 @@ def main() -> None:
     selected = [r for r in rows if r["status"] == "正式·精选"]
 
     theme_counts = Counter(r["theme"] for r in formal)
-    diff_counts = Counter(r["difficulty"] for r in mounted)
+    diff_counts = Counter(r["difficulty"] for r in formal)
     all_types = Counter()
     mounted_types = Counter()
     selected_types = Counter()
@@ -181,6 +182,20 @@ def main() -> None:
                 skill_pages[code].add(draft["id"])
                 skill_questions[code] += 1
 
+    # 44 篇精选：逐题补标后与挂载稿同口径计入考点覆盖与可出卷篇数
+    for item in json.load(open(BANK44, encoding="utf-8")):
+        codes = set()
+        for q in item.get("questions") or []:
+            raw = q.get("skill")
+            code = raw if raw in SKILL_FULL else SKILL_NAME.get(raw)
+            if code:
+                codes.add(code)
+                skill_questions[code] += 1
+        for code in item.get("skills") or []:
+            codes.add(code)
+        for code in codes:
+            skill_pages[code].add(item["id"])
+
     origin_counts = Counter()
     unknown_origin = 0
     for path in os.listdir(DRAFTS):
@@ -215,11 +230,14 @@ def main() -> None:
     sk_rows = "".join(
         f"<tr><td><b>{sk}</b></td><td>{esc(SKILL_FULL[sk])}</td>"
         f"<td class='num'>{len(skill_pages.get(sk, ()))}</td>"
-        f"<td class='num'>{skill_questions.get(sk, 0)}</td></tr>"
+        f"<td class='num'>{skill_questions.get(sk, 0)}</td>"
+        f"<td class='num'>{len(skill_pages.get(sk, ()))}</td>"
+        f"<td>{'<span class=\"pill ok\">够</span>' if len(skill_pages.get(sk, ())) >= 20 else '<span class=\"pill warn\">不足</span>'}</td>"
+        f"<td>{'<span class=\"pill ok\">够</span>' if len(skill_pages.get(sk, ())) >= 30 else '<span class=\"pill warn\">不足</span>'}</td></tr>"
         for sk in SKILL_FULL
     )
     diff_rows = "".join(
-        f"<tr><td>{esc(k)}</td><td class='num'>{v}</td><td class='num'>{pct(v, len(mounted))}</td></tr>"
+        f"<tr><td>{esc(k)}</td><td class='num'>{v}</td><td class='num'>{pct(v, len(formal))}</td></tr>"
         for k, v in (("易", diff_counts.get("易", 0)), ("中", diff_counts.get("中", 0)),
                      ("难", diff_counts.get("难", 0)))
     )
@@ -284,6 +302,7 @@ def main() -> None:
 :root {{
   --ink:#1f2937; --muted:#64748b; --line:#d8dee8; --bg:#f4f6f9; --card:#ffffff;
   --ok:#0f6b3f; --okbg:#e7f5ec; --down:#8a2c2c; --downbg:#fbe9e9; --accent:#1e4e8c;
+  --warn:#8a5a00; --warnbg:#fdf1dc;
 }}
 * {{ box-sizing:border-box; }}
 body {{ margin:0; background:var(--bg); color:var(--ink);
@@ -308,6 +327,7 @@ tr.down td {{ color:var(--down); background:#fffafa; }}
 .pill {{ display:inline-block; padding:1px 8px; border-radius:999px; font-size:11.5px; white-space:nowrap; }}
 .pill.ok {{ background:var(--okbg); color:var(--ok); }}
 .pill.down {{ background:var(--downbg); color:var(--down); }}
+.pill.warn {{ background:var(--warnbg); color:var(--warn); }}
 .index {{ margin:6px 0 14px; font-size:12.5px; line-height:1.9; color:#334155; }}
 .note {{ background:#f7f9fc; border-left:3px solid var(--accent); padding:10px 12px;
   font-size:12.5px; color:#475569; margin:12px 0; }}
@@ -340,12 +360,12 @@ tr.down td {{ color:var(--down); background:#fffafa; }}
 <h2>一、总览</h2>
 <div class="grow">
 <div>
-<h3>主题分布（正式 {len(formal)} 篇）<span class="sub">命题稿原主题；挂载层会把非连续 20 篇映射为科普、童话/记事并入寓言/写事</span></h3>
+<h3>主题分布（正式 {len(formal)} 篇）<span class="sub">命题稿原主题，九类不合并（非连续、童话、记事各自独立）</span></h3>
 <table><thead><tr><th>主题</th><th class="num">篇数</th><th class="num">题数</th></tr></thead>
 <tbody>{theme_rows}</tbody></table>
 </div>
 <div>
-<h3>难度分布（仅 268 篇挂载稿有分层）<span class="sub">44 篇精选未标难度，不计入</span></h3>
+<h3>难度分布（正式 {len(formal)} 篇）<span class="sub">挂载稿沿用 quality_gate 的易/中/难；44 篇精选按正文长度与题目整合要求补标 A/B/C，映射为易/中/难</span></h3>
 <table><thead><tr><th>难度</th><th class="num">篇数</th><th class="num">占比</th></tr></thead>
 <tbody>{diff_rows}</tbody></table>
 <h3>题型分布</h3>
@@ -356,12 +376,12 @@ tr.down td {{ color:var(--down); background:#fffafa; }}
 
 <div class="grow">
 <div>
-<h3>SK1–SK7 覆盖（仅 268 篇挂载稿）<span class="sub">44 篇精选无 skill 字段，未计入</span></h3>
-<table><thead><tr><th>代号</th><th>考点</th><th class="num">覆盖篇数</th><th class="num">题数</th></tr></thead>
+<h3>SK1–SK7 覆盖（正式 {len(formal)} 篇：挂载 268 + 精选 44）<span class="sub">44 篇精选已按现有题目逐题补标；可出卷篇数即按该考点能筛出的篇目上限</span></h3>
+<table><thead><tr><th>代号</th><th>考点</th><th class="num">覆盖篇数</th><th class="num">题数</th><th class="num">按考点可出卷篇数</th><th>够 20 篇（单卷）</th><th>够 30 篇（10 套×3 篇不重复）</th></tr></thead>
 <tbody>{sk_rows}</tbody></table>
 </div>
 <div>
-<h3>原题来源构成（仅挂载稿 {composition_total} 题）<span class="sub">精选 97 题未标来源方式</span></h3>
+<h3>原题来源构成（仅挂载稿 {composition_total} 题）<span class="sub">精选 {total_q - total_q_mounted} 题未标来源方式</span></h3>
 <table><thead><tr><th>来源方式</th><th class="num">题数</th><th class="num">占比</th></tr></thead>
 <tbody>
 <tr><td>原题复用（原题 + 保留 + 20 题旧稿未标 action）</td><td class="num">{reuse}</td><td class="num">{pct(reuse, composition_total)}</td></tr>
@@ -389,7 +409,8 @@ tr.down td {{ color:var(--down); background:#fffafa; }}
 <div class="note">
 口径说明：正文字数只统计汉字；题量为该篇题目总数；题型号中“选/填/简”分别指选择、填空、简答；
 来源站点按来源标签归类，无法识别时记为“试卷/教辅汇编”；精选 44 篇为项目原创，未标 skill、难度与来源方式。
-本清单与 docs/reading-bank-inventory.csv 由同一脚本、同一份数据一次性生成。
+本清单与 docs/reading-bank-inventory.csv、docs/reading-bank-inventory-skills.csv
+由同一脚本、同一份数据一次性生成。
 </div>
 </main>
 </body>
@@ -407,8 +428,20 @@ tr.down td {{ color:var(--down); background:#fffafa; }}
                              r["qtypes"], r["skills"], r["difficulty"], r["site"],
                              r["status"], r["priority"], r["reason"]])
 
+    with open(OUT_CSV_SKILLS, "w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["考点代号", "考点", "覆盖篇数", "题数", "按考点可出卷篇数",
+                         "够20篇（单卷）", "够30篇（10套×3篇不重复）", "缺口"])
+        for sk in SKILL_FULL:
+            pages = len(skill_pages.get(sk, ()))
+            writer.writerow([sk, SKILL_FULL[sk], pages, skill_questions.get(sk, 0),
+                             pages, "够" if pages >= 20 else "不足",
+                             "够" if pages >= 30 else "不足",
+                             max(0, 20 - pages)])
+
     print(f"HTML: {OUT_HTML}")
     print(f"CSV : {OUT_CSV}")
+    print(f"CSV : {OUT_CSV_SKILLS}（按考点可出卷篇数）")
     print(f"正式 {len(formal)}（精选 {len(selected)} + 挂载 {len(mounted)}），下架 {len(down_rows)}，"
           f"总题 {total_q}（挂载 {total_q_mounted} + 精选 {total_q - total_q_mounted}）")
     print(f"题型 选{mounted_types['choice']}/填{mounted_types['fill']}/简{mounted_types['short']}（挂载）")

@@ -1,0 +1,398 @@
+[
+  {
+    "id": "RD-01",
+    "title": "修鞋的爷爷",
+    "theme": "写人",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文353汉字，前三题回文直取，第4题需跨三段整合细节体会人物品质，故定B。"
+  },
+  {
+    "id": "RD-02",
+    "title": "我的同桌",
+    "theme": "写人",
+    "skills": ["SK1", "SK2", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2", "SK4"],
+    "basis": "正文321汉字，含概括两件事与人物评价，需整合信息，定B。"
+  },
+  {
+    "id": "RD-03",
+    "title": "会讲故事的奶奶",
+    "theme": "写人",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文331汉字，前三题直取，第4题由同一段动作体会态度，定A。"
+  },
+  {
+    "id": "RD-04",
+    "title": "校门口的交警叔叔",
+    "theme": "写人",
+    "skills": ["SK1", "SK2", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK2", "SK4"],
+    "basis": "正文344汉字，含两件事概括与话语体会，需整合，定B。"
+  },
+  {
+    "id": "RD-05",
+    "title": "雨后的校园",
+    "theme": "写景",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2"],
+    "basis": "正文315汉字，前三题直取，第4题按段列举景物，回文可答，定A。"
+  },
+  {
+    "id": "RD-06",
+    "title": "秋天的果园",
+    "theme": "写景",
+    "skills": ["SK1", "SK5", "SK6"],
+    "difficulty": "B",
+    "questionSkills": ["SK6", "SK1", "SK1", "SK5"],
+    "basis": "正文340汉字，含比喻识别与整体感受，需整合，定B。"
+  },
+  {
+    "id": "RD-07",
+    "title": "江边的傍晚",
+    "theme": "写景",
+    "skills": ["SK1", "SK6"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK6"],
+    "basis": "正文329汉字，第4题兼查景物梳理与写作顺序（按写法落点记SK6），需统观全篇，定B。"
+  },
+  {
+    "id": "RD-08",
+    "title": "雪后的山村",
+    "theme": "写景",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "A",
+    "questionSkills": ["SK4", "SK1", "SK1", "SK1"],
+    "basis": "正文342汉字，季节题需由雪景推断，其余三题原文直取，定A。"
+  },
+  {
+    "id": "RD-09",
+    "title": "第一次做西红柿炒鸡蛋",
+    "theme": "写事",
+    "skills": ["SK1", "SK2", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK2", "SK4"],
+    "basis": "正文321汉字，含分点概括与心情归因，需整合，定B。"
+  },
+  {
+    "id": "RD-10",
+    "title": "接力赛最后一棒",
+    "theme": "写事",
+    "skills": ["SK1", "SK3"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK3"],
+    "basis": "正文330汉字，前三题直取，第4题理解老师话语含义，定B。"
+  },
+  {
+    "id": "RD-11",
+    "title": "找回来的书包",
+    "theme": "写事",
+    "skills": ["SK1", "SK2", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK2", "SK4"],
+    "basis": "正文349汉字，含事件概括与心理归因，需整合，定B。"
+  },
+  {
+    "id": "RD-12",
+    "title": "停电的晚上",
+    "theme": "写事",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文322汉字，三题直取，第4题心情原因可在原文找到依据，定A。"
+  },
+  {
+    "id": "RD-13",
+    "title": "我的小台灯",
+    "theme": "状物",
+    "skills": ["SK1", "SK2", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK2", "SK4"],
+    "basis": "正文340汉字，含灯体部分梳理与情感归因，需整合，定B。"
+  },
+  {
+    "id": "RD-14",
+    "title": "奶奶的针线盒",
+    "theme": "状物",
+    "skills": ["SK1", "SK3"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK3"],
+    "basis": "正文329汉字，前三题直取，第4题理解“小药箱”的比喻义，定B。"
+  },
+  {
+    "id": "RD-15",
+    "title": "窗台上的绿萝",
+    "theme": "状物",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2"],
+    "basis": "正文318汉字，前三题直取，第4题按“做法—结果”回文概括，定A。"
+  },
+  {
+    "id": "RD-16",
+    "title": "一只旧闹钟",
+    "theme": "状物",
+    "skills": ["SK1", "SK4", "SK5"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK4", "SK5"],
+    "basis": "正文329汉字，含情感归因与道理提炼，需整合，定B。"
+  },
+  {
+    "id": "RD-17",
+    "title": "小蚂蚁搬米粒",
+    "theme": "寓言",
+    "skills": ["SK1", "SK2", "SK5"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK2", "SK5"],
+    "basis": "正文330汉字，含搬米经过概括与寓意提炼，定B。"
+  },
+  {
+    "id": "RD-18",
+    "title": "爱学样的小猴子",
+    "theme": "寓言",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2"],
+    "basis": "正文315汉字，前三题直取，第4题概括单一变化，定A。"
+  },
+  {
+    "id": "RD-19",
+    "title": "骄傲的风筝",
+    "theme": "寓言",
+    "skills": ["SK1", "SK2", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK4", "SK2"],
+    "basis": "正文316汉字，含态度体会与前后变化概括，需整合，定B。"
+  },
+  {
+    "id": "RD-20",
+    "title": "小刺猬的刺",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文325汉字，前三题直取，第4题道理在结尾直接点明，定A。"
+  },
+  {
+    "id": "RD-21",
+    "title": "蜜蜂的舞蹈",
+    "theme": "科普",
+    "skills": ["SK1", "SK3"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK3"],
+    "basis": "正文313汉字，第4题需整合方向与距离说明句意，上浮一档，定B。"
+  },
+  {
+    "id": "RD-22",
+    "title": "会“出汗”的树叶",
+    "theme": "科普",
+    "skills": ["SK1"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK1"],
+    "basis": "正文323汉字，四题均为气孔、蒸腾、好处等原文直取，定A。"
+  },
+  {
+    "id": "RD-23",
+    "title": "蚂蚁的力气有多大",
+    "theme": "科普",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK2", "SK1"],
+    "basis": "正文332汉字，第3题需整合两段说明搬运原因，上浮一档，定B。"
+  },
+  {
+    "id": "RD-24",
+    "title": "月亮的脸为什么会变",
+    "theme": "科普",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文322汉字，第4题需跨段整合说明月相成因，定B。"
+  },
+  {
+    "id": "RD-026",
+    "title": "平民一夫寓言：乒乓球与刀鱼",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文394汉字，含寓言讽刺对象的提炼，定B。"
+  },
+  {
+    "id": "RD-028",
+    "title": "平民一夫寓言：小山羊扮狗",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "C",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文472汉字，情节较长且需提炼寓意，定C。"
+  },
+  {
+    "id": "RD-035",
+    "title": "经不起轻轻一捅",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文346汉字，第4题需整合因果推断，定B。"
+  },
+  {
+    "id": "RD-043",
+    "title": "个个都摩登喽",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文302汉字，末题需由情节抽象出批评现象，上浮一档，定B。"
+  },
+  {
+    "id": "RD-027",
+    "title": "平民一夫寓言：小燕子",
+    "theme": "寓言",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2"],
+    "basis": "正文309汉字，第4题需对比概括三种表现，上浮一档，定B。"
+  },
+  {
+    "id": "RD-044",
+    "title": "麻雀登高枝",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文379汉字，第4题需整合对话推断蔑视原因，定B。"
+  },
+  {
+    "id": "RD-049",
+    "title": "小岩羊与金鵰",
+    "theme": "寓言",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2"],
+    "basis": "正文406汉字，第4题需概括多处脱险情节，定B。"
+  },
+  {
+    "id": "RD-055",
+    "title": "狼与羊",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文322汉字，第4题需整合两处情节推断小狼心理，上浮一档，定B。"
+  },
+  {
+    "id": "RD-056",
+    "title": "枝头的红柿子",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "C",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文456汉字，含寓意提炼，定C。"
+  },
+  {
+    "id": "RD-058",
+    "title": "驴子登上舞台",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文414汉字，含道理提炼，定B。"
+  },
+  {
+    "id": "RD-072",
+    "title": "平民一夫寓言：猴子摘月",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文372汉字，第4题需整合跌落情节推断猴王决定，定B。"
+  },
+  {
+    "id": "RD-073",
+    "title": "平民一夫寓言：皮球和松鼠",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文446汉字，含寓意概括，定B。"
+  },
+  {
+    "id": "RD-076",
+    "title": "张华志寓言：急着开花，还是忙着长根",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文391汉字，第4题需整合生长过程推断原因，定B。"
+  },
+  {
+    "id": "RD-077",
+    "title": "张华志寓言：心里藏一把米",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文384汉字，第4题需理解结尾句的言外之意，定B。"
+  },
+  {
+    "id": "RD-084",
+    "title": "艾思寓言：群狮和莽蛇",
+    "theme": "寓言",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2"],
+    "basis": "正文389汉字，第4题需概括三方面做法，定B。"
+  },
+  {
+    "id": "RD-091",
+    "title": "壮树和瘦树",
+    "theme": "寓言",
+    "skills": ["SK1", "SK2"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK2"],
+    "basis": "正文394汉字，第4题需对比概括两树表现，定B。"
+  },
+  {
+    "id": "RD-096",
+    "title": "悲剧性格",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文311汉字，第4题需整合两个例子推断“可悲”，上浮一档，定B。"
+  },
+  {
+    "id": "RD-098",
+    "title": "艾思寓言：大树获救",
+    "theme": "寓言",
+    "skills": ["SK1", "SK5"],
+    "difficulty": "A",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK5"],
+    "basis": "正文329汉字，前三题直取，第4题寓意在结尾直接点明，定A。"
+  },
+  {
+    "id": "RD-103",
+    "title": "不及驴腿高",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文350汉字，第4题需整合多处表现推断原因，上浮一档，定B。"
+  },
+  {
+    "id": "RD-106",
+    "title": "其中包含奥妙",
+    "theme": "寓言",
+    "skills": ["SK1", "SK4"],
+    "difficulty": "B",
+    "questionSkills": ["SK1", "SK1", "SK1", "SK4"],
+    "basis": "正文327汉字，第4题需整合收成与过程推断，上浮一档，定B。"
+  }
+]
