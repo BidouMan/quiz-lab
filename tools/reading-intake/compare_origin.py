@@ -442,7 +442,7 @@ def main():
 
     m = res["meta"]
     print(f"脚本：tools/reading-intake/compare_origin.py")
-    print(f"命题稿 {m['draftFiles']} 篇；已下架 {m['downlisted']} 篇；"
+    print(f"命题稿 {m['draftFiles']} 篇；已归档/下架 {m['downlisted']} 篇；"
           f"正式题库(quality_gate pass) {m['gatePassPages']} 篇；题目 {m['questionTotal']} 道；"
           f"跨组混合篇 {m['mixedPages']} 篇")
     for g in ("A", "B", "C"):

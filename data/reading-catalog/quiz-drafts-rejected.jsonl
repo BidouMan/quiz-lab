@@ -1,86 +1,86 @@
-{"id": "RD-302", "title": "梧桐", "charCount": 227, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《梧桐》（三年级课外阅读训练）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-303", "title": "放学以后", "charCount": 245, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号文章《放学以后》（小学三年级语文阅读练习）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-310", "title": "拾贝的小女孩", "charCount": 246, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["《拾贝的小女孩》（三年级上册阅读短文，原文附阅读指导）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-320", "title": "牛顿", "charCount": 240, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《部编三年级上册语文暑假阅读题，30篇每天练！【老师推荐】》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-321", "title": "可爱的小溪", "charCount": 189, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《部编三年级上册期末课外阅读训练含答案12篇》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-323", "title": "乡间绿阴", "charCount": 126, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《三年级上册语文阅读理解专项训练（含答案）》（账号 三年级语文数学）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-326", "title": "秋天的雨", "charCount": 156, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《部编版三年级语文上册课内+课外阅读理解练习及答案，给孩子下载练习！》（账号 帝源英语课）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-329", "title": "下雨了", "charCount": 228, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“江苏微教育”《小学语文低年级期末阅读专项训练（附答案）》——《下雨了》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-330", "title": "放飞蜻蜓", "charCount": 206, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“小学语文看图写话作文学习”《部编三年级上册期末课外阅读训练含答案12篇》——《放飞蜻蜓》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-331", "title": "小花猫", "charCount": 186, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“江苏微教育”《小学语文低年级期末阅读专项训练（附答案）》——《小花猫》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-332", "title": "树木的智慧（节选）", "charCount": 240, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级知识”《部编版三年级上册语文期末常考试题带答案+模拟检测卷2套》——《树木的智慧（节选）》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-335", "title": "花坛", "charCount": 232, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“帝源英语课”《小学语文三年级阅读理解专项练习附答案，给孩子下载！》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-336", "title": "太阳花", "charCount": 222, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“帝源英语课”《小学三年级语文上册阅读理解练习带答案，一周快速强化！》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-337", "title": "天鹅湖", "charCount": 147, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级考试通”《【可打印】三年级上册语文阅读理解训练（含答案），二升三暑假必做！》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-338", "title": "小草", "charCount": 204, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级考试通”《【可打印】三年级上册语文阅读理解训练（含答案），二升三暑假必做！》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-340", "title": "去年的树（片段）", "charCount": 211, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-341", "title": "一幅名扬中外的画（片段）", "charCount": 99, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“智能听写宝”《部编版小学三年级语文上册寒假作业，带答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-342", "title": "大青树下的小学（片段）", "charCount": 133, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“唐山微教育”《三年级上语文课内阅读专项练习及答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-343", "title": "铺满金色巴掌的水泥道（片段）", "charCount": 175, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-344", "title": "金色的草地（片段）", "charCount": 142, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-345", "title": "在牛肚子里旅行（片段）", "charCount": 186, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级数学语文”《部编版三年级语文上册课内阅读理解练习及答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-346", "title": "总也倒不了的老屋（片段）", "charCount": 138, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“帝源英语课”《部编版三年级语文上册课内+课外阅读理解练习及答案，给孩子下载练习！》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-347", "title": "父亲、树林和鸟（片段）", "charCount": 111, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“国际庄家长会”《部编三年级语文上册课内阅读理解练习及答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-348", "title": "富饶的西沙群岛（节选）", "charCount": 118, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级知识”《部编版三年级上册语文期末常考试题带答案+模拟检测卷2套》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-349", "title": "掌声（片段）", "charCount": 178, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-350", "title": "灰雀（片段）", "charCount": 115, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-351", "title": "松鼠", "charCount": 95, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“q862325”《三年级上册语文阅读理解13篇》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-359", "title": "美丽的校园秋色", "charCount": 248, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2026统编版三年级语文上册期末综合测试卷免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-374", "title": "爱因斯坦在桥上", "charCount": 237, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["统编版2025三年级语文上册期末试卷免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-376", "title": "幸福的含义", "charCount": 192, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2023-2024部编版三年级语文上册第一次月考测试卷可下载打印（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-379", "title": "海滨小城（片段）", "charCount": 215, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2022年江西省吉安市三年级语文（上）期末试卷可下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-387", "title": "下课十分钟", "charCount": 232, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版三年级语文上册《第一单元》测试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-391", "title": "海底世界（节选）", "charCount": 185, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末综合测试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-411", "title": "乌鸦喝水", "charCount": 188, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末《阅读理解》专项复习题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-412", "title": "山里的宝贝", "charCount": 237, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末《阅读理解》专项复习题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-413", "title": "有趣的小刺猬", "charCount": 234, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册期末考试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-415", "title": "小花苗", "charCount": 227, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末考试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-420", "title": "雁群宿营", "charCount": 200, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2020年部编版小学三年级语文上册《第三单元》测试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-423", "title": "日月潭", "charCount": 185, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第四单元》测试题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-433", "title": "夏洛的网（内容简介）", "charCount": 232, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2024部编版三年级语文上册期中测试卷免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-435", "title": "石榴", "charCount": 221, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["小学三年级语文全能阅读《石榴》附答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-437", "title": "看日出", "charCount": 239, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年人教版小学三年级语文上册期末测试题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-438", "title": "南极洲的奇趣景观", "charCount": 216, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2016-2017学年小学三年级语文上学期期中团体赛试卷"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-439", "title": "盘古开天地（节选）", "charCount": 132, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["人教版2015年小学三年级语文上学期期末复习题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-440", "title": "蝴蝶谷", "charCount": 229, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2015-2016学年小学三年级语文上学期期中检测试题"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-446", "title": "风筝与线", "charCount": 162, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2014-2015小学三年级语文上册期中质量检测试卷"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-448", "title": "灾梨祸枣", "charCount": 162, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["小学三年级语文学业水平调查试题"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-454", "title": "狗熊做裤子", "charCount": 221, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年小学三年级语文上册期末综合练习题"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-455", "title": "爱说大话的青蛙", "charCount": 238, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年北师大版小学三年级语文上册期末综合试题"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-456", "title": "美丽的武夷山", "charCount": 239, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2010年小学三年级语文上册期中检测题"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-457", "title": "企鹅", "charCount": 224, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年新人教版小学三年级语文上册阅读训练题（一）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-458", "title": "可贵的沉默（节选）", "charCount": 154, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年新人教版小学三年级语文上册阅读训练题（一）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-460", "title": "母亲的缝纫机", "charCount": 121, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年新人教版小学三年级语文上册阅读训练题（二）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-463", "title": "杀鸡取蛋", "charCount": 212, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["szxuexiao.com《2011年新人教版小学三年级语文上册阅读训练题（二）》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-466", "title": "牧场之国（节选）", "charCount": 226, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["szxuexiao.com《2022年部编版三年级语文上册阅读理解测试题（可下载打印）》"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-467", "title": "读不完的大书（片段）", "charCount": 223, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["统编版2026-2027三年级语文上学期期末学情调研卷免费下载（附参考答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-468", "title": "手术台就是阵地（节选）", "charCount": 152, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2025-2026统编版三年级语文上册期末复习卷免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-469", "title": "秋天的雨（节选）", "charCount": 152, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2024-2025统编版三年级语文上册期中测试卷免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-470", "title": "花的学校（节选）", "charCount": 151, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2023-2024部编版三年级语文上册第一单元综合提优卷可下载打印（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-471", "title": "那一定会很好（节选）", "charCount": 169, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末《阅读》专项训练题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-473", "title": "在牛肚子里旅行（片段）", "charCount": 173, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["部编版2018年小学三年级语文上册《第三单元》测试题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-474", "title": "阳台上的小手（片段）", "charCount": 165, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第一单元》测试题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-475", "title": "燕子（节选）", "charCount": 168, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2022年部编版小学三年级语文下册《第一单元》测试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-477", "title": "瑞雪", "charCount": 217, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["小学三年级语文《瑞雪》练习题"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-478", "title": "燕子（选段）", "charCount": 148, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2026部编版三年级语文下册第一单元检测卷免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-479", "title": "荷花（节选）", "charCount": 149, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2025人教版三年级语文下册期末检测试卷免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-480", "title": "赵州桥（节选）", "charCount": 264, "rules": ["R1"], "reasons": ["三下来源（范围一票否决）"], "sources": ["2022年部编版三年级语文下册期末综合复习试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-481", "title": "火烧云（节选）", "charCount": 180, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["部编版2021三年级语文下册期末质量检测试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-482", "title": "我变成了一棵树（节选）", "charCount": 162, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文下册《第五单元》测试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-483", "title": "花钟（节选）", "charCount": 312, "rules": ["R1"], "reasons": ["三下来源（范围一票否决）"], "sources": ["2021年部编版小学三年级语文下册《第四单元》测试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-484", "title": "小真的长头发（节选）", "charCount": 216, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2020年部编版小学三年级语文下册《第五单元》测试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-485", "title": "翠鸟（片段）", "charCount": 127, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2015年小学三年级语文下册期中考试试卷"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-486", "title": "一个小村庄的故事（片段）", "charCount": 193, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2013年小学三年级语文下学期期末考试试卷"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-487", "title": "总也倒不了的老屋（节选）", "charCount": 133, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["统编版2026三年级语文上册《第三单元》综合测试免费下载（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-488", "title": "总也倒不了的老屋（节选）", "charCount": 139, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["部编版2023-2024三年级语文上册期中试卷可下载打印（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-489", "title": "小狗学叫（节选）", "charCount": 140, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2020年部编版小学三年级语文上册《第四单元》测试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-490", "title": "美丽的小兴安岭（节选）", "charCount": 125, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册期末考试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-491", "title": "揠苗助长（节选）", "charCount": 133, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第三单元》测试题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-493", "title": "纸的发明（造纸方法的传承）", "charCount": 134, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2023三年级语文下册第三单元综合知识测试卷部编版可下载找印（附答案）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-494", "title": "荷花（想象起舞）", "charCount": 133, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["三年级语文下册期末模拟试卷附答案2022学年部编版（可下载打印）"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-495", "title": "翠鸟", "charCount": 107, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册期中考试试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-496", "title": "香港,璀璨的明珠（节选）", "charCount": 57, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第四单元》测试题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-497", "title": "石榴（节选）", "charCount": 88, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第二单元》测试题及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-498", "title": "奇怪的大石头（节选）", "charCount": 95, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["人教版2016-2017学年三年级语文上学期期末检测试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-499", "title": "爬天都峰（节选）", "charCount": 110, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["人教版2016-2017学年三年级语文上学期《期中检测》试卷及答案"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
-{"id": "RD-500", "title": "富饶的西沙群岛（海水）", "charCount": 70, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2012-2013学年人教版小学三年级语文第一学期期末考试试卷"], "note": "文件保留在 quiz-drafts，仅移出挂载池"}
+{"id": "RD-302", "title": "梧桐", "charCount": 227, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《梧桐》（三年级课外阅读训练）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-303", "title": "放学以后", "charCount": 245, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号文章《放学以后》（小学三年级语文阅读练习）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-310", "title": "拾贝的小女孩", "charCount": 246, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["《拾贝的小女孩》（三年级上册阅读短文，原文附阅读指导）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-320", "title": "牛顿", "charCount": 240, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《部编三年级上册语文暑假阅读题，30篇每天练！【老师推荐】》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-321", "title": "可爱的小溪", "charCount": 189, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《部编三年级上册期末课外阅读训练含答案12篇》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-323", "title": "乡间绿阴", "charCount": 126, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《三年级上册语文阅读理解专项训练（含答案）》（账号 三年级语文数学）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-326", "title": "秋天的雨", "charCount": 156, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号《部编版三年级语文上册课内+课外阅读理解练习及答案，给孩子下载练习！》（账号 帝源英语课）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-329", "title": "下雨了", "charCount": 228, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“江苏微教育”《小学语文低年级期末阅读专项训练（附答案）》——《下雨了》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-330", "title": "放飞蜻蜓", "charCount": 206, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“小学语文看图写话作文学习”《部编三年级上册期末课外阅读训练含答案12篇》——《放飞蜻蜓》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-331", "title": "小花猫", "charCount": 186, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“江苏微教育”《小学语文低年级期末阅读专项训练（附答案）》——《小花猫》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-332", "title": "树木的智慧（节选）", "charCount": 240, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级知识”《部编版三年级上册语文期末常考试题带答案+模拟检测卷2套》——《树木的智慧（节选）》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-335", "title": "花坛", "charCount": 232, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“帝源英语课”《小学语文三年级阅读理解专项练习附答案，给孩子下载！》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-336", "title": "太阳花", "charCount": 222, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“帝源英语课”《小学三年级语文上册阅读理解练习带答案，一周快速强化！》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-337", "title": "天鹅湖", "charCount": 147, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级考试通”《【可打印】三年级上册语文阅读理解训练（含答案），二升三暑假必做！》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-338", "title": "小草", "charCount": 204, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级考试通”《【可打印】三年级上册语文阅读理解训练（含答案），二升三暑假必做！》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-340", "title": "去年的树（片段）", "charCount": 211, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-341", "title": "一幅名扬中外的画（片段）", "charCount": 99, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“智能听写宝”《部编版小学三年级语文上册寒假作业，带答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-342", "title": "大青树下的小学（片段）", "charCount": 133, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“唐山微教育”《三年级上语文课内阅读专项练习及答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-343", "title": "铺满金色巴掌的水泥道（片段）", "charCount": 175, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-344", "title": "金色的草地（片段）", "charCount": 142, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-345", "title": "在牛肚子里旅行（片段）", "charCount": 186, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级数学语文”《部编版三年级语文上册课内阅读理解练习及答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-346", "title": "总也倒不了的老屋（片段）", "charCount": 138, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“帝源英语课”《部编版三年级语文上册课内+课外阅读理解练习及答案，给孩子下载练习！》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-347", "title": "父亲、树林和鸟（片段）", "charCount": 111, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“国际庄家长会”《部编三年级语文上册课内阅读理解练习及答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-348", "title": "富饶的西沙群岛（节选）", "charCount": 118, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“三年级知识”《部编版三年级上册语文期末常考试题带答案+模拟检测卷2套》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-349", "title": "掌声（片段）", "charCount": 178, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-350", "title": "灰雀（片段）", "charCount": 115, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“部编版小学语文精讲”《收藏：部编三年级语文上册课内阅读理解练习附参考答案》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-351", "title": "松鼠", "charCount": 95, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["公众号“q862325”《三年级上册语文阅读理解13篇》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-359", "title": "美丽的校园秋色", "charCount": 248, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2026统编版三年级语文上册期末综合测试卷免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-374", "title": "爱因斯坦在桥上", "charCount": 237, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["统编版2025三年级语文上册期末试卷免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-376", "title": "幸福的含义", "charCount": 192, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2023-2024部编版三年级语文上册第一次月考测试卷可下载打印（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-379", "title": "海滨小城（片段）", "charCount": 215, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2022年江西省吉安市三年级语文（上）期末试卷可下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-387", "title": "下课十分钟", "charCount": 232, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版三年级语文上册《第一单元》测试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-391", "title": "海底世界（节选）", "charCount": 185, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末综合测试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-411", "title": "乌鸦喝水", "charCount": 188, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末《阅读理解》专项复习题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-412", "title": "山里的宝贝", "charCount": 237, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末《阅读理解》专项复习题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-413", "title": "有趣的小刺猬", "charCount": 234, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册期末考试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-415", "title": "小花苗", "charCount": 227, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末考试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-420", "title": "雁群宿营", "charCount": 200, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2020年部编版小学三年级语文上册《第三单元》测试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-423", "title": "日月潭", "charCount": 185, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第四单元》测试题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-433", "title": "夏洛的网（内容简介）", "charCount": 232, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2024部编版三年级语文上册期中测试卷免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-435", "title": "石榴", "charCount": 221, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["小学三年级语文全能阅读《石榴》附答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-437", "title": "看日出", "charCount": 239, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年人教版小学三年级语文上册期末测试题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-438", "title": "南极洲的奇趣景观", "charCount": 216, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2016-2017学年小学三年级语文上学期期中团体赛试卷"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-439", "title": "盘古开天地（节选）", "charCount": 132, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["人教版2015年小学三年级语文上学期期末复习题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-440", "title": "蝴蝶谷", "charCount": 229, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2015-2016学年小学三年级语文上学期期中检测试题"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-446", "title": "风筝与线", "charCount": 162, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2014-2015小学三年级语文上册期中质量检测试卷"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-448", "title": "灾梨祸枣", "charCount": 162, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["小学三年级语文学业水平调查试题"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-454", "title": "狗熊做裤子", "charCount": 221, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年小学三年级语文上册期末综合练习题"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-455", "title": "爱说大话的青蛙", "charCount": 238, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年北师大版小学三年级语文上册期末综合试题"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-456", "title": "美丽的武夷山", "charCount": 239, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2010年小学三年级语文上册期中检测题"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-457", "title": "企鹅", "charCount": 224, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年新人教版小学三年级语文上册阅读训练题（一）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-458", "title": "可贵的沉默（节选）", "charCount": 154, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年新人教版小学三年级语文上册阅读训练题（一）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-460", "title": "母亲的缝纫机", "charCount": 121, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2011年新人教版小学三年级语文上册阅读训练题（二）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-463", "title": "杀鸡取蛋", "charCount": 212, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["szxuexiao.com《2011年新人教版小学三年级语文上册阅读训练题（二）》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-466", "title": "牧场之国（节选）", "charCount": 226, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["szxuexiao.com《2022年部编版三年级语文上册阅读理解测试题（可下载打印）》"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-467", "title": "读不完的大书（片段）", "charCount": 223, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["统编版2026-2027三年级语文上学期期末学情调研卷免费下载（附参考答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-468", "title": "手术台就是阵地（节选）", "charCount": 152, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2025-2026统编版三年级语文上册期末复习卷免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-469", "title": "秋天的雨（节选）", "charCount": 152, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2024-2025统编版三年级语文上册期中测试卷免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-470", "title": "花的学校（节选）", "charCount": 151, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2023-2024部编版三年级语文上册第一单元综合提优卷可下载打印（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-471", "title": "那一定会很好（节选）", "charCount": 169, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文上册期末《阅读》专项训练题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-473", "title": "在牛肚子里旅行（片段）", "charCount": 173, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["部编版2018年小学三年级语文上册《第三单元》测试题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-474", "title": "阳台上的小手（片段）", "charCount": 165, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第一单元》测试题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-475", "title": "燕子（节选）", "charCount": 168, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2022年部编版小学三年级语文下册《第一单元》测试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-477", "title": "瑞雪", "charCount": 217, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["小学三年级语文《瑞雪》练习题"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-478", "title": "燕子（选段）", "charCount": 148, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2026部编版三年级语文下册第一单元检测卷免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-479", "title": "荷花（节选）", "charCount": 149, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2025人教版三年级语文下册期末检测试卷免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-480", "title": "赵州桥（节选）", "charCount": 264, "rules": ["R1"], "reasons": ["三下来源（范围一票否决）"], "sources": ["2022年部编版三年级语文下册期末综合复习试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-481", "title": "火烧云（节选）", "charCount": 180, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["部编版2021三年级语文下册期末质量检测试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-482", "title": "我变成了一棵树（节选）", "charCount": 162, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2021年部编版小学三年级语文下册《第五单元》测试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-483", "title": "花钟（节选）", "charCount": 312, "rules": ["R1"], "reasons": ["三下来源（范围一票否决）"], "sources": ["2021年部编版小学三年级语文下册《第四单元》测试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-484", "title": "小真的长头发（节选）", "charCount": 216, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2020年部编版小学三年级语文下册《第五单元》测试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-485", "title": "翠鸟（片段）", "charCount": 127, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2015年小学三年级语文下册期中考试试卷"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-486", "title": "一个小村庄的故事（片段）", "charCount": 193, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2013年小学三年级语文下学期期末考试试卷"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-487", "title": "总也倒不了的老屋（节选）", "charCount": 133, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["统编版2026三年级语文上册《第三单元》综合测试免费下载（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-488", "title": "总也倒不了的老屋（节选）", "charCount": 139, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["部编版2023-2024三年级语文上册期中试卷可下载打印（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-489", "title": "小狗学叫（节选）", "charCount": 140, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2020年部编版小学三年级语文上册《第四单元》测试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-490", "title": "美丽的小兴安岭（节选）", "charCount": 125, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册期末考试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-491", "title": "揠苗助长（节选）", "charCount": 133, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第三单元》测试题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-493", "title": "纸的发明（造纸方法的传承）", "charCount": 134, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["2023三年级语文下册第三单元综合知识测试卷部编版可下载找印（附答案）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-494", "title": "荷花（想象起舞）", "charCount": 133, "rules": ["R1", "R2"], "reasons": ["三下来源（范围一票否决）", "正文不足 250 汉字"], "sources": ["三年级语文下册期末模拟试卷附答案2022学年部编版（可下载打印）"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-495", "title": "翠鸟", "charCount": 107, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册期中考试试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-496", "title": "香港,璀璨的明珠（节选）", "charCount": 57, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第四单元》测试题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-497", "title": "石榴（节选）", "charCount": 88, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2018年小学三年级语文上册《第二单元》测试题及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-498", "title": "奇怪的大石头（节选）", "charCount": 95, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["人教版2016-2017学年三年级语文上学期期末检测试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-499", "title": "爬天都峰（节选）", "charCount": 110, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["人教版2016-2017学年三年级语文上学期《期中检测》试卷及答案"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
+{"id": "RD-500", "title": "富饶的西沙群岛（海水）", "charCount": 70, "rules": ["R2"], "reasons": ["正文不足 250 汉字"], "sources": ["2012-2013学年人教版小学三年级语文第一学期期末考试试卷"], "note": "已移入 archive/rejected-drafts，仅作归档，不参与命题与导出"}
