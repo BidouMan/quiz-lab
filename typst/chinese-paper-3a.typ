@@ -11,20 +11,18 @@
 
 // 覆盖共用构件：题号「粘」住后面的内容；默写块不可断页，
 // 避免标题或诗名落在页脚、正文跑到下一页。
-#let qhead(no, title, score: none) = block(sticky: true, above: 5mm, below: 2mm)[
-  #text(size: 14pt, weight: "bold")[#no．#title]
-  #if score != none {
-    h(1fr)
-    text(size: 11pt, fill: luma(90))[(#score 分)]
-  }
+// 版式规则：所有题型标题与第一行（含横线/拼音/田字格）的基线距离统一约 8–9mm。
+// 统一由 below 控制，题型内部首项不得再加 v() 或 above；新增题型沿用该值。
+#let qhead(no, title) = block(sticky: true, above: 6mm, below: 6.2mm)[
+  #text(size: 12pt, weight: "bold")[#no．#title]
 ]
 
 // 古诗默写：诗名与两条横线必须同页
 #let poem-blank(title, author, dynasty, lines: 2, line-w: 100%, gap: 9mm) = block(breakable: false, above: 3mm, below: 3mm)[
-  #text(size: 12pt)[#title　#(dynasty)·#(author)]
+  #text(size: 11pt)[#title　#(dynasty)·#(author)]
   #v(1mm)
   #for _ in range(lines) {
-    block(width: line-w, stroke: (bottom: (thickness: 0.5pt, paint: luma(150))), inset: 0pt)[]
+    block(width: line-w, above: 0pt, below: 0pt, stroke: (bottom: (thickness: 0.5pt, paint: luma(150))), inset: 0pt)[]
     v(gap)
   }
 ]
@@ -32,11 +30,22 @@
 #set page(
   width: 210mm,
   height: 297mm,
-  margin: (x: 12.7mm, top: 19mm, bottom: 16mm),
+  margin: (x: 18mm, top: 18mm, bottom: 16mm),
   numbering: "第 1 页",
 )
-#set text(font: cn-font, size: 14pt, lang: "zh", region: "cn")
-#set par(leading: 5.6mm, justify: false)
+// 正文 11pt；leading 0.82em 实测基线距约 1.55 倍字高
+#set text(font: cn-font, size: 11pt, lang: "zh", region: "cn")
+#set par(leading: 0.82em, justify: false)
+
+// 书写横线：行高即相邻两条线的间距
+#let write-line(w: 100%, h: 8mm) = block(
+  width: w,
+  height: h,
+  above: 0pt,
+  below: 0pt,
+  stroke: (bottom: (thickness: 0.5pt, paint: luma(140))),
+  inset: 0pt,
+)[]
 
 // ---------- 本卷局部构件 ----------
 
@@ -51,31 +60,111 @@
   out
 }
 
-/// 古诗补全：题名行 + 提示句 + 书写空线（空线可在提示句前或后）
-#let poem-fill(title, dynasty, author, first, blankFirst: false, blank: 42mm) = block(above: 1.4mm, below: 0.8mm)[
-  #text(size: 11.5pt)[#title　#(dynasty)·#(author)]
-  #h(4mm)
-  #if blankFirst [
-    #box(width: blank, stroke: (bottom: (thickness: 0.5pt, paint: luma(140))), inset: 0pt)[]
-    #h(1.2mm)
-    #text(size: 13pt)[#first]
+/// 古诗补全：题名行 + 提示句 + 按答案长度给的书写横线。
+/// 答案是两个分句时用两行横线，每句一条，不拉一条横贯整行的长线。
+#let poem-fill(title, dynasty, author, first, widths: (), blankFirst: false) = block(above: 2mm, below: 1mm)[
+  #text(size: 11pt)[#title　#(dynasty)·#(author)]
+  #v(1mm)
+  #let blank-stack = {
+    for (i, w) in widths.enumerate() {
+      write-line(w: w, h: 7.5mm)
+      if i < widths.len() - 1 { v(0.6mm) }
+    }
+  }
+  #if widths.len() > 1 [
+    #if blankFirst [
+      #blank-stack
+      #v(3.2mm)
+      #text(size: 11pt)[#first]
+    ] else [
+      #text(size: 11pt)[#first]
+      #v(0.8mm)
+      #blank-stack
+    ]
   ] else [
-    #text(size: 13pt)[#first]
-    #h(4mm)
-    #box(width: blank, stroke: (bottom: (thickness: 0.5pt, paint: luma(140))), inset: 0pt)[]
+    #text(size: 11pt)[#first]
+    #h(3mm)
+    #write-line(w: widths.at(0), h: 6mm)
   ]
 ]
 
-/// 注音题：字上方空线，字下方给语境词，便于多音字定音
-#let zhuyin-item-with-context(ch, ctx, w: 14mm) = stack(
+/// 注音题：整词一行排，被注音的字下方加点，字上方按拼音长度给横线
+#let zhuyin-word(word, target, bw: 12mm, size: 13pt) = {
+  let chars = word.clusters()
+  let idx = if target in chars { chars.position(c => c == target) } else { 0 }
+  let unit = size
+  // 左右各留出横线超出字宽的部分，保证横线不越出本词边界
+  let side = calc.max((bw - unit) / 2, 0mm)
+  let total = chars.len() * unit + 2 * side
+  // 被注音字的中心位置（相对整块左边缘）
+  let cx = side + idx * unit + unit / 2
+  stack(
+    dir: ttb,
+    spacing: 4mm,
+    // 拼音横线：与整词居中对齐，上方 2.4mm 供书写
+    box(width: total, height: 2.4mm)[
+      #place(top + center, box(
+        width: bw,
+        height: 2.4mm,
+        stroke: (bottom: (thickness: 0.5pt, paint: luma(140))),
+        inset: 0pt,
+      )[])
+    ],
+    // 词组：逐字等宽排（保证圆点对准字的中心）；被注音字下方加点
+    box(width: total)[
+      #pad(left: side, grid(
+        columns: (unit,) * chars.len(),
+        align: center,
+        ..chars.map(c => text(size: size)[#c]),
+      ))
+      #place(bottom + left, dx: cx - 0.6mm, dy: 2.2mm, circle(radius: 0.6mm, fill: luma(40)))
+    ],
+  )
+}
+
+/// 看拼音写词语：拼音贴近田字格，多行之间留出足够行距
+#let kanpinyin-cell(word, p, size: 10mm) = stack(
   dir: ttb,
-  spacing: 0.6mm,
-  zhuyin-item(ch, w: w),
-  text(size: 8.5pt, fill: luma(110), ctx),
+  spacing: 1.6mm,
+  box(py(p, size: 8pt)),
+  tian-row(n: word.clusters().len(), size: size),
 )
 
+#let kanpinyin-line(items, size: 10mm, gap: 5mm, cols: none) = {
+  let blocks = items.map(((w, p)) => kanpinyin-cell(w, p, size: size))
+  let n = if cols == none { blocks.len() } else { cols }
+  if n > blocks.len() {
+    for _ in range(n - blocks.len()) {
+      blocks.push(box())
+    }
+  }
+  grid(
+    columns: (1fr,) * n,
+    align: center,
+    column-gutter: gap,
+    row-gutter: 6mm,
+    ..blocks,
+  )
+}
+
+/// 注音题整节排布：每行 6 个词，多行之间用统一的 row-gutter
+#let zhuyin-line(items, cols: 6) = {
+  let cells = items.map(i => zhuyin-word(i.context, i.char, bw: i.blankWidthMm * 1mm))
+  if calc.rem(cells.len(), cols) != 0 {
+    for _ in range(cols - calc.rem(cells.len(), cols)) {
+      cells.push(box())
+    }
+  }
+  grid(
+    columns: (auto,) * cols,
+    column-gutter: 8mm,
+    row-gutter: 6mm,
+    ..cells,
+  )
+}
+
 /// 按「（ ）」把题干拆成“文字 + 空线”
-#let fill-inline(stem, widths, size: 13pt) = {
+#let fill-inline(stem, widths, size: 11pt) = {
   let parts = stem.split("（ ）")
   for (i, part) in parts.enumerate() {
     [#part]
@@ -85,7 +174,7 @@
         stroke: (bottom: (thickness: 0.5pt, paint: luma(140))),
         inset: 0pt,
       )[]
-      h(1.2mm)
+      h(1.4mm)
     }
   }
 }
@@ -101,42 +190,41 @@
   }
 }
 
-/// 选择题四选一
+/// 选择题四选一：两列排布，选项之间等距
 #let choice-options(options) = {
   let letters = ("A", "B", "C", "D")
   grid(
     columns: (1fr,) * 2,
-    column-gutter: 6mm,
-    row-gutter: 1.5mm,
-    ..options.enumerate().map(((i, opt)) => box[#text(size: 12.5pt)[#letters.at(i)．#opt]]),
+    column-gutter: 10mm,
+    row-gutter: 3.6mm,
+    ..options.enumerate().map(((i, opt)) => box[#text(size: 11pt)[#letters.at(i)．#opt]]),
   )
 }
 
-/// 阅读题：选择 / 填空 / 简答三种版式分开排
-#let reading-question(no, q) = block(above: 1.8mm, below: 0.5mm)[
+/// 阅读题：选择 / 填空 / 简答三种版式分开排；整题不可断页
+#let reading-question(no, q) = block(
+  above: 6.6mm,
+  below: 0.6mm,
+  breakable: false,
+)[
   #if q.type == "choice" {
-    text(size: 13pt)[#text(weight: "bold")[#(no)．]#q.stem]
-    h(2mm)
-    text(size: 10.5pt, fill: luma(95))[（#q.score 分）]
-    v(1mm)
+    text(size: 11pt)[#text(weight: "bold")[#(no)．]#q.stem]
+    v(0.8mm)
     choice-options(q.options)
   } else if q.type == "fill" {
-    text(size: 13pt)[#text(weight: "bold")[#(no)．]]
-    fill-inline(q.stem, (26mm,) * q.blanks.len(), size: 13pt)
-    h(2mm)
-    text(size: 10.5pt, fill: luma(95))[（#q.score 分）]
+    text(size: 11pt)[#text(weight: "bold")[#(no)．]]
+    fill-inline(q.stem, q.blankWidthsMm.map(w => w * 1mm), size: 11pt)
+    v(0.4mm)
   } else {
-    text(size: 13pt)[#text(weight: "bold")[#(no)．]#q.stem]
-    h(2mm)
-    text(size: 10.5pt, fill: luma(95))[（#q.score 分）]
-    v(0.5mm)
-    for _ in range(if q.score >= 6 { 3 } else { 2 }) {
-      write-line(h: 8.4mm)
+    text(size: 11pt)[#text(weight: "bold")[#(no)．]#q.stem]
+    v(1.2mm)
+    for _ in range(q.blankLines) {
+      write-line(h: 8mm)
     }
   }
 ]
 
-/// 答案页判分标签：黑底=对错可判，空心=按要点看
+/// 答案页标签：黑底=对错可判，空心=给参考答案
 #let answer-tag(mode) = {
   if mode == "objective" {
     box(
@@ -150,19 +238,19 @@
       stroke: (paint: luma(130), thickness: 0.5pt),
       radius: 1mm,
       inset: (x: 1.6mm, y: 0.5mm),
-    )[#text(size: 7.5pt, fill: luma(60))[按要点看]]
+    )[#text(size: 7.5pt, fill: luma(60))[参考答案]]
   } else {
     box(
       fill: luma(248),
       stroke: (paint: luma(130), thickness: 0.5pt),
       radius: 1mm,
       inset: (x: 1.6mm, y: 0.5mm),
-    )[#text(size: 7.5pt, fill: luma(60))[选择题可判 · 简答按要点]]
+    )[#text(size: 7.5pt, fill: luma(60))[客观题可判 · 简答给参考]]
   }
 }
 
-/// 答案页小节标题：主观题标「按要点看」，客观题标「对错可判」
-#let anshead(no, title, mode: "objective") = block(sticky: true, above: 3mm, below: 1mm)[
+/// 答案页小节标题：主观题标「参考答案」，客观题标「对错可判」
+#let anshead(no, title, mode: "objective") = block(sticky: true, above: 3mm, below: 2mm)[
   #text(size: 12pt, weight: "bold")[#no．#title]
   #h(2mm)
   #answer-tag(mode)
@@ -194,127 +282,115 @@
   #text(weight: "bold")[素材缺口：]#s.gap.message
 ]
 
-/// 卷面题型正文
-#let section-body(s) = {
+/// 卷面题型正文；head 为节标题，大块题型把标题并入首块，避免标题落在页底
+#let section-body(s, head) = {
+  let head-inline = if s.typeId in ("gushi-fill", "gushi-dimo", "reading", "writing") { none } else { head }
+  if head-inline != none { head-inline }
   if s.typeId == "kanpinyin" {
-    hint("读拼音，把词语写在田字格里。")
-    for row in chunked(s.items, 5) {
-      kanpinyin-line(row.map(i => (i.word, i.pinyin)), size: 10mm, gap: 5mm)
-    }
+    kanpinyin-line(s.items.map(i => (i.word, i.pinyin)), size: 10mm, gap: 5mm, cols: 5)
   } else if s.typeId == "zhuyin" {
-    hint("在横线上写出下面汉字的读音，注意多音字。")
-    for row in chunked(s.items, 9) {
-      grid(
-        columns: (14mm,) * row.len(),
-        column-gutter: 5mm,
-        ..row.map(i => zhuyin-item-with-context(i.char, i.context, w: 14mm)),
-      )
-    }
-    v(0.5mm)
-    text(size: 9.5pt, fill: luma(110))[提示：多音字要结合下面的语境词定音。]
+    zhuyin-line(s.items)
   } else if s.typeId == "xingjin" {
-    hint("看清偏旁，给每个字组一个词语。")
-    xingjin-line(s.items.map(i => (i.a, i.b)))
+    block(breakable: false)[
+      #xingjin-line(s.items.map(i => (i.a, i.b)))
+    ]
   } else if s.typeId == "gushi-fill" {
     for (k, i) in s.items.enumerate() {
       block(breakable: false)[
         #if k == 0 {
-          hint("补全诗句。")
+          head
         }
-        #poem-fill(i.title, i.dynasty, i.author, i.prompt, blankFirst: i.blankFirst)
+        #poem-fill(
+          i.title,
+          i.dynasty,
+          i.author,
+          i.prompt,
+          widths: i.blankWidthsMm.map(w => w * 1mm),
+          blankFirst: i.blankFirst,
+        )
       ]
     }
   } else if s.typeId == "gushi-dimo" {
     for (k, i) in s.items.enumerate() {
       block(breakable: false)[
         #if k == 0 {
-          hint("默写古诗，注意标点和书写。")
+          head
         }
         #poem-blank(i.title, i.author, i.dynasty, lines: i.lines.len(), gap: 9mm)
       ]
     }
   } else if s.typeId == "gaibing" {
-    hint("只改一处，保持原意。")
     for (j, g) in s.items.enumerate() {
-      v(0.8mm)
-      text(size: 13pt)[（#(j + 1)）#g.broken]
-      v(0.3mm)
-      grid(columns: (16mm, 1fr), text(size: 12pt)[改为：], write-line(h: 7mm))
+      block(breakable: false, above: 2.4mm)[
+        #text(size: 11pt)[（#(j + 1)）#g.broken]
+        #v(0.3mm)
+        #grid(columns: (16mm, 1fr), text(size: 11pt)[改为：], write-line(h: 8mm))
+      ]
     }
   } else if s.typeId == "guanlian" {
-    hint("把关联词填在括号里；同义说法都算对。")
     for (j, g) in s.items.enumerate() {
-      v(1.2mm)
-      text(size: 13pt)[（#(j + 1)）]
-      fill-inline(g.text, (18mm,) * g.answers.at(0).len(), size: 13pt)
+      if j > 0 { v(2.6mm) }
+      text(size: 11pt)[（#(j + 1)）]
+      fill-inline(g.text, g.blankWidthsMm.map(w => w * 1mm), size: 11pt)
     }
   } else if s.typeId == "biaodian" {
-    hint("在括号里加上合适的标点。")
     for (j, g) in s.items.enumerate() {
-      v(1mm)
-      text(size: 13pt)[（#(j + 1)）#g.text]
+      if j > 0 { v(2.6mm) }
+      text(size: 11pt)[（#(j + 1)）#g.text]
     }
   } else if s.typeId == "kuoxie" {
-    hint("把句子写具体，至少补三处，不改变原意。")
     for (j, g) in s.items.enumerate() {
-      v(0.8mm)
-      text(size: 13pt)[（#(j + 1)）#g.base]
-      text(size: 10.5pt, fill: luma(105))[　提示：#g.hints.join("　/　")]
-      write-line(h: 8.5mm)
+      block(breakable: false, above: 2.4mm)[
+        #text(size: 11pt)[（#(j + 1)）#g.base]
+        #text(size: 10.5pt, fill: luma(105))[　提示：#g.hints.join("　/　")]
+        #for _ in range(g.blankLines) { write-line(h: 8mm) }
+      ]
     }
   } else if s.typeId == "fangxie" {
-    hint("读例子，照样子写一句。")
     for (j, g) in s.items.enumerate() {
-      v(0.8mm)
-      text(size: 12pt)[（#(j + 1)）例：#g.example　#g.prompt]
-      write-line(h: 8.5mm)
-      write-line(h: 8.5mm)
+      block(breakable: false, above: 2.4mm)[
+        #text(size: 11pt)[（#(j + 1)）例：#g.example　#g.prompt]
+        #for _ in range(g.blankLines) { write-line(h: 8mm) }
+      ]
     }
   } else if s.typeId == "reading" {
     for (k, r) in s.items.enumerate() {
-      block(breakable: false)[
+      block(breakable: false, sticky: true)[
         #if k == 0 {
-          hint("读短文，完成后面的题目。")
+          head
         }
-        #block(
-          width: 100%,
-          fill: luma(250),
-          stroke: (paint: luma(195), thickness: 0.6pt),
-          radius: 1.5mm,
-          inset: (x: 5mm, y: 2mm),
-        )[
-          #set par(leading: 4.6mm, justify: false)
-          #align(center, text(size: 12pt, weight: "bold")[#r.title])
-          #v(0.8mm)
-          #for para in r.paragraphs {
-            [#text(size: 12pt)[#h(2em)#para]]
-            parbreak()
-          }
-        ]
-        #v(0.5mm)
-        #for (qi, q) in r.questions.enumerate() {
-          reading-question(qi + 1, q)
+        #align(center, text(size: 12pt, weight: "bold")[#r.title])
+        #v(1.2mm)
+        #for para in r.paragraphs {
+          [#text(size: 11pt)[#h(2em)#para]]
+          parbreak()
         }
       ]
+      v(1.4mm)
+      for (qi, q) in r.questions.enumerate() {
+        reading-question(qi + 1, q)
+      }
+      v(2mm)
     }
   } else if s.typeId == "writing" {
-    for w in s.items {
+    for (k, w) in s.items.enumerate() {
       block(breakable: false)[
-        #text(size: 12.5pt, weight: "bold")[题目：#w.title]
+        #if k == 0 { head }
+        #text(size: 11pt, weight: "bold")[题目：#w.title]
         #v(1mm)
         #let opening = w.at("storyOpening", default: none)
         #if opening != none [
-          #text(size: 11.5pt)[开头：#opening]
+          #text(size: 11pt)[开头：#opening]
           #v(1mm)
         ]
-        #text(size: 12pt)[提示：#w.prompt]
+        #text(size: 11pt)[提示：#w.prompt]
         #v(1mm)
-        #text(size: 11.5pt)[要求：]
+        #text(size: 11pt)[要求：]
         #for (i, req) in w.requirements.enumerate() {
-          text(size: 11.5pt)[#(i + 1)）#req]
+          text(size: 11pt)[#(i + 1)）#req]
           linebreak()
         }
-        #text(size: 11.5pt)[字数：#w.wordCount.min～#w.wordCount.max 字。]
+        #text(size: 11pt)[字数：#w.wordCount.min～#w.wordCount.max 字。]
         #v(0.8mm)
         #align(center)[
           #grid(
@@ -329,7 +405,7 @@
     }
   } else if s.typeId == "lianmian" {
     for item in s.items {
-      text(size: 11.5pt)[#item.note]
+      text(size: 11pt)[#item.note]
     }
   }
 }
@@ -339,17 +415,19 @@
   if s.typeId == "kanpinyin" {
     grid(
       columns: (1fr,) * 4,
-      row-gutter: 1mm,
+      row-gutter: 2.6mm,
       ..s.items.map(i => box[#py(i.pinyin, size: 8pt)　#han(i.word, size: 10.5pt)]),
     )
   } else if s.typeId == "zhuyin" {
-    annotate-word(s.items.map(i => i.pinyin), s.items.map(i => i.char), w: 14mm)
-    v(0.5mm)
+    for row in chunked(s.items, 9) {
+      annotate-word(row.map(i => i.pinyin), row.map(i => i.char), w: 14mm)
+      v(1mm)
+    }
     text(size: 8.5pt, fill: luma(105))[语境：#s.items.map(i => i.context).join("、")。多音字按语境定音。]
   } else if s.typeId == "xingjin" {
     grid(
       columns: (1fr,) * 3,
-      row-gutter: 1mm,
+      row-gutter: 2.6mm,
       ..s.items.map(i => box[
         #han(i.a, size: 11pt)（#text(size: 10pt)[#i.aAnswer]）　#han(i.b, size: 11pt)（#text(size: 10pt)[#i.bAnswer]）
       ]),
@@ -415,12 +493,18 @@
           text(size: 9.5pt)[（#(j + 1)）答案 #("A", "B", "C", "D").at(q.answer)。#q.explain]
           linebreak()
         } else if q.type == "fill" {
-          text(size: 9.5pt)[（#(j + 1)）#q.blanks.join("；")]
+          text(size: 9.5pt)[（#(j + 1)）答案：#q.blanks.join("；")]
           linebreak()
         } else {
-          text(size: 9.5pt, weight: "bold")[（#(j + 1)）评分要点]
-          linebreak()
-          scoring-points(q.at("scoring", default: none))
+          let ref = q.at("answer", default: none)
+          if ref != none and ref.trim() != "" {
+            text(size: 9.5pt)[（#(j + 1)）参考：#ref]
+            linebreak()
+          } else {
+            text(size: 9.5pt, weight: "bold")[（#(j + 1)）评分要点（暂无参考答案）]
+            linebreak()
+            scoring-points(q.at("scoring", default: none))
+          }
         }
       }
       v(1mm)
@@ -441,7 +525,7 @@
           block[
             #set text(size: 9pt)
             #grid(
-              columns: (25mm, 11mm, 1fr),
+              columns: (25mm, 14mm, 1fr),
               stroke: (thickness: 0.5pt, paint: luma(170)),
               inset: (x: 2.5mm, y: 1mm),
               align: (center + horizon, center + horizon, left + horizon),
@@ -466,16 +550,10 @@
 
 // ==================== 卷面 ====================
 
-#paper-title(p.meta.title, sub: p.meta.subtitle)
-#info-row(fields: ("班级", "姓名", "学号", "得分"))
+#paper-title(p.meta.title)
 
 #for s in p.sections {
-  if s.selected > 0 {
-    qhead(s.no, s.label, score: s.score)
-  } else {
-    qhead(s.no, s.label)
-  }
-  section-body(s)
+  section-body(s, qhead(s.no, s.label))
   if s.gap != none {
     v(1mm)
     gap-block(s)
@@ -488,21 +566,21 @@
 #if p.meta.includeAnswers {
   pagebreak()
 
-  align(center, text(size: 16pt, weight: "bold")[参考答案与评分要点])
+  align(center, text(size: 16pt, weight: "bold")[参考答案与解析])
   v(1.5mm)
   grid(
     columns: (auto, 1fr),
     column-gutter: 3mm,
     row-gutter: 1mm,
-    [ #answer-tag("objective") ], [对错可判：给出答案，可直接核对。],
-    [ #answer-tag("subjective") ], [按要点看：只列评分要点，不给标准答案或范文。],
-    [ #answer-tag("mixed") ], [混合板块：选择、填空给答案；简答只给评分要点。],
+    [ #answer-tag("objective") ], [对错可判：给出答案和简析，可直接核对。],
+    [ #answer-tag("subjective") ], [参考答案：简答题给出参考答案，意思对即可。],
+    [ #answer-tag("mixed") ], [混合板块：客观题给答案和简析，简答题给参考答案。],
   )
   v(1mm)
   set par(leading: 3.8mm)
 
   for s in p.sections {
-    anshead(s.no, s.label + "（" + str(s.score) + " 分）", mode: s.answerMode)
+    anshead(s.no, s.label, mode: s.answerMode)
     if s.selected > 0 {
       answer-body(s)
     } else {

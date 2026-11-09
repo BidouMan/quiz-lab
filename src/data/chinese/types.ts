@@ -319,7 +319,7 @@ export interface ReadingFillQuestion {
 export interface ReadingShortQuestion {
   type: 'short'
   stem: string
-  /** 参考答案（可选，仅作批改参考，不作为唯一标准答案） */
+  /** 参考答案：答案页直接展示，家长可据此核对；缺省时回退到评分要点 */
   answer?: string
   /** 评分要点，至少 2 条；简答题按点给分 */
   scoring: RubricPoints

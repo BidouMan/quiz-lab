@@ -17,6 +17,7 @@
   R10 选项长度比 > 2.0、含「以上都对/无法判断」类选项、同篇正确项位置连续 3 题相同 → fail
   R11 skill 字段缺失或非法（无法归入 SK1–SK7）→ fail
   R12 难度分层（易/中/难，仅记录，不判 fail）
+  R13 主观题缺参考答案（仅记录；全库补齐后再升级为 fail）
 
 用法：
   python3 quality_gate.py                # 写 quality-gate.jsonl 并打印统计
@@ -323,6 +324,10 @@ def review_one(draft: dict) -> dict:
         flags.append("R6")
     if any(q.get("type") == "choice" for q in questions):
         flags.append("R10")
+    # R13 主观题缺参考答案：先只记录，全库补齐后再升级为 fail
+    if any(q.get("type") == "short" and not (q.get("answer") or "").strip()
+           for q in questions):
+        flags.append("R13")
     flags.append("R12")
 
     return {

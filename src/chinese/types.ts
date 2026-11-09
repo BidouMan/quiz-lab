@@ -42,9 +42,9 @@ export type ChinesePaperTypeId =
 export type ChineseDifficulty = ChineseLevel | 'mixed'
 
 /**
- * 答案页的判分方式：
- * - objective：对错可判，给出答案；
- * - subjective：主观题，只给评分要点，不给标准答案或范文；
+ * 答案页的呈现方式：
+ * - objective：对错可判，给出答案与简析；
+ * - subjective：主观题，给出参考答案；缺答案时回退到评分要点；
  * - mixed：同一板块既有客观小题也有简答（目前只有课外阅读）。
  */
 export type ChineseAnswerMode = 'objective' | 'subjective' | 'mixed'
@@ -223,7 +223,7 @@ export interface ChineseSectionResult {
   label: string
   /** 题型所属板块，排版用它决定换页时机 */
   group: '字词' | '积累' | '句子' | '阅读' | '习作' | '卷面'
-  /** 答案页判分方式，决定给答案还是只给评分要点 */
+  /** 答案页呈现方式：给答案、给参考答案，或两者混排 */
   answerMode: ChineseAnswerMode
   /** 卷面题号：一、二、三……按配置顺序 */
   no: string
