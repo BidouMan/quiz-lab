@@ -477,7 +477,14 @@ export const GAIBING_ITEMS: GaibingItem[] = RAW.map((item, index) => {
     sources: sentenceSource(padId('GB', index)),
     explain: item.reason,
     judging: open ? 'rubric' : 'auto',
-    answerKind: item.acceptable.length > 0 ? 'multiple' : 'unique',
-    answerCount: 1 + item.acceptable.length,
+    answerKind: (item.acceptable ?? []).length > 0 ? 'multiple' : 'unique',
+    answerCount: 1 + (item.acceptable ?? []).length,
+    rubric: open
+      ? [
+          `补出“${item.replacement}”一类成分，意思合理即可`,
+          '补后句子成分完整，搭配合理',
+          '不改变原句意思',
+        ]
+      : undefined,
   }
 })

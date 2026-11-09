@@ -1,4 +1,4 @@
-import type { FangxieItem } from '../types.ts'
+import type { FangxieItem, RubricPoints } from '../types.ts'
 import { padId, sentenceSource } from './common.ts'
 
 type RawFangxie = Omit<
@@ -9,49 +9,49 @@ type RawFangxie = Omit<
 /** 比喻常用的比喻词，只用于机器初筛，不要求答案只出现这些词 */
 export const BIYU_MARKERS = ['像', '好像', '仿佛', '似的', '如同'] as const
 
-const RUBRIC_BIYU_A = [
+const RUBRIC_BIYU_A: RubricPoints = [
   '能正确判断例句是比喻',
   '有本体和喻体，二者有相似点（形状、颜色、动作等）',
   '比喻词使用正确，句子通顺',
   '标点正确',
 ]
 
-const RUBRIC_BIYU_B = [
+const RUBRIC_BIYU_B: RubricPoints = [
   '有本体和喻体，二者有相似点（形状、颜色、动作、声音等）',
   '比喻词使用正确，句子通顺',
   '喻体符合事物特点，想象合理',
   '标点正确',
 ]
 
-const RUBRIC_BIYU_C = [
+const RUBRIC_BIYU_C: RubricPoints = [
   '有本体和喻体，相似点清楚，不止一处',
   '喻体新鲜、具体，能让人想象出画面',
   '句子通顺，标点正确',
   '不把比喻和拟人混在一起，表达清楚',
 ]
 
-const RUBRIC_NIREN_A = [
+const RUBRIC_NIREN_A: RubricPoints = [
   '能正确判断例句是拟人',
   '把物当作人来写，用了人的动作、语言或心情',
   '符合事物的特点，想象合理',
   '句子通顺，标点正确',
 ]
 
-const RUBRIC_NIREN_B = [
+const RUBRIC_NIREN_B: RubricPoints = [
   '把物当作人来写，用了人的动作、语言或心情',
   '符合事物的特点，想象合理',
   '句子通顺，标点正确',
   '至少写出一个具体动作或神态',
 ]
 
-const RUBRIC_NIREN_C = [
+const RUBRIC_NIREN_C: RubricPoints = [
   '把物当作人来写，至少有两处人的动作、语言或心情',
   '符合事物的特点，想象合理、有画面感',
   '句子通顺，标点正确',
   '不把拟人和比喻混在一起，表达清楚',
 ]
 
-const rubricFor = (level: RawFangxie['level'], mode: RawFangxie['mode']): string[] => {
+const rubricFor = (level: RawFangxie['level'], mode: RawFangxie['mode']): RubricPoints => {
   if (mode === '比喻') return level === 'A' ? RUBRIC_BIYU_A : level === 'B' ? RUBRIC_BIYU_B : RUBRIC_BIYU_C
   return level === 'A' ? RUBRIC_NIREN_A : level === 'B' ? RUBRIC_NIREN_B : RUBRIC_NIREN_C
 }
@@ -440,5 +440,5 @@ export const FANGXIE_ITEMS: FangxieItem[] = RAW.map((item, index) => ({
   explain: item.guide,
   judging: 'rubric',
   answerKind: 'multiple',
-  answerCount: item.samples.length,
+  answerCount: (item.samples ?? []).length,
 }))

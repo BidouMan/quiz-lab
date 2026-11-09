@@ -1,4 +1,4 @@
-import type { KuoxieItem } from '../types.ts'
+import type { KuoxieItem, RubricPoints } from '../types.ts'
 import { padId, sentenceSource } from './common.ts'
 
 type RawKuoxie = Omit<
@@ -6,21 +6,21 @@ type RawKuoxie = Omit<
   'id' | 'kind' | 'status' | 'sources' | 'explain' | 'judging' | 'answerKind' | 'answerCount' | 'rubric'
 >
 
-const RUBRIC_A = [
+const RUBRIC_A: RubricPoints = [
   '保留原句主干，主要意思不变',
   '至少扩写两处（时间、地点、样子、动作、心情中任选）',
   '扩写内容与情境相符，句子通顺',
   '标点正确',
 ]
 
-const RUBRIC_B = [
+const RUBRIC_B: RubricPoints = [
   '保留原句主干，主要意思不变',
   '至少扩写三处，位置自选',
   '扩写内容具体、与情境相符，句子通顺',
   '标点正确',
 ]
 
-const RUBRIC_C = [
+const RUBRIC_C: RubricPoints = [
   '保留原句主干，主要意思不变',
   '至少扩写三处，并写成 2–3 句连贯的话',
   '有观察细节：看到的、听到的或想到的至少一处',
@@ -338,7 +338,7 @@ const RAW: RawKuoxie[] = [
   },
 ]
 
-const rubricFor = (level: RawKuoxie['level']): string[] =>
+const rubricFor = (level: RawKuoxie['level']): RubricPoints =>
   level === 'A' ? RUBRIC_A : level === 'B' ? RUBRIC_B : RUBRIC_C
 
 export const KUOXIE_ITEMS: KuoxieItem[] = RAW.map((item, index) => ({
@@ -351,5 +351,5 @@ export const KUOXIE_ITEMS: KuoxieItem[] = RAW.map((item, index) => ({
   explain: `至少扩写两处，位置自选；提示角为${item.hints.join('、')}。开放题，按评分点面批。`,
   judging: 'rubric',
   answerKind: 'multiple',
-  answerCount: item.samples.length,
+  answerCount: (item.samples ?? []).length,
 }))

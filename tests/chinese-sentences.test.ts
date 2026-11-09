@@ -99,7 +99,11 @@ test('句子题库：编号唯一，来源定位到编号，全部 verified', ()
     assert.ok(item.sources.length > 0, `${item.id} 缺来源`)
     assert.equal(item.sources[0].locator, item.id, `${item.id} 来源未定位到条目`)
     assert.ok(item.explain.length > 0, `${item.id} 缺少说明`)
-    assert.ok(item.answerCount >= 1, `${item.id} 没有声明答案数量`)
+    if (item.judging === 'auto') {
+      assert.ok(item.answerCount >= 1, `${item.id} 客观题没有声明答案数量`)
+    } else {
+      assert.ok(item.rubric !== undefined && item.rubric.length >= 2, `${item.id} 主观题评分点少于 2 条`)
+    }
   }
 })
 
@@ -129,40 +133,45 @@ test('修改病句：四类各 10 条，答案可机械复核，开放题明确�
   }
 
   for (const item of GAIBING_ITEMS) {
+    const fixed = item.fixed ?? ''
+    const acceptable = item.acceptable ?? []
     assert.ok(item.instruction.length > 0, `${item.id} 缺题干指令`)
     assert.ok(item.broken.endsWith('。'), `${item.id} 病句应以句号结尾`)
-    assert.notEqual(item.fixed, item.broken, `${item.id} 没有改动`)
-    assert.equal(item.answerCount, 1 + item.acceptable.length, `${item.id} 答案数量声明不符`)
-    for (const alt of item.acceptable) {
+    assert.equal(item.answerCount, 1 + acceptable.length, `${item.id} 参考改法数量声明不符`)
+    if (fixed) assert.notEqual(fixed, item.broken, `${item.id} 没有改动`)
+    for (const alt of acceptable) {
       assert.notEqual(alt, item.broken, `${item.id} 可接受答案与病句相同`)
-      assert.notEqual(alt, item.fixed, `${item.id} 可接受答案与主答案重复`)
+      assert.notEqual(alt, fixed, `${item.id} 可接受答案与主答案重复`)
       assert.ok(alt.endsWith('。'), `${item.id} 可接受答案应以句号结尾`)
     }
 
     if (item.subkind === '成分残缺') {
       assert.equal(item.judging, 'rubric', `${item.id} 成分残缺是开放题，应标 rubric`)
-      assert.equal(item.answerKind, 'multiple', `${item.id} 成分残缺应有多条示例`)
-      assert.ok(item.acceptable.length >= 2, `${item.id} 成分残缺示例不足 3 条`)
+      assert.ok(item.rubric !== undefined && item.rubric.length >= 2, `${item.id} 开放题评分点少于 2 条`)
+      if (acceptable.length > 0) assert.equal(item.answerKind, 'multiple', `${item.id} 参考改法应标 multiple`)
       assert.equal(item.defect, '', `${item.id} 成分残缺不应有 defect`)
       assert.ok(item.replacement.length > 0, `${item.id} 没给出补上的成分`)
-      assert.ok(
-        isInsertion(item.broken, item.fixed, item.replacement),
-        `${item.id} 不是纯插入式补全`,
-      )
+      if (fixed) {
+        assert.ok(
+          isInsertion(item.broken, fixed, item.replacement),
+          `${item.id} 参考改法不是纯插入式补全`,
+        )
+      }
       continue
     }
 
     assert.equal(item.judging, 'auto', `${item.id} 客观题应标 auto`)
+    assert.ok(fixed.length > 0, `${item.id} 客观题缺必填答案`)
     assert.equal(
       item.answerKind,
-      item.acceptable.length > 0 ? 'multiple' : 'unique',
+      acceptable.length > 0 ? 'multiple' : 'unique',
       `${item.id} 答案种类声明不符`,
     )
 
     if (item.subkind === '搭配不当') {
       assert.ok(item.broken.includes(item.defect), `${item.id} 病句里找不到 defect`)
       assert.equal(
-        item.fixed,
+        fixed,
         item.broken.replace(item.defect, item.replacement),
         `${item.id} 搭配修改不是一次替换`,
       )
@@ -170,13 +179,13 @@ test('修改病句：四类各 10 条，答案可机械复核，开放题明确�
       assert.ok(item.broken.includes(item.defect), `${item.id} 病句里找不到 defect`)
       assert.equal(item.replacement, '', `${item.id} 重复类应删除而不是替换`)
       assert.equal(
-        item.fixed,
+        fixed,
         item.broken.replace(item.defect, ''),
         `${item.id} 重复修改不是一次删除`,
       )
     } else {
       assert.ok(
-        sortedChars(item.broken) === sortedChars(item.fixed),
+        sortedChars(item.broken) === sortedChars(fixed),
         `${item.id} 语序调整改动了字词`,
       )
     }
@@ -196,15 +205,15 @@ test('扩写句子：取消指定词硬约束，按评分点标注开放题', ()
   assert.equal(new Set(bases).size, bases.length, '扩写原句出现重复')
 
   for (const item of KUOXIE_ITEMS) {
+    const samples = item.samples ?? []
     assert.equal(item.judging, 'rubric', `${item.id} 扩写是开放题，应标 rubric`)
     assert.equal(item.answerKind, 'multiple', `${item.id} 扩写应给多种写法`)
-    assert.equal(item.answerCount, item.samples.length, `${item.id} 示例数量声明不符`)
-    assert.ok(item.samples.length >= 2, `${item.id} 参考答案少于 2 条`)
+    assert.equal(item.answerCount, samples.length, `${item.id} 参考示例数量声明不符`)
     assert.ok(item.hints.length >= 3, `${item.id} 提示角不足`)
-    assert.ok(item.rubric.length >= 3, `${item.id} 评分点不足`)
+    assert.ok(item.rubric.length >= 2, `${item.id} 评分点少于 2 条`)
     assert.ok(!('requiredParts' in item), `${item.id} 仍保留指定词硬约束`)
 
-    for (const sample of item.samples) {
+    for (const sample of samples) {
       assert.ok(sample.length > item.base.length, `${item.id} 参考答案没有扩写`)
       for (const part of item.keep) {
         assert.ok(sample.includes(part), `${item.id} 答案缺少主干「${part}」`)
@@ -296,17 +305,17 @@ test('比喻与拟人：补齐评分点，参考答案只做初筛不锁死答�
   assert.equal(new Set(examples).size, examples.length, '仿写例句出现重复')
 
   for (const item of FANGXIE_ITEMS) {
+    const samples = item.samples ?? []
     assert.equal(item.judging, 'rubric', `${item.id} 仿写是开放题，应标 rubric`)
     assert.equal(item.answerKind, 'multiple', `${item.id} 仿写应给多种写法`)
-    assert.equal(item.answerCount, item.samples.length, `${item.id} 示例数量声明不符`)
-    assert.ok(item.samples.length >= 2, `${item.id} 参考答案少于 2 条`)
-    assert.ok(item.rubric.length >= 3, `${item.id} 评分点不足`)
+    assert.equal(item.answerCount, samples.length, `${item.id} 参考示例数量声明不符`)
+    assert.ok(item.rubric.length >= 2, `${item.id} 评分点少于 2 条`)
     assert.ok(item.guide.length > 0, `${item.id} 缺少写法引导`)
     if (item.level === 'A') {
       assert.ok(item.prompt.includes('判断'), `${item.id} A 档应先判断比喻还是拟人`)
     }
 
-    for (const sample of item.samples) {
+    for (const sample of samples) {
       assert.notEqual(sample, item.example, `${item.id} 答案与例句重复`)
       assert.match(sample, /[。！？]$/, `${item.id} 答案没有句末标点`)
       if (item.mode === '比喻') {

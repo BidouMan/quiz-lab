@@ -42,8 +42,8 @@ export const SENTENCE_BANK_META: ChineseSentenceBankMeta = {
       '语序颠倒：fixed 与 broken 的字符（含标点）多重集必须完全相同，只能换序不能换词。',
       '关联词：每条 answers 的每个组合都必须在对应 relation 的词表内，组合长度等于题干「（ ）」数量。',
       '标点：每条 answers 的每个组合都必须在标点白名单内，组合长度等于空数，引号和书名号成对。',
-      '答案声明：answerCount 必须等于可枚举答案数；unique 只能有 1 条，multiple 至少 2 条。',
-      '扩写与仿写：只在 samples 上做「保留主干 / 比喻词或拟人动作」的初筛，最终按 rubric 人工面批。',
+      '答案声明：客观题 answerCount 必须等于可枚举答案数（unique 只能 1 条，multiple 至少 2 条）；主观题不锁答案数，answerCount 只记参考示例数，可为 0。',
+      '主观题评分点：扩写、仿写、成分残缺的 rubric 至少 2 条；samples 仅作参考，可缺省，最终按 rubric 人工面批。',
     ],
     samples: [
       'GB-15 关联词：把「只要……就……」和「只有……才……」同时列入答案，代回原句都通顺。',
