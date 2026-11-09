@@ -1,11 +1,11 @@
 // 单篇阅读样张：正文 + 题目 + 答案页（含原题留痕）
 // 数据直接读取命题稿，版式沿用语文卷面构件。
 // 生成：
-//   typst compile --root . --font-path typst/fonts typst/reading-sample.typ samples/reading-sample-RD-301.pdf
+//   typst compile --root . --font-path typst/fonts typst/reading-sample.typ samples/reading-sample-RD-378.pdf
 
 #import "chinese.typ": *
 
-#let p = json("../data/reading-catalog/quiz-drafts/RD-301.json")
+#let p = json("../data/reading-catalog/quiz-drafts/RD-378.json")
 #let letters = ("A", "B", "C", "D")
 #let total = p.questions.fold(0, (acc, q) => acc + q.score)
 
@@ -138,11 +138,11 @@
   row-gutter: 1mm,
   [#box(fill: luma(45), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#text(size: 7.5pt, fill: white)[对错可判]]],
   [客观题：给出答案，可直接核对。],
-  [#box(fill: luma(248), stroke: (paint: luma(130), thickness: 0.5pt), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#text(size: 7.5pt, fill: luma(60))[按要点看]]],
-  [主观题：只列评分要点，不给标准答案。],
+  [#box(fill: luma(248), stroke: (paint: luma(130), thickness: 0.5pt), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#text(size: 7.5pt, fill: luma(60))[家长可核]]],
+  [主观题：先给参考答案，括号内为可接受范围；评分要点供对照。],
 )
 #v(1mm)
-#text(size: 9pt, fill: luma(70))[#p.strategyNote]
+#text(size: 9pt, fill: luma(70))[#p.at("strategyNote", default: "")]
 #v(2mm)
 #set par(leading: 4mm)
 
@@ -157,7 +157,7 @@
     #if q.type != "short" {
       box(fill: luma(45), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#text(size: 7.5pt, fill: white)[对错可判]]
     } else {
-      box(fill: luma(248), stroke: (paint: luma(130), thickness: 0.5pt), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#text(size: 7.5pt, fill: luma(60))[按要点看]]
+      box(fill: luma(248), stroke: (paint: luma(130), thickness: 0.5pt), radius: 1mm, inset: (x: 1.6mm, y: 0.5mm))[#text(size: 7.5pt, fill: luma(60))[家长可核]]
     }
     #v(1mm)
     #if q.type == "choice" {
@@ -165,6 +165,13 @@
     } else if q.type == "fill" {
       text(size: 9.5pt, fill: luma(95))[#q.explain]
     } else {
+      let ans = q.at("answer", default: none)
+      if ans != none and ans != "" {
+        text(size: 9.5pt, weight: "bold")[参考答案]
+        linebreak()
+        text(size: 10.5pt)[#ans]
+        v(1mm)
+      }
       text(size: 9.5pt, weight: "bold")[评分要点]
       linebreak()
       for (j, point) in q.scoring.enumerate() {
@@ -177,7 +184,7 @@
       v(1.5mm)
       action-tag(o.action)
       h(2mm)
-      text(size: 8.5pt, fill: luma(80))[原题：#o.original]
+      text(size: 8.5pt, fill: luma(80))[原题：#o.at("original", default: "（新增题）")]
       if o.at("note", default: none) != none {
         linebreak()
         text(size: 8pt, fill: luma(115))[#o.at("note")]
