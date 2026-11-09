@@ -40,6 +40,10 @@ export interface AppConfig {
   dedup?: boolean
   /** 留空则自动探测：/opt/homebrew/bin/typst → /usr/local/bin/typst → PATH */
   typstPath: string
+  /** 卷子另存目录；留空表示下载文件夹（~/Downloads） */
+  saveDir: string
+  /** 历史卷保留数量；0 表示不限 */
+  historyLimit: number
 }
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -51,6 +55,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   pages: 1,
   dedup: true,
   typstPath: '',
+  saveDir: '',
+  historyLimit: 30,
 }
 
 /** 单题型题量硬上限：界面、引擎与配置迁移共用同一口径 */
@@ -103,6 +109,8 @@ export interface LayoutCheck {
 
 export interface GenerateResult {
   outputPath: string
+  /** 用户保存目录下的实际文件路径；未另存时为 null */
+  savedPath: string | null
   dataPath: string
   elapsedMs: number
   bytes: number

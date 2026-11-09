@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { open, save } from '@tauri-apps/plugin-dialog'
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { corruptTimestamp, memoryRecoveryNotice, MemoryStore, parseMemoryJson } from '../quiz/memory.ts'
 import { findUnit } from '../data/curriculum.ts'
 import {
@@ -46,7 +46,12 @@ import {
 import { readableNotes, shortageNote } from './wording'
 
 const MEMORY_KEY = 'quizlab:quiz-memory.v1'
+const HISTORY_KEY = 'quizlab:history.v1'
 const APP_VERSION = '0.7.0-beta.2'
+
+/** 开发者工具只在开发构建里出现；正式打包时入口与面板都不会被加载 */
+const isDevBuild = import.meta.env.DEV
+const DevTools = isDevBuild ? defineAsyncComponent(() => import('./DevToolsEntry.vue')) : null
 
 function loadMemory(): { store: MemoryStore; notice: string } {
   let raw: string | null = null
@@ -86,18 +91,22 @@ function persistMemory(store: MemoryStore) {
 
 const DAILY = PRESETS[0]
 
-/** 首次进入：全部单元 · 标准难度 · 每日一练 */
-const config = reactive<AppConfig>({
-  ...DEFAULT_CONFIG,
-  unitIds: panelUnits().map((unit) => unit.unitId),
-  level: DAILY.level,
-  types: Object.keys(DAILY.values) as AppType[],
-  counts: { ...DAILY.values },
-  count: presetTotal(DAILY),
-})
+/** 首次进入 / 恢复默认时的配置：全部单元 · 标准难度 · 每日一练 */
+function initialConfig(): AppConfig {
+  return {
+    ...DEFAULT_CONFIG,
+    unitIds: panelUnits().map((unit) => unit.unitId),
+    level: DAILY.level,
+    types: Object.keys(DAILY.values) as AppType[],
+    counts: { ...DAILY.values },
+    count: presetTotal(DAILY),
+  }
+}
+
+const config = reactive<AppConfig>(initialConfig())
 
 const loadedMemory = loadMemory()
-const memory = loadedMemory.store
+let memory = loadedMemory.store
 const lastBuild = ref<BuildResult | null>(null)
 const template = ref<TemplateInfo | null>(null)
 const typst = ref<TypstInfo | null>(null)
@@ -163,11 +172,24 @@ async function onChineseGenerate(selection: ReadingPaperSelection) {
       score: paper.score.total,
     }
     const notes = [...paper.gaps.map((gap) => gap.message), ...paper.notes]
-    const generated = await generatePaper(doc, config.typstPath, 'typst/chinese-paper-3a.typ')
+    const generated = await generatePaper(
+      doc,
+      config.typstPath,
+      'typst/chinese-paper-3a.typ',
+      joinPath(saveRoot(), `三年级语文-课外阅读-${stamp()}.pdf`),
+    )
     chineseResult.value = generated
     chinesePdfData.value = base64ToBytes(generated.pdfBase64)
     chinesePages.value = 0
     chineseNotice.value = [...notes, ...generated.warnings].filter(Boolean).join('；')
+    addHistory({
+      title: `语文 · 课外阅读（${readings.length} 篇）`,
+      at: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+      count: questions,
+      pages: 0,
+      path: generated.savedPath ?? generated.outputPath,
+      subject: 'chinese',
+    })
   } catch (reason) {
     chineseError.value = errorText(reason)
   } finally {
@@ -181,8 +203,87 @@ interface HistoryItem {
   count: number
   pages: number
   path: string
+  subject: SubjectId
 }
-const history = ref<HistoryItem[]>([])
+
+/** 旧记录没有 subject 字段：按文件名兜底，语文卷都是「语文-」开头 */
+function normalizeHistoryItem(value: unknown): HistoryItem | null {
+  if (value == null || typeof value !== 'object') return null
+  const item = value as Record<string, unknown>
+  if (
+    typeof item.title !== 'string' ||
+    typeof item.at !== 'string' ||
+    typeof item.count !== 'number' ||
+    typeof item.pages !== 'number' ||
+    typeof item.path !== 'string' ||
+    item.path === ''
+  ) {
+    return null
+  }
+  const subject: SubjectId =
+    item.subject === 'math' || item.subject === 'chinese'
+      ? item.subject
+      : item.path.includes('语文-')
+        ? 'chinese'
+        : 'math'
+  return {
+    title: item.title,
+    at: item.at,
+    count: item.count,
+    pages: item.pages,
+    path: item.path,
+    subject,
+  }
+}
+
+function loadHistory(): HistoryItem[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .map(normalizeHistoryItem)
+      .filter((item): item is HistoryItem => item !== null)
+  } catch {
+    return []
+  }
+}
+
+function persistHistory(): void {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.value))
+  } catch {
+    // localStorage 不可用时仅本进程生效
+  }
+}
+
+const history = ref<HistoryItem[]>(loadHistory())
+
+/** 按设置裁剪历史卷；0 表示不限 */
+function trimHistory(): void {
+  if (config.historyLimit > 0) history.value = history.value.slice(0, config.historyLimit)
+}
+
+function addHistory(item: HistoryItem): void {
+  history.value.unshift(item)
+  trimHistory()
+}
+
+/** 历史卷当前显示的科目；打开抽屉时默认跟随当前页面科目 */
+const historyFilter = ref<SubjectId>('math')
+const filteredHistory = computed(() =>
+  history.value.filter((item) => item.subject === historyFilter.value),
+)
+
+function openHistory(): void {
+  historyFilter.value = subject.value
+  historyOpen.value = true
+  settingsOpen.value = false
+}
+
+watch(history, persistHistory, { deep: true })
+watch(() => config.historyLimit, trimHistory)
 
 let seed = 0
 let saveTimer: number | undefined
@@ -222,22 +323,44 @@ const displayPages = computed(() => {
   return lastBuild.value?.pageEstimate ?? Math.max(1, Math.round(total.value / 12))
 })
 
-const folderName = computed(() => {
-  const parts = result.value?.outputPath.split('/') ?? []
+/** 保存目录：留空时落到系统下载文件夹 */
+function saveRoot(): string {
+  return config.saveDir.trim() || '~/Downloads'
+}
+
+function joinPath(dir: string, name: string): string {
+  return /[\\/]$/.test(dir) ? `${dir}${name}` : `${dir}/${name}`
+}
+
+/** 文件名时间戳：20261109-205133 */
+function stamp(): string {
+  const now = new Date()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+}
+
+function pathParts(path?: string | null): string[] {
+  return (path ?? '').split(/[\\/]/).filter((part) => part !== '')
+}
+
+function folderOf(path?: string | null): string {
+  const parts = pathParts(path)
   return parts.length >= 2 ? parts[parts.length - 2] : ''
-})
-const fileName = computed(() => {
-  const parts = result.value?.outputPath.split('/') ?? []
-  return parts[parts.length - 1] ?? ''
-})
-const chineseFolder = computed(() => {
-  const parts = chineseResult.value?.outputPath.split('/') ?? []
-  return parts.length >= 2 ? parts[parts.length - 2] : ''
-})
-const chineseFile = computed(() => {
-  const parts = chineseResult.value?.outputPath.split('/') ?? []
-  return parts[parts.length - 1] ?? ''
-})
+}
+
+function fileOf(path?: string | null): string {
+  const parts = pathParts(path)
+  return parts.length >= 1 ? parts[parts.length - 1] : ''
+}
+
+const folderName = computed(() => folderOf(result.value?.savedPath ?? result.value?.outputPath))
+const fileName = computed(() => fileOf(result.value?.savedPath ?? result.value?.outputPath))
+const chineseFolder = computed(() =>
+  folderOf(chineseResult.value?.savedPath ?? chineseResult.value?.outputPath),
+)
+const chineseFile = computed(() =>
+  fileOf(chineseResult.value?.savedPath ?? chineseResult.value?.outputPath),
+)
 
 const combinedNotice = computed(() =>
   [memoryNotice.value, configNotice.value, notice.value, layoutSkippedNote.value]
@@ -352,20 +475,26 @@ async function generate() {
     notice.value = readableNotes(notes).join('；')
     persistMemory(memory)
 
-    const generated = await generatePaper(built.data, config.typstPath)
+    const paperName = `三年级数学-${activePreset.value?.name ?? '自选题量'}-${stamp()}.pdf`
+    const generated = await generatePaper(
+      built.data,
+      config.typstPath,
+      undefined,
+      joinPath(saveRoot(), paperName),
+    )
     result.value = generated
     actualPages.value = 0
     pdfData.value = base64ToBytes(generated.pdfBase64)
     typst.value = { path: generated.typstPath, version: generated.typstVersion }
     typstError.value = ''
-    history.value.unshift({
+    addHistory({
       title: `${unitText.value} · ${activePreset.value?.name ?? '自选题量'}`,
       at: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
       count: built.count,
       pages: built.pageEstimate ?? 0,
-      path: generated.outputPath,
+      path: generated.savedPath ?? generated.outputPath,
+      subject: 'math',
     })
-    history.value = history.value.slice(0, 30)
   } catch (reason) {
     errorMessage.value = errorText(reason)
   } finally {
@@ -378,7 +507,7 @@ async function saveAs(target: GenerateResult | null = result.value, fileName = '
   try {
     const dest = await save({
       title: '保存 PDF',
-      defaultPath: fileName,
+      defaultPath: config.saveDir.trim() ? joinPath(saveRoot(), fileName) : fileName,
       filters: [{ name: 'PDF', extensions: ['pdf'] }],
     })
     if (!dest) return
@@ -466,6 +595,11 @@ function applyStoredConfig(stored: Partial<AppConfig>): string {
     count: typeof stored.count === 'number' ? stored.count : DEFAULT_CONFIG.count,
     pages: typeof stored.pages === 'number' ? stored.pages : DEFAULT_CONFIG.pages,
     typstPath: typeof stored.typstPath === 'string' ? stored.typstPath : '',
+    saveDir: typeof stored.saveDir === 'string' ? stored.saveDir : '',
+    historyLimit:
+      stored.historyLimit === 10 || stored.historyLimit === 30 || stored.historyLimit === 0
+        ? stored.historyLimit
+        : DEFAULT_CONFIG.historyLimit,
   })
   return typeof storedCounts?.angle === 'number' && storedCounts.angle > 0
     ? '「角与图形计数」已并入填空，原题量已累加到填空题'
@@ -504,6 +638,40 @@ async function importSettings() {
   }
 }
 
+const saveDirLabel = computed(() => config.saveDir.trim() || '下载文件夹（~/Downloads）')
+
+async function chooseSaveDir() {
+  try {
+    const dir = await open({
+      title: '选择保存位置',
+      directory: true,
+      multiple: false,
+      defaultPath: config.saveDir.trim() || undefined,
+    })
+    if (!dir || Array.isArray(dir)) return
+    config.saveDir = dir
+    configNotice.value = `保存位置已改为：${dir}`
+  } catch (reason) {
+    configNotice.value = `保存位置设置失败：${errorText(reason)}`
+  }
+}
+
+function resetSaveDir() {
+  config.saveDir = ''
+  configNotice.value = '保存位置已恢复为下载文件夹'
+}
+
+function clearMemory() {
+  memory = new MemoryStore()
+  persistMemory(memory)
+  memoryNotice.value = '出题记忆已清空，新卷可能和旧卷重复'
+}
+
+function resetSettings() {
+  Object.assign(config, initialConfig())
+  configNotice.value = '已恢复默认设置'
+}
+
 function scheduleSave() {
   if (!ready.value) return
   window.clearTimeout(saveTimer)
@@ -527,6 +695,7 @@ onMounted(async () => {
     errorMessage.value = errorText(reason)
   }
   ready.value = true
+  trimHistory()
 
   await refreshTemplate()
   await runCheckTypst()
@@ -561,8 +730,9 @@ onBeforeUnmount(() => {
         </button>
       </div>
       <span class="spacer" />
-      <button class="ghost" @click="historyOpen = true; settingsOpen = false">历史卷</button>
+      <button class="ghost" @click="openHistory">历史卷</button>
       <button class="ghost" @click="settingsOpen = true; historyOpen = false">设置</button>
+      <component :is="DevTools" v-if="DevTools" />
     </header>
 
     <aside class="side">
@@ -724,6 +894,64 @@ onBeforeUnmount(() => {
           </div>
           <div class="modal-body">
             <section class="setting-group">
+              <h3>保存位置</h3>
+              <div class="field">
+                <span class="label">当前目录</span>
+                <span class="spacer" />
+                <span class="readonly dir" :title="saveDirLabel">{{ saveDirLabel }}</span>
+                <button class="secondary" @click="chooseSaveDir">更改</button>
+              </div>
+              <div v-if="config.saveDir" class="field">
+                <span class="spacer" />
+                <button class="linkbtn" @click="resetSaveDir">恢复默认（下载文件夹）</button>
+              </div>
+            </section>
+
+            <section class="setting-group">
+              <h3>历史卷</h3>
+              <div class="field">
+                <span class="label">保留最近</span>
+                <span class="spacer" />
+                <div class="seg">
+                  <button :aria-pressed="config.historyLimit === 10" @click="config.historyLimit = 10">
+                    10 份
+                  </button>
+                  <button :aria-pressed="config.historyLimit === 30" @click="config.historyLimit = 30">
+                    30 份
+                  </button>
+                  <button :aria-pressed="config.historyLimit === 0" @click="config.historyLimit = 0">
+                    不限
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="setting-group">
+              <h3>数据</h3>
+              <div class="field">
+                <span class="label">备份</span>
+                <span class="note">导出为 JSON，换电脑可导入</span>
+                <span class="spacer" />
+                <div class="row-actions">
+                  <button class="secondary" @click="exportSettings">导出备份</button>
+                  <button class="secondary" @click="importSettings">导入备份</button>
+                </div>
+              </div>
+              <div class="field">
+                <span class="label">清空出题记忆</span>
+                <span class="note">清空后新卷可能和旧卷重复</span>
+                <span class="spacer" />
+                <button class="secondary" @click="clearMemory">清空</button>
+              </div>
+              <div class="field">
+                <span class="label">恢复默认设置</span>
+                <span class="note">回到首次进入的状态</span>
+                <span class="spacer" />
+                <button class="secondary" @click="resetSettings">恢复</button>
+              </div>
+            </section>
+
+            <section class="setting-group">
               <h3>排版程序</h3>
               <div class="field">
                 <span class="label">Typst</span>
@@ -739,19 +967,6 @@ onBeforeUnmount(() => {
                   @change="runCheckTypst"
                 />
                 <span class="note">留空则自动探测</span>
-              </div>
-            </section>
-
-            <section class="setting-group">
-              <h3>数据</h3>
-              <div class="field">
-                <span class="label">备份</span>
-                <span class="note">导出为 JSON，换电脑可导入</span>
-                <span class="spacer" />
-                <div class="row-actions">
-                  <button class="secondary" @click="exportSettings">导出备份</button>
-                  <button class="secondary" @click="importSettings">导入备份</button>
-                </div>
               </div>
             </section>
 
@@ -793,11 +1008,17 @@ onBeforeUnmount(() => {
             <h2>历史卷</h2>
             <button class="x" aria-label="关闭" @click="historyOpen = false">×</button>
           </div>
+          <div class="history-filter">
+            <button :aria-pressed="historyFilter === 'math'" @click="historyFilter = 'math'">数学</button>
+            <button :aria-pressed="historyFilter === 'chinese'" @click="historyFilter = 'chinese'">
+              语文
+            </button>
+          </div>
           <div class="drawer-body">
-            <p v-if="history.length === 0" class="drawer-empty">
-              还没有历史卷。<br />本次生成的卷会先出现在这里，下次启动后保留。
+            <p v-if="filteredHistory.length === 0" class="drawer-empty">
+              还没有{{ historyFilter === 'chinese' ? '语文' : '数学' }}卷。<br />本次生成的卷会先出现在这里，下次启动后保留。
             </p>
-            <div v-for="(item, index) in history" :key="index" class="history-item">
+            <div v-for="(item, index) in filteredHistory" :key="index" class="history-item">
               <b>{{ item.title }}</b>
               <small>{{ item.at }} · {{ item.count }} 题 · {{ item.pages }} 页</small>
               <div class="row-actions">
@@ -1322,6 +1543,37 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   flex: none;
 }
+.readonly.dir {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.setting-group .seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 210px;
+  flex: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.setting-group .seg button {
+  font: inherit;
+  font-size: 13px;
+  height: 30px;
+  border: none;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.setting-group .seg button + button {
+  border-left: 1px solid #ccc;
+}
+.setting-group .seg button[aria-pressed='true'] {
+  background: #111;
+  color: #fff;
+}
 .input {
   flex: 1;
   min-width: 0;
@@ -1404,6 +1656,31 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px;
+}
+.history-filter {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 12px 20px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+  flex: none;
+}
+.history-filter button {
+  font: inherit;
+  font-size: 13px;
+  height: 32px;
+  border: none;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+}
+.history-filter button + button {
+  border-left: 1px solid #ccc;
+}
+.history-filter button[aria-pressed='true'] {
+  background: #111;
+  color: #fff;
 }
 .drawer-empty {
   margin-top: 80px;

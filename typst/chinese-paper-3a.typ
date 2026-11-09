@@ -11,19 +11,53 @@
 
 // 覆盖共用构件：题号「粘」住后面的内容；默写块不可断页，
 // 避免标题或诗名落在页脚、正文跑到下一页。
-// 版式规则：所有题型标题与第一行（含横线/拼音/田字格）的基线距离统一约 8–9mm。
-// 统一由 below 控制，题型内部首项不得再加 v() 或 above；新增题型沿用该值。
-#let qhead(no, title) = block(sticky: true, above: 6mm, below: 6.2mm)[
+// ============ 版式规则（全题型统一，新增题型必须沿用）============
+// 页面：A4，左右边距 18mm，上 18mm、下 16mm；正文 11pt，leading 0.82em（约 1.55 倍），左对齐。
+// 标题：12pt 加粗；上方距上一题固定 8mm（head-above），下方距第一行 6.2mm（head-below）。
+//   若标题被包进首块防页底孤行，该块的 above 必须写 head-above；题型分支末尾不得留 v()。
+// 填空横线宽度（gen-chinese-paper.mjs 统一计算，不在此处写死）：
+//   宽 = 答案字数 × 7mm（三年级手写单字宽度），下限 14mm、上限 105mm；所有题型同字同宽。
+// 诗句补全、古诗默写：诗名用《》加粗 11pt + 9pt 灰「朝代·作者」；每联一行，
+//   分句各一条定宽横线，分句间打印全角逗号（5mm 格，逗号落在横线上）；书写带高 6.5mm。
+// 给加点字注音：词组 13pt，被注音字下加点；横线按拼音长度取宽并居中，线与词组 4mm。
+// 看拼音写词语：10mm 田字格，拼音 8pt，拼音与格子 1.6mm，5 列，行距 6mm。
+// 修改病句：「改为：」与横线同基线（grid align bottom，标签列 auto）。
+// 扩写、仿写：各 1 行书写线。阅读简答：按参考答案长度给 2–6 行。
+// ==============================================================
+#let head-above = 8mm
+#let head-below = 6.2mm
+#let qhead(no, title) = block(sticky: true, above: head-above, below: head-below)[
   #text(size: 12pt, weight: "bold")[#no．#title]
 ]
 
-// 古诗默写：诗名与两条横线必须同页
-#let poem-blank(title, author, dynasty, lines: 2, line-w: 100%, gap: 9mm) = block(breakable: false, above: 3mm, below: 3mm)[
-  #text(size: 11pt)[#title　#(dynasty)·#(author)]
-  #v(1mm)
-  #for _ in range(lines) {
-    block(width: line-w, above: 0pt, below: 0pt, stroke: (bottom: (thickness: 0.5pt, paint: luma(150))), inset: 0pt)[]
-    v(gap)
+/// 书写带：每个分句一条按字数定宽的横线，分句之间打印逗号，
+/// 宽度由 gen-chinese-paper.mjs 按「字数 × 7mm」算好后传入。
+#let write-band(widths, h: 6.5mm) = {
+  let cells = ()
+  for (i, w) in widths.enumerate() {
+    if i > 0 {
+      cells.push(box(width: 5mm, height: h, align(bottom + center, text(size: 11pt)[，])))
+    }
+    cells.push(box(
+      width: w,
+      height: h,
+      stroke: (bottom: (thickness: 0.5pt, paint: luma(140))),
+      inset: 0pt,
+    )[])
+  }
+  grid(columns: (auto,) * cells.len(), align: bottom, ..cells)
+}
+
+// 古诗默写：与古诗补全同一套结构（诗名行 + 按字数定宽的书写带），
+// 每联一行，联内两个分句之间打印逗号。
+#let poem-blank(no, title, author, dynasty, lineWidths, above: 0mm) = block(above: above, below: 0mm)[
+  #text(size: 11pt, weight: "bold")[#(no)．《#title》]
+  #h(3mm)
+  #text(size: 9pt, fill: luma(115))[#(dynasty)·#(author)]
+  #v(1.6mm)
+  #for (i, widths) in lineWidths.enumerate() {
+    if i > 0 { v(4.5mm) }
+    write-band(widths)
   }
 ]
 
@@ -60,32 +94,25 @@
   out
 }
 
-/// 古诗补全：题名行 + 提示句 + 按答案长度给的书写横线。
-/// 答案是两个分句时用两行横线，每句一条，不拉一条横贯整行的长线。
-#let poem-fill(title, dynasty, author, first, widths: (), blankFirst: false) = block(above: 2mm, below: 1mm)[
-  #text(size: 11pt)[#title　#(dynasty)·#(author)]
-  #v(1mm)
-  #let blank-stack = {
-    for (i, w) in widths.enumerate() {
-      write-line(w: w, h: 7.5mm)
-      if i < widths.len() - 1 { v(0.6mm) }
-    }
+/// 古诗补全：题号 + 诗名（加粗，篇名加书名号）+ 朝代·作者（小字灰），
+/// 给出的诗句与待补的横线都排在同一行，一次只补整联；诗名行与诗句左对齐。
+#let poem-fill(no, title, dynasty, author, verse, widths, blankFirst: false, above: 0mm) = block(above: above, below: 0mm)[
+  // 诗名行：题号与诗名加粗，出处用更小的灰字，和诗句拉开层次
+  #text(size: 11pt, weight: "bold")[#(no)．《#title》]
+  #h(3mm)
+  #text(size: 9pt, fill: luma(115))[#(dynasty)·#(author)]
+  #v(1.6mm)
+  // 书写带：每个分句一条横线，分句之间打印逗号；线距本方诗句比距下一题更近
+  #let band = write-band(widths)
+  #if blankFirst {
+    band
+    v(3mm)
+    text(size: 11pt)[#verse]
+  } else {
+    text(size: 11pt)[#verse]
+    v(2mm)
+    band
   }
-  #if widths.len() > 1 [
-    #if blankFirst [
-      #blank-stack
-      #v(3.2mm)
-      #text(size: 11pt)[#first]
-    ] else [
-      #text(size: 11pt)[#first]
-      #v(0.8mm)
-      #blank-stack
-    ]
-  ] else [
-    #text(size: 11pt)[#first]
-    #h(3mm)
-    #write-line(w: widths.at(0), h: 6mm)
-  ]
 ]
 
 /// 注音题：整词一行排，被注音的字下方加点，字上方按拼音长度给横线
@@ -201,6 +228,37 @@
   )
 }
 
+/// 阅读材料里的列表项/参数行标记：这些行不首行缩进
+#let reading-list-marks = ("①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⊙", "●")
+
+/// 阅读材料里的「｜」行排成带框表格，首行加粗；列数以表头为准，多出的单元格并入末列
+#let reading-table(rows) = {
+  let n = rows.at(0).split("｜").len()
+  let cells = ()
+  for (ri, r) in rows.enumerate() {
+    let raw = r.split("｜").map(s => s.trim())
+    let cs = if raw.len() > n {
+      let head = raw.slice(0, n - 1)
+      head.push(raw.slice(n - 1).join("；"))
+      head
+    } else {
+      raw
+    }
+    for c in cs {
+      cells.push(if ri == 0 { text(weight: "bold")[#c] } else { [#c] })
+    }
+    for _ in range(n - cs.len()) { cells.push([]) }
+  }
+  grid(
+    columns: (1fr,) * n,
+    column-gutter: 0mm,
+    row-gutter: 0mm,
+    stroke: (x: 0.3pt + luma(215), y: 0.3pt + luma(215)),
+    inset: (x: 2.4mm, y: 1.4mm),
+    ..cells,
+  )
+}
+
 /// 阅读题：选择 / 填空 / 简答三种版式分开排；整题不可断页
 #let reading-question(no, q) = block(
   above: 6.6mm,
@@ -249,11 +307,9 @@
   }
 }
 
-/// 答案页小节标题：主观题标「参考答案」，客观题标「对错可判」
+/// 答案页小节标题
 #let anshead(no, title, mode: "objective") = block(sticky: true, above: 3mm, below: 2mm)[
   #text(size: 12pt, weight: "bold")[#no．#title]
-  #h(2mm)
-  #answer-tag(mode)
 ]
 
 /// 取评分要点；字段缺失或为空时统一回退，避免答案页留空
@@ -296,35 +352,47 @@
     ]
   } else if s.typeId == "gushi-fill" {
     for (k, i) in s.items.enumerate() {
-      block(breakable: false)[
+      block(breakable: false, above: if k == 0 { head-above } else { 12mm })[
         #if k == 0 {
           head
         }
         #poem-fill(
+          k + 1,
           i.title,
           i.dynasty,
           i.author,
           i.prompt,
-          widths: i.blankWidthsMm.map(w => w * 1mm),
+          i.clauseWidthsMm.map(w => w * 1mm),
           blankFirst: i.blankFirst,
         )
       ]
     }
   } else if s.typeId == "gushi-dimo" {
     for (k, i) in s.items.enumerate() {
-      block(breakable: false)[
+      block(breakable: false, above: if k == 0 { head-above } else { 8mm })[
         #if k == 0 {
           head
         }
-        #poem-blank(i.title, i.author, i.dynasty, lines: i.lines.len(), gap: 9mm)
+        #poem-blank(
+          k + 1,
+          i.title,
+          i.author,
+          i.dynasty,
+          i.blankWidthsPerLineMm.map(row => row.map(w => w * 1mm)),
+        )
       ]
     }
   } else if s.typeId == "gaibing" {
     for (j, g) in s.items.enumerate() {
-      block(breakable: false, above: 2.4mm)[
+      block(breakable: false, above: if j == 0 { 0mm } else { 6mm })[
         #text(size: 11pt)[（#(j + 1)）#g.broken]
         #v(0.3mm)
-        #grid(columns: (16mm, 1fr), text(size: 11pt)[改为：], write-line(h: 8mm))
+        #grid(
+          columns: (auto, 1fr),
+          align: bottom,
+          text(size: 11pt)[改为：],
+          write-line(h: 6.5mm),
+        )
       ]
     }
   } else if s.typeId == "guanlian" {
@@ -355,26 +423,63 @@
     }
   } else if s.typeId == "reading" {
     for (k, r) in s.items.enumerate() {
-      block(breakable: false, sticky: true)[
+      block(breakable: false, sticky: true, above: if k == 0 { head-above } else { 0mm })[
         #if k == 0 {
           head
         }
-        #align(center, text(size: 12pt, weight: "bold")[#r.title])
-        #v(1.2mm)
-        #for para in r.paragraphs {
-          [#text(size: 11pt)[#h(2em)#para]]
-          parbreak()
+        #align(center, text(size: 14pt, weight: "bold")[#r.title])
+        #v(1.6mm)
+        #let pi = 0
+        #while pi < r.paragraphs.len() {
+          let para = r.paragraphs.at(pi)
+          if pi == 0 and para.trim() == r.title.trim() {
+            pi += 1
+          } else if para.contains("｜") {
+            let rows = ()
+            while pi < r.paragraphs.len() and r.paragraphs.at(pi).contains("｜") {
+              rows.push(r.paragraphs.at(pi))
+              pi += 1
+            }
+            reading-table(rows)
+            v(2mm)
+          } else if para.starts-with("【材料") {
+            v(1.6mm)
+            text(size: 11.5pt, weight: "bold")[#para]
+            v(0.8mm)
+            pi += 1
+          } else if para.starts-with("【注") {
+            text(size: 9.5pt, fill: luma(95))[#para]
+            v(1mm)
+            pi += 1
+          } else if para.starts-with("【") {
+            v(1.6mm)
+            text(size: 11.5pt, weight: "bold")[#para]
+            v(0.8mm)
+            pi += 1
+          } else if para.starts-with("（选自") or para.starts-with("(选自") {
+            text(size: 9pt, fill: luma(105))[#para]
+            v(1mm)
+            pi += 1
+          } else if reading-list-marks.any(m => para.starts-with(m)) or (para.split("：").len() > 1 and para.split("：").at(0).clusters().len() <= 8) {
+            [#text(size: 11pt)[#para]]
+            parbreak()
+            pi += 1
+          } else {
+            [#text(size: 11pt)[#h(2em)#para]]
+            parbreak()
+            pi += 1
+          }
         }
       ]
       v(1.4mm)
       for (qi, q) in r.questions.enumerate() {
         reading-question(qi + 1, q)
       }
-      v(2mm)
+      if k < s.items.len() - 1 { v(2mm) }
     }
   } else if s.typeId == "writing" {
     for (k, w) in s.items.enumerate() {
-      block(breakable: false)[
+      block(breakable: false, above: if k == 0 { head-above } else { 8mm })[
         #if k == 0 { head }
         #text(size: 11pt, weight: "bold")[题目：#w.title]
         #v(1mm)
@@ -485,8 +590,9 @@
       v(0.8mm)
     }
   } else if s.typeId == "reading" {
-    for r in s.items {
-      text(size: 10pt, weight: "bold")[#r.id《#r.title》]
+    for (k, r) in s.items.enumerate() {
+      if k > 0 { v(7mm) }
+      text(size: 10.5pt, weight: "bold")[《#r.title》]
       linebreak()
       for (j, q) in r.questions.enumerate() {
         if q.type == "choice" {
@@ -558,7 +664,6 @@
     v(1mm)
     gap-block(s)
   }
-  v(1.5mm)
 }
 
 // ==================== 答案页（可整页取舍）====================
@@ -568,15 +673,6 @@
 
   align(center, text(size: 16pt, weight: "bold")[参考答案与解析])
   v(1.5mm)
-  grid(
-    columns: (auto, 1fr),
-    column-gutter: 3mm,
-    row-gutter: 1mm,
-    [ #answer-tag("objective") ], [对错可判：给出答案和简析，可直接核对。],
-    [ #answer-tag("subjective") ], [参考答案：简答题给出参考答案，意思对即可。],
-    [ #answer-tag("mixed") ], [混合板块：客观题给答案和简析，简答题给参考答案。],
-  )
-  v(1mm)
   set par(leading: 3.8mm)
 
   for s in p.sections {
@@ -585,16 +681,6 @@
       answer-body(s)
     } else {
       text(size: 9.5pt)[本卷未排此题：#s.gap.message]
-      linebreak()
-    }
-  }
-
-  if p.notes.len() > 0 {
-    v(2mm)
-    text(size: 10pt, weight: "bold")[生成说明]
-    v(0.5mm)
-    for note in p.notes {
-      text(size: 8.5pt, fill: luma(90))[· #note]
       linebreak()
     }
   }

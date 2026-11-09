@@ -19,9 +19,57 @@ import type {
   ReadingSkillCode,
   ReadingTheme,
 } from '../data/chinese/types.ts'
+import type { ReadingPaperItem } from './types.ts'
 
 /** 课外阅读专项：每篇分值 */
 export const READING_PAPER_SCORE = 12
+
+// ---------- 阅读题版式度量（与 typst/gen-chinese-paper.mjs 同口径）----------
+const HANDWRITE_MM_PER_CHAR = 7
+const BLANK_MIN_MM = 14
+const BLANK_MAX_MM = 105
+const SHORT_ANSWER_CHARS_PER_LINE = 25
+
+const charCount = (text: unknown): number =>
+  [...String(text ?? '')].filter((ch) => !/\s/.test(ch)).length
+
+const clampLines = (chars: number): number =>
+  Math.min(Math.max(Math.ceil(chars / SHORT_ANSWER_CHARS_PER_LINE), 2), 6)
+
+/** 只取学生实际要写的正文：去掉“示例：”和末尾“也可/即可”这类家长提示 */
+function coreAnswer(answer: unknown): string {
+  let text = String(answer ?? '').trim()
+  text = text.replace(/^示例[:：]\s*/, '')
+  const parts = text.split('。').map((part) => part.trim()).filter(Boolean)
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1]!
+    if (/^(摘抄其他|预测另一种|其他合理|举自己|举其他|说清|句子通顺|意思通顺)/.test(last)) {
+      parts.pop()
+    }
+  }
+  return parts.join('。')
+}
+
+/** 给阅读题的填空横线宽度、简答书写行数补齐版式字段 */
+function applyReadingMetrics(doc: ChinesePaperDoc): void {
+  for (const section of doc.sections) {
+    if (section.typeId !== 'reading' || section.selected <= 0) continue
+    const items = section.items as ReadingPaperItem[]
+    for (const reading of items) {
+      for (const question of reading.questions) {
+        if (question.type === 'fill') {
+          const target = question as typeof question & { blankWidthsMm?: number[] }
+          target.blankWidthsMm = question.blanks.map((blank) =>
+            Math.min(Math.max(charCount(blank) * HANDWRITE_MM_PER_CHAR, BLANK_MIN_MM), BLANK_MAX_MM),
+          )
+        } else if (question.type === 'short') {
+          const target = question as typeof question & { blankLines?: number }
+          target.blankLines = clampLines(charCount(coreAnswer(question.answer)))
+        }
+      }
+    }
+  }
+}
 
 /** 界面上的阅读专项选择；空数组表示不筛选 */
 export interface ReadingPaperSelection {
@@ -97,24 +145,23 @@ export function buildChinesePaperDoc(config: ChinesePaperConfig): {
     config.subtitle ??
     `统编版·五四学制 2025 年秋修订版　｜　满分 ${paper.score.total} 分　｜　${totalItems} 题${time ? `　｜　${time}` : ''}${shortage}`
 
-  return {
-    paper,
-    doc: {
-      meta: {
-        title: config.title,
-        subtitle,
-        total: paper.score.total,
-        gradable: paper.score.gradable,
-        requested: paper.score.requested,
-        totalItems,
-        requestedItems,
-        seed: config.seed,
-        difficulty: config.difficulty,
-        includeAnswers: config.includeAnswers,
-      },
-      sections: paper.sections,
-      gaps: paper.gaps,
-      notes: paper.notes,
+  const doc: ChinesePaperDoc = {
+    meta: {
+      title: config.title,
+      subtitle,
+      total: paper.score.total,
+      gradable: paper.score.gradable,
+      requested: paper.score.requested,
+      totalItems,
+      requestedItems,
+      seed: config.seed,
+      difficulty: config.difficulty,
+      includeAnswers: config.includeAnswers,
     },
+    sections: paper.sections,
+    gaps: paper.gaps,
+    notes: paper.notes,
   }
+  applyReadingMetrics(doc)
+  return { paper, doc }
 }
