@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "batch": "20261107-222231",
+  "createdAt": "2026-11-07T22:22:31+0800",
+  "wordRange": [
+    300,
+    500
+  ],
+  "intervalSeconds": [
+    3,
+    5
+  ],
+  "stats": {
+    "success": 0,
+    "skipped": 0,
+    "failed": 3,
+    "imported": 0,
+    "pendingQuestions": 0
+  },
+  "failReasons": {
+    "字数不符": 3
+  },
+  "entries": [
+    {
+      "link": "https://mp.weixin.qq.com/s?src=11&timestamp=1794047171&ver=7074&signature=vAr1ngs*77DqZ-NKNpYgKJZ5kNV-igbDkkGEQ8MFhbl*gXUdZAxIKqpstKJ34aOVHdN7jkyzWHrkPVZ2s7m8zG*c8s-5MRoxLRGDeUmey9ib*n*a9p*D8-DF6fqotJN8&new=1",
+      "finalUrl": "https://mp.weixin.qq.com/s?src=11&timestamp=1794047171&ver=7074&signature=vAr1ngs*77DqZ-NKNpYgKJZ5kNV-igbDkkGEQ8MFhbl*gXUdZAxIKqpstKJ34aOVHdN7jkyzWHrkPVZ2s7m8zG*c8s-5MRoxLRGDeUmey9ib*n*a9p*D8-DF6fqotJN8&new=1",
+      "title": "三年级语文上册阅读题含答案，新学期孩子练习！",
+      "seq": null,
+      "status": "failed",
+      "reasonCategory": "字数不符",
+      "reason": "字数 3577，不在 300–500",
+      "intakeStatus": null,
+      "charCount": 3577
+    },
+    {
+      "link": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046801&ver=7074&signature=Accq9oXaEuOBtNHuyuTthbMGxPuscUAYNBlp6aSUhsGO*S5bDM0RFzHEuNFCBAwZTRY4i228aV6YIe*MjUgeIK0o5Iu-U*PI0TQci2inBxoV7FI249z2lqVqy0qvm*96&new=1",
+      "finalUrl": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046801&ver=7074&signature=Accq9oXaEuOBtNHuyuTthbMGxPuscUAYNBlp6aSUhsGO*S5bDM0RFzHEuNFCBAwZTRY4i228aV6YIe*MjUgeIK0o5Iu-U*PI0TQci2inBxoV7FI249z2lqVqy0qvm*96&new=1",
+      "title": "部编版三年级语文上册课内阅读专项练习及答案",
+      "seq": null,
+      "status": "failed",
+      "reasonCategory": "字数不符",
+      "reason": "字数 4929，不在 300–500",
+      "intakeStatus": null,
+      "charCount": 4929
+    },
+    {
+      "link": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046836&ver=7074&signature=*o1JTLSH4JzgKhzBIHpaJ3nltxLn8o0cahswCh9ImhQPi7wd6eEweZfzVs3GQEMdFE1Yuw6PWv2em8JzZxMHjFRci5MJzFyF*0KHTX5f-JO5ccqSJaoxuRManOtDRKed&new=1",
+      "finalUrl": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046836&ver=7074&signature=*o1JTLSH4JzgKhzBIHpaJ3nltxLn8o0cahswCh9ImhQPi7wd6eEweZfzVs3GQEMdFE1Yuw6PWv2em8JzZxMHjFRci5MJzFyF*0KHTX5f-JO5ccqSJaoxuRManOtDRKed&new=1",
+      "title": "收藏：部编三年级语文上册课内阅读理解练习附参考答案",
+      "seq": null,
+      "status": "failed",
+      "reasonCategory": "字数不符",
+      "reason": "字数 5832，不在 300–500",
+      "intakeStatus": null,
+      "charCount": 5832
+    }
+  ],
+  "updatedAt": "2026-11-07T22:22:43+0800"
+}

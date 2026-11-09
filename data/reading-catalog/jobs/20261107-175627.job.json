@@ -1,0 +1,37 @@
+{
+  "createdAt": "2026-11-07T17:56:27+08:00",
+  "id": "20261107-175627",
+  "note": "",
+  "requireAnswer": false,
+  "sources": [
+    "chinafable",
+    "gutenberg-zh",
+    "pep-samples",
+    "moe-gov",
+    "wechat-kids"
+  ],
+  "status": "partial",
+  "targetCount": 20,
+  "wordMax": 500,
+  "wordMin": 300,
+  "result": {
+    "added": 0,
+    "gap": 20,
+    "inventory": 20,
+    "reasons": [
+      "目标 20 篇，本轮新增 0 篇，缺口 20 篇",
+      "不可用来源：pep-samples,wechat-kids",
+      "公众号索引实测 2/50 成功（4%），第 3 条起搜狗 antispider，IP 被限流；未放量",
+      "寓言网本页 8 篇正文合格但未命题（no-answer），41 条本轮未处理，缺口未降低标准"
+    ],
+    "updatedAt": "2026-11-07T18:08:05+0800",
+    "wechatProbe": {
+      "attempted": 50,
+      "success": 2,
+      "verify": 48,
+      "hard403": 0,
+      "notfound": 0,
+      "empty": 0
+    }
+  }
+}

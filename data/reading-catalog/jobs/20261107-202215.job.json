@@ -1,0 +1,18 @@
+{
+  "createdAt": "2026-11-07T20:22:15+08:00",
+  "id": "20261107-202215",
+  "note": "",
+  "requireAnswer": false,
+  "sources": [
+    "chinafable",
+    "gutenberg-zh",
+    "pep-samples",
+    "moe-gov",
+    "local-export",
+    "wechat-kids"
+  ],
+  "status": "pending",
+  "targetCount": 20,
+  "wordMax": 500,
+  "wordMin": 300
+}

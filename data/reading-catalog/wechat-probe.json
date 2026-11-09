@@ -1,0 +1,378 @@
+{
+  "generatedAt": "2026-11-07T18:06:39+0800",
+  "limit": 50,
+  "attempted": 50,
+  "counts": {
+    "success": 2,
+    "verify": 48,
+    "hard403": 0,
+    "notfound": 0,
+    "empty": 0,
+    "network": 0
+  },
+  "results": [
+    {
+      "index": 1,
+      "kind": "success",
+      "keyword": "三年级 阅读理解",
+      "title": "三年级滑坡现象之阅读理解",
+      "httpStatus": 200,
+      "paragraphs": 45,
+      "chars": 1312,
+      "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1794045902&ver=7074&signature=6FQEhnMJKLUapMKLpH4aBWFKYFsp9jraRKElXeb1gZvEzxZP*FHbjNX4OycR17z4h06iouQsGBmvCzurwJfDbs2sjAmpi2hL*a5LCkbnQmGcXBtVVsernDe7rRpXO*nC&new=1"
+    },
+    {
+      "index": 2,
+      "kind": "success",
+      "keyword": "三年级 阅读理解",
+      "title": "三年级上册语文课内阅读理解专项练习（4），附答案",
+      "httpStatus": 200,
+      "paragraphs": 44,
+      "chars": 769,
+      "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1794045902&ver=7074&signature=M8pN87sQEs57h0asWjqRISwXBNlflzDa2GZtdKLrIwm2HQNjwK41t8TVepar8d-EDEeak-fCn1VaWa*LQtQA44qFQjjTiBMRZwmp1kK8-14aEbKghKG3DG7GQSYQND8I&new=1"
+    },
+    {
+      "index": 3,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级上册语文课内阅读理解专项练习(2),附答案",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 4,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级语文阅读理解,可下载",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 5,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学语文三四年级阅读理解答题技巧,超全整理!",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 6,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学语文三年级阅读理解练习题(可打印)",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 7,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级阅读理解与写作(附练习及答案)",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 8,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解辅导",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 9,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解平均分高7.2分:三步法破解所有题型",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 10,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解错一片?用这款AI精读小助手,10分钟教会孩子“从文中找答案”!",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 11,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "【阅读理解】三年级语文阅读理解精选及答案",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 12,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解难度增大,失分严重怎么办?",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 13,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级语文下册阅读理解训练题,给孩子下载练习!",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 14,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "26秋三年级上册语文期中阅读理解押题",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 15,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解训练场",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 16,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解答题技巧总结【完整版】",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 17,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学语文三年级阅读理解专项练习附答案,给孩子下载!",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 18,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解复习",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 19,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级上册语文课内阅读理解专项练习(2),附答案",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 20,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级滑坡现象之阅读理解",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 21,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级语文期中阶段阅读理解专项卷",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 22,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级下册课外阅读理解,附答案",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 23,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "妈妈给孩子转了小学,随后发现三年级阅读理解孩子基本看不懂——小学的压力是否源自校校差距?",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 24,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "【新学期】三年级语文阅读理解精选",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 25,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级上册语文课内阅读理解专项练习(7),附答案",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 26,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级阅读理解真题训练,附答案",
+      "keyword": "三年级 阅读理解"
+    },
+    {
+      "index": 27,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级学课外阅读答题技巧,满分攻略!",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 28,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级课外阅读训练指导 合集",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 29,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级下册语文课外阅读理解1,附答案",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 30,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "书香伴成长:三年级课外阅读推荐书籍",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 31,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "部编版三年级课外阅读大全,有答案【免费下载】",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 32,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级下册课外阅读理解,附答案",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 33,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级课外阅读导读微视频",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 34,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级课外阅读记录卡手抄报怎么画,小学生阅读记录卡模板简单画法",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 35,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级语文课外阅读短文29篇(带答案)和21篇(无答案),已排版可下载!",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 36,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学语文三年级课外阅读计划",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 37,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级语文课外阅读训练有答案,练习必备!",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 38,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级上学期课外阅读书目(结合课本推荐)",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 39,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级下学期课外阅读书目(结合课本推荐)",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 40,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级语文:课外阅读最新16篇,给孩子暑假练习!",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 41,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级课外阅读指导方法",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 42,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级课外阅读《稻草人》测试题",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 43,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级语文课外阅读题二十九篇及参考答案",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 44,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "小学三年级语文课外阅读短文29篇(带答案)和21篇(无答案),已排版可下载!",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 45,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级课外阅读《格林童话》测试题",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 46,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "专项训练┃部编版语文三年级下册课外阅读专项训练(A)",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 47,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "部编三年级课外阅读专项训练",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 48,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级课外阅读书单推荐,值得收藏!",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 49,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级下册语文课外阅读理解1,附答案",
+      "keyword": "三年级 课外阅读"
+    },
+    {
+      "index": 50,
+      "kind": "verify",
+      "reason": "verify",
+      "title": "三年级上学期课外阅读书目(结合课本推荐)",
+      "keyword": "三年级 课外阅读"
+    }
+  ],
+  "keywords": [
+    "三年级 阅读理解",
+    "三年级 课外阅读",
+    "小学语文 阅读短文 答案",
+    "三年级上册 阅读训练",
+    "三年级 语文 阅读题"
+  ]
+}

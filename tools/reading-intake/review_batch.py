@@ -67,7 +67,8 @@ def main():
 
     drafts = load()
     ids = [d["id"] for d in drafts]
-    start = ids.index(args.start) if args.start in ids else 0
+    target = int(args.start.split("-")[1])
+    start = next((i for i, rid in enumerate(ids) if int(rid.split("-")[1]) >= target), 0)
     batch = drafts[start:start + args.count]
 
     print(f"本批 {len(batch)} 篇：{batch[0]['id']} – {batch[-1]['id']}"

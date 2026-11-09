@@ -1,0 +1,262 @@
+{
+  "version": 1,
+  "batch": "20261107-split2",
+  "createdAt": "2026-11-07T23:02:10+0800",
+  "wordRange": [
+    300,
+    500
+  ],
+  "intervalSeconds": [
+    3,
+    5
+  ],
+  "stats": {
+    "success": 3,
+    "skipped": 0,
+    "failed": 0,
+    "imported": 0,
+    "pendingQuestions": 7,
+    "splitArticles": 2,
+    "splitUnits": 20,
+    "splitPassed": 0,
+    "splitWordPassed": 6,
+    "needsSplit": 1
+  },
+  "failReasons": {},
+  "entries": [
+    {
+      "link": "https://mp.weixin.qq.com/s?src=11&timestamp=1794047171&ver=7074&signature=vAr1ngs*77DqZ-NKNpYgKJZ5kNV-igbDkkGEQ8MFhbl*gXUdZAxIKqpstKJ34aOVHdN7jkyzWHrkPVZ2s7m8zG*c8s-5MRoxLRGDeUmey9ib*n*a9p*D8-DF6fqotJN8&new=1",
+      "finalUrl": "https://mp.weixin.qq.com/s?src=11&timestamp=1794047171&ver=7074&signature=vAr1ngs*77DqZ-NKNpYgKJZ5kNV-igbDkkGEQ8MFhbl*gXUdZAxIKqpstKJ34aOVHdN7jkyzWHrkPVZ2s7m8zG*c8s-5MRoxLRGDeUmey9ib*n*a9p*D8-DF6fqotJN8&new=1",
+      "title": "三年级语文上册阅读题含答案，新学期孩子练习！",
+      "seq": "RD-173",
+      "status": "ok",
+      "reasonCategory": null,
+      "reason": null,
+      "intakeStatus": "split",
+      "charCount": 3539,
+      "split": {
+        "reliable": true,
+        "attempted": true,
+        "method": "heading",
+        "units": [
+          {
+            "seq": "RD-174",
+            "title": "三年级语文上册阅读题含答案，新学期孩子练习！-1",
+            "charCount": 277,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 277，不在 300–500"
+          },
+          {
+            "seq": "RD-175",
+            "title": "齐白石",
+            "charCount": 413,
+            "status": "no-answer",
+            "passed": false,
+            "wordPassed": true,
+            "reason": "正文已提取且合格，缺题目/答案；补 questions/<seq>.json 后重跑"
+          },
+          {
+            "seq": "RD-176",
+            "title": "小草",
+            "charCount": 283,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 283，不在 300–500"
+          },
+          {
+            "seq": "RD-177",
+            "title": "《马和驹》",
+            "charCount": 903,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 903，不在 300–500"
+          },
+          {
+            "seq": "RD-178",
+            "title": "葡萄园",
+            "charCount": 192,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 192，不在 300–500"
+          },
+          {
+            "seq": "RD-179",
+            "title": "太阳花",
+            "charCount": 305,
+            "status": "no-answer",
+            "passed": false,
+            "wordPassed": true,
+            "reason": "正文已提取且合格，缺题目/答案；补 questions/<seq>.json 后重跑"
+          },
+          {
+            "seq": "RD-180",
+            "title": "乌鸦",
+            "charCount": 426,
+            "status": "no-answer",
+            "passed": false,
+            "wordPassed": true,
+            "reason": "正文已提取且合格，缺题目/答案；补 questions/<seq>.json 后重跑"
+          }
+        ]
+      }
+    },
+    {
+      "link": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046801&ver=7074&signature=Accq9oXaEuOBtNHuyuTthbMGxPuscUAYNBlp6aSUhsGO*S5bDM0RFzHEuNFCBAwZTRY4i228aV6YIe*MjUgeIK0o5Iu-U*PI0TQci2inBxoV7FI249z2lqVqy0qvm*96&new=1",
+      "finalUrl": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046801&ver=7074&signature=Accq9oXaEuOBtNHuyuTthbMGxPuscUAYNBlp6aSUhsGO*S5bDM0RFzHEuNFCBAwZTRY4i228aV6YIe*MjUgeIK0o5Iu-U*PI0TQci2inBxoV7FI249z2lqVqy0qvm*96&new=1",
+      "title": "部编版三年级语文上册课内阅读专项练习及答案",
+      "seq": "RD-181",
+      "status": "ok",
+      "reasonCategory": null,
+      "reason": null,
+      "intakeStatus": "split",
+      "charCount": 4929,
+      "split": {
+        "reliable": true,
+        "attempted": true,
+        "method": "heading",
+        "units": [
+          {
+            "seq": "RD-182",
+            "title": "山行",
+            "charCount": 96,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 96，不在 300–500"
+          },
+          {
+            "seq": "RD-183",
+            "title": "望洞庭",
+            "charCount": 90,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 90，不在 300–500"
+          },
+          {
+            "seq": "RD-184",
+            "title": "《大青树下的小学》片段",
+            "charCount": 293,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 293，不在 300–500"
+          },
+          {
+            "seq": "RD-185",
+            "title": "《灰雀》片段",
+            "charCount": 208,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 208，不在 300–500"
+          },
+          {
+            "seq": "RD-186",
+            "title": "《铺满金色巴掌的水泥道》片段",
+            "charCount": 315,
+            "status": "no-answer",
+            "passed": false,
+            "wordPassed": true,
+            "reason": "正文已提取且合格，缺题目/答案；补 questions/<seq>.json 后重跑"
+          },
+          {
+            "seq": "RD-187",
+            "title": "《秋天的雨》片段",
+            "charCount": 242,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 242，不在 300–500"
+          },
+          {
+            "seq": "RD-188",
+            "title": "《金色的草地》片段",
+            "charCount": 243,
+            "status": "no-questions",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "正文未发现题目形态，保留正文供以后人工命题"
+          },
+          {
+            "seq": "RD-189",
+            "title": "《去年的树》片段",
+            "charCount": 308,
+            "status": "no-answer",
+            "passed": false,
+            "wordPassed": true,
+            "reason": "正文已提取且合格，缺题目/答案；补 questions/<seq>.json 后重跑"
+          },
+          {
+            "seq": "RD-190",
+            "title": "《在牛肚子里旅行》片段",
+            "charCount": 263,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 263，不在 300–500"
+          },
+          {
+            "seq": "RD-191",
+            "title": "《总也倒不了的老屋》片段",
+            "charCount": 224,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 224，不在 300–500"
+          },
+          {
+            "seq": "RD-192",
+            "title": "《美丽的小兴安岭》片段",
+            "charCount": 259,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 259，不在 300–500"
+          },
+          {
+            "seq": "RD-193",
+            "title": "《掌声》片段",
+            "charCount": 327,
+            "status": "no-answer",
+            "passed": false,
+            "wordPassed": true,
+            "reason": "正文已提取且合格，缺题目/答案；补 questions/<seq>.json 后重跑"
+          },
+          {
+            "seq": "RD-194",
+            "title": "《父亲、树林和鸟》片段",
+            "charCount": 173,
+            "status": "rejected",
+            "passed": false,
+            "wordPassed": false,
+            "reason": "字数 173，不在 300–500"
+          }
+        ]
+      }
+    },
+    {
+      "link": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046836&ver=7074&signature=*o1JTLSH4JzgKhzBIHpaJ3nltxLn8o0cahswCh9ImhQPi7wd6eEweZfzVs3GQEMdFE1Yuw6PWv2em8JzZxMHjFRci5MJzFyF*0KHTX5f-JO5ccqSJaoxuRManOtDRKed&new=1",
+      "finalUrl": "https://mp.weixin.qq.com/s?src=11&timestamp=1794046836&ver=7074&signature=*o1JTLSH4JzgKhzBIHpaJ3nltxLn8o0cahswCh9ImhQPi7wd6eEweZfzVs3GQEMdFE1Yuw6PWv2em8JzZxMHjFRci5MJzFyF*0KHTX5f-JO5ccqSJaoxuRManOtDRKed&new=1",
+      "title": "收藏：部编三年级语文上册课内阅读理解练习附参考答案",
+      "seq": "RD-195",
+      "status": "ok",
+      "reasonCategory": null,
+      "reason": null,
+      "intakeStatus": "needs-split",
+      "charCount": 5832,
+      "split": {
+        "reliable": false,
+        "attempted": true,
+        "method": null,
+        "units": []
+      }
+    }
+  ],
+  "updatedAt": "2026-11-07T23:02:50+0800"
+}

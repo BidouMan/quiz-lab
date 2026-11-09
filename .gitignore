@@ -25,6 +25,10 @@ src-tauri/gen/schemas/
 .screenshots/
 .trae-html-share-packages/
 
+# Python 缓存
+__pycache__/
+*.pyc
+
 # 样张目录：只收录代表性样张 PDF，排除临时导出、字号试验与截图
 samples/app-输出.pdf
 samples/字号对比-*.pdf

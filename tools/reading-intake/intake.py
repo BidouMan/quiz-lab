@@ -130,6 +130,17 @@ def cmd_clean(args: argparse.Namespace) -> None:
     print(text)
 
 
+def cmd_blocks(args: argparse.Namespace) -> None:
+    """把 clean.txt 按空行切成文字块，导出 blocks.json 供段号定位使用。"""
+    text = Path(args.input).read_text(encoding="utf-8")
+    blocks = [block.strip() for block in re.split(r"\n\s*\n", text) if block.strip()]
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / "blocks.json"
+    path.write_text(json.dumps({"blocks": blocks}, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"{path}\t{len(blocks)} 块")
+
+
 def cmd_eval(args: argparse.Namespace) -> None:
     import difflib
 
@@ -270,6 +281,11 @@ def main() -> None:
     p.add_argument("input")
     p.add_argument("--out", required=True)
     p.set_defaults(func=cmd_clean)
+
+    p = sub.add_parser("blocks")
+    p.add_argument("input")
+    p.add_argument("--out", required=True)
+    p.set_defaults(func=cmd_blocks)
 
     p = sub.add_parser("eval")
     p.add_argument("ref")

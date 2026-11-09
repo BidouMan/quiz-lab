@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-07",
+  "sources": [
+    {
+      "id": "chinafable",
+      "name": "中国寓言网 · 现代寓言",
+      "type": "公众号/博客",
+      "listUrl": "http://www.chinafable.cn/search-1-0-0-1.html",
+      "adapter": "chinafable",
+      "status": "pending",
+      "remainingPages": 192,
+      "lastScanAt": "2026-11-07",
+      "note": "中国寓言文学研究会主办的作品站，页面 GBK 编码。作品页正文可下载；版权归原作者，仅作本地自测与教研使用。",
+      "pagination": {
+        "kind": "page-path",
+        "prefix": "search-1-0-0-",
+        "lastPage": 3,
+        "totalPages": 195
+      }
+    },
+    {
+      "id": "gutenberg-zh",
+      "name": "Project Gutenberg · 中文公版书",
+      "type": "公版书库",
+      "listUrl": "https://www.gutenberg.org/browse/languages/zh",
+      "adapter": "gutenberg",
+      "status": "pending",
+      "remainingPages": null,
+      "lastScanAt": null,
+      "note": "公版中文书整本下载。多为文言或古典白话，与三上 300–500 字现代短文口径不符，process 会按字数与寓意缺失如实拒收。",
+      "pagination": {
+        "kind": "single-page",
+        "lastPage": 0,
+        "totalPages": 1
+      }
+    },
+    {
+      "id": "pep-samples",
+      "name": "人民教育出版社 · 人教好书样章",
+      "type": "出版社样章",
+      "listUrl": "https://www.pep.com.cn/products/",
+      "adapter": "none",
+      "status": "unavailable",
+      "remainingPages": null,
+      "lastScanAt": null,
+      "note": "复验（2026-11-07）：带浏览器 UA + Referer 后首页与产品页返回 200，确认不是硬 403；但书目列表仍由前端异步加载，未找到稳定可枚举的条目接口与公开样章直链。能取范围仅限书目介绍，无样章正文，本轮不采集。"
+    },
+    {
+      "id": "moe-gov",
+      "name": "中华人民共和国教育部",
+      "type": "政府/教育机构网站",
+      "listUrl": "http://www.moe.gov.cn/",
+      "adapter": "none",
+      "status": "not-applicable",
+      "remainingPages": null,
+      "lastScanAt": null,
+      "note": "复验：站点栏目只有政策文件、通知和新闻，没有学生短文/阅读篇目，不适合作为素材来源；移出候选，避免以后再试。"
+    },
+    {
+      "id": "local-export",
+      "name": "公众号 · 本地导出目录",
+      "type": "本地导出目录",
+      "listUrl": "data/reading-catalog/samples/local-export",
+      "adapter": "local",
+      "status": "exhausted",
+      "remainingPages": 0,
+      "lastScanAt": "2026-11-07",
+      "note": "本地导出目录 /Users/amixc/MyWorkSpace/CodeStaction/QuizLab/data/reading-catalog/samples/local-export（导出工具：样例导出器）。可重复扫描，目录内新文件会自动收录；最近一次：新增 0，已收跳过 4，重复 0，失败 0。"
+    },
+    {
+      "id": "wechat-kids",
+      "name": "公众号 · 搜索引擎索引（搜狗微信）",
+      "type": "公众号/博客",
+      "listUrl": "https://weixin.sogou.com/weixin?type=2&query=%E4%B8%89%E5%B9%B4%E7%BA%A7%20%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3",
+      "adapter": "none",
+      "status": "unavailable",
+      "remainingPages": null,
+      "lastScanAt": "2026-11-07",
+      "note": "实测 50 条候选：成功 2、撞验证 48、404 0、正文为空 0（见 wechat-probe.json）。前 2 条正文可正常提取，第 3 条起搜狗 /link 全部跳 antispider，随后搜索页也返回 0 条，判定为本机 IP 被限流，不是 WeChat 正文不可取。放量前需走登录态历史列表路线（WECHAT_LOGIN_ROUTE.md），需用户配合。"
+    },
+    {
+      "id": "wechat-links",
+      "name": "公众号 · 批量链接",
+      "type": "公众号/博客",
+      "listUrl": "",
+      "adapter": "local",
+      "status": "manual",
+      "remainingPages": null,
+      "lastScanAt": "2026-11-07",
+      "note": "面板「批量链接」逐条抓取：系统 curl 取文章页 HTML（浏览器 UA、无登录凭证），正文按本地导出适配器解析后走 clean → gate 入库。历史文章列表接口只有微信客户端能取，桌面端已停止尝试。"
+    }
+  ]
+}
