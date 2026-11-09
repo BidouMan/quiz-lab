@@ -19,6 +19,8 @@ import ParamsPanel from './ParamsPanel.vue'
 import ChinesePanel from './ChinesePanel.vue'
 import PdfPreview from './PdfPreview.vue'
 import { buildPaper, defaultUnitIds, migrateCounts, migrateLegacyCounts, panelUnits, typeVisibleInGrade } from './paperBuilder'
+import { buildChinesePaperDoc, buildReadingPaperConfig, type ReadingPaperSelection } from '../chinese/doc.ts'
+import type { ReadingPaperItem } from '../chinese/types.ts'
 import {
   LEVEL_LABELS,
   PRESETS,
@@ -29,7 +31,7 @@ import {
   type Preset,
 } from './presets'
 import { TYPE_OPTIONS, TYPE_ORDER } from './typstData'
-import { PLACEHOLDER_TEXT, SUBJECTS, type SubjectId } from './subjects'
+import { SUBJECTS, type SubjectId } from './subjects'
 import {
   clampTypeCount,
   DEFAULT_CONFIG,
@@ -123,19 +125,54 @@ const historyOpen = ref(false)
 /** 科目切换只在本次运行内保留；数学配置与已生成的卷子都留在原位，不受切换影响 */
 const subject = ref<SubjectId>('math')
 const chineseNotice = ref('')
+const chineseError = ref('')
+const chineseBusy = ref(false)
+const chineseResult = ref<GenerateResult | null>(null)
+const chinesePdfData = ref<Uint8Array | null>(null)
+const chinesePages = ref(0)
+const chineseFigures = ref({ pieces: 0, questions: 0, score: 0 })
 const subjectMeta = computed(() => SUBJECTS.find((item) => item.id === subject.value) ?? SUBJECTS[0])
-const chinesePreviewText = computed(() =>
-  chineseNotice.value ? '占位 · 语文练习卷尚未接入' : PLACEHOLDER_TEXT,
-)
 
 function switchSubject(id: SubjectId) {
   if (id === subject.value) return
   subject.value = id
-  if (id === 'chinese') chineseNotice.value = ''
+  if (id === 'chinese') chineseError.value = ''
 }
 
-function onChineseGenerate() {
-  chineseNotice.value = '占位提示：语文出卷尚未接入，本版本不会调用排版程序，也不会生成 PDF。'
+/** 语文出卷：面板只给筛选条件，配置与模板数据都在 src/chinese/doc.ts 里装配 */
+async function onChineseGenerate(selection: ReadingPaperSelection) {
+  if (chineseBusy.value) return
+  chineseBusy.value = true
+  chineseError.value = ''
+  chineseNotice.value = ''
+  try {
+    seed += 1
+    const paperConfig = buildReadingPaperConfig(selection, seed)
+    const { doc, paper } = buildChinesePaperDoc(paperConfig)
+    const readings = paper.items.filter(
+      (item): item is ReadingPaperItem => item.typeId === 'reading',
+    )
+    if (readings.length === 0) {
+      chineseError.value = '当前筛选下没有可用篇目，请放宽考点、主题或难度。'
+      return
+    }
+    const questions = readings.reduce((sum, item) => sum + item.questions.length, 0)
+    chineseFigures.value = {
+      pieces: readings.length,
+      questions,
+      score: paper.score.total,
+    }
+    const notes = [...paper.gaps.map((gap) => gap.message), ...paper.notes]
+    const generated = await generatePaper(doc, config.typstPath, 'typst/chinese-paper-3a.typ')
+    chineseResult.value = generated
+    chinesePdfData.value = base64ToBytes(generated.pdfBase64)
+    chinesePages.value = 0
+    chineseNotice.value = [...notes, ...generated.warnings].filter(Boolean).join('；')
+  } catch (reason) {
+    chineseError.value = errorText(reason)
+  } finally {
+    chineseBusy.value = false
+  }
 }
 
 interface HistoryItem {
@@ -191,6 +228,14 @@ const folderName = computed(() => {
 })
 const fileName = computed(() => {
   const parts = result.value?.outputPath.split('/') ?? []
+  return parts[parts.length - 1] ?? ''
+})
+const chineseFolder = computed(() => {
+  const parts = chineseResult.value?.outputPath.split('/') ?? []
+  return parts.length >= 2 ? parts[parts.length - 2] : ''
+})
+const chineseFile = computed(() => {
+  const parts = chineseResult.value?.outputPath.split('/') ?? []
   return parts[parts.length - 1] ?? ''
 })
 
@@ -328,16 +373,16 @@ async function generate() {
   }
 }
 
-async function saveAs() {
-  if (!result.value) return
+async function saveAs(target: GenerateResult | null = result.value, fileName = '数学每日一练.pdf') {
+  if (!target) return
   try {
     const dest = await save({
       title: '保存 PDF',
-      defaultPath: '数学每日一练.pdf',
+      defaultPath: fileName,
       filters: [{ name: 'PDF', extensions: ['pdf'] }],
     })
     if (!dest) return
-    const saved = await savePdfAs(result.value.outputPath, dest)
+    const saved = await savePdfAs(target.outputPath, dest)
     notice.value = `已保存：${saved}`
   } catch (reason) {
     errorMessage.value = errorText(reason)
@@ -353,10 +398,10 @@ async function openPdfNow(path = result.value?.outputPath) {
   }
 }
 
-async function printPdf() {
-  if (!result.value) return
+async function printPdf(target: GenerateResult | null = result.value) {
+  if (!target) return
   try {
-    await openPdf(result.value.outputPath)
+    await openPdf(target.outputPath)
     notice.value = '已用系统「预览」打开，可在预览中按 ⌘P 打印。'
   } catch (reason) {
     errorMessage.value = errorText(reason)
@@ -571,8 +616,8 @@ onBeforeUnmount(() => {
             <div class="figure"><b>{{ displayPages }}</b><small>页纸</small></div>
           </div>
           <div class="row-actions">
-            <button class="secondary" :disabled="busy" @click="saveAs">保存 PDF</button>
-            <button class="print" :disabled="busy" @click="printPdf">打印</button>
+            <button class="secondary" :disabled="busy" @click="saveAs()">保存 PDF</button>
+            <button class="print" :disabled="busy" @click="printPdf()">打印</button>
           </div>
         </div>
         <div class="path">已保存到 {{ folderName }} / {{ fileName }}</div>
@@ -617,14 +662,55 @@ onBeforeUnmount(() => {
       </template>
 
       <template v-else>
-        <section class="ph-panel">
-          <span class="ph-badge">{{ PLACEHOLDER_TEXT }}</span>
-          <h3>语文练习卷尚未接入</h3>
-          <p>单元、题型与预设已按数学页面的结构留位，接入教材后即可替换。</p>
-          <p v-if="chineseNotice" class="ph-tip">{{ chineseNotice }}</p>
+        <div v-if="chineseBusy" class="status">
+          <i class="dot" />
+          <span class="status-text">正在生成语文阅读卷…</span>
+        </div>
+        <div v-if="chineseError" class="status err">
+          <i class="dot" />
+          <span class="status-text">{{ chineseError }}</span>
+          <button class="act" @click="chineseError = ''">关闭</button>
+        </div>
+        <div v-if="chineseNotice" class="status">
+          <i class="dot" />
+          <span class="status-text">{{ chineseNotice }}</span>
+        </div>
+
+        <section v-if="chineseResult" class="result-card">
+          <div class="rc-top">
+            <div class="figures">
+              <div class="figure"><b>{{ chineseFigures.pieces }}</b><small>篇文章</small></div>
+              <div class="figure"><b>{{ chineseFigures.questions }}</b><small>道题</small></div>
+              <div class="figure"><b>{{ chineseFigures.score }}</b><small>分</small></div>
+            </div>
+            <div class="row-actions">
+              <button
+                class="secondary"
+                :disabled="chineseBusy"
+                @click="saveAs(chineseResult, '语文课外阅读专项.pdf')"
+              >
+                保存 PDF
+              </button>
+              <button class="print" :disabled="chineseBusy" @click="printPdf(chineseResult)">打印</button>
+            </div>
+          </div>
+          <div class="path">
+            已保存到 {{ chineseFolder }} / {{ chineseFile }}
+            <span v-if="chinesePages > 0"> · 共 {{ chinesePages }} 页</span>
+          </div>
+          <div class="row-actions rc-actions">
+            <button class="linkbtn" @click="openPdfNow(chineseResult?.outputPath)">打开 PDF</button>
+          </div>
         </section>
-        <div class="preview-wrap">
-          <PdfPreview :data="null" :empty-text="chinesePreviewText" />
+
+        <div v-if="chinesePdfData" class="preview-wrap">
+          <PdfPreview :data="chinesePdfData" @loaded="chinesePages = $event" />
+        </div>
+        <div v-else class="empty-stage">
+          <div class="empty-card">
+            <h3>先出一份课外阅读专项</h3>
+            <p>在左侧勾选考点、主题或难度，不选就是全部；定好篇数后点「生成阅读卷」。</p>
+          </div>
         </div>
       </template>
     </main>

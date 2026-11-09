@@ -40,10 +40,12 @@ export async function getTemplateInfo(): Promise<TemplateInfo> {
 export async function generatePaper(
   data: unknown,
   typstPath: string,
+  template?: string,
 ): Promise<GenerateResult> {
   return invoke<GenerateResult>('generate_paper', {
     data,
     typstPath: typstPath || null,
+    template: template || null,
   })
 }
 

@@ -352,15 +352,34 @@ fn template_info() -> Result<TemplateInfo, String> {
     })
 }
 
+/// 模板路径：默认数学卷 paper.typ；语文传 typst/chinese-paper-3a.typ。
+/// 只允许项目内相对路径，拒绝绝对路径与 `..`。
+fn resolve_template(root: &Path, template: Option<String>) -> Result<String, String> {
+    let rel = template
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| "typst/paper.typ".to_string());
+    if Path::new(&rel).is_absolute() || rel.split('/').any(|part| part == "..") {
+        return Err(format!("模板路径必须是项目内的相对路径：{rel}"));
+    }
+    let full = root.join(&rel);
+    if !full.is_file() {
+        return Err(format!("找不到排版模板：{}", full.display()));
+    }
+    Ok(rel)
+}
+
 #[tauri::command]
 fn generate_paper(
     data: Value,
     typst_path: Option<String>,
     save_to: Option<String>,
+    template: Option<String>,
 ) -> Result<GenerateResult, String> {
     let root = project_root()?;
     let typst = resolve_typst(typst_path)?;
     let version = typst_version(&typst)?;
+    let template = resolve_template(&root, template)?;
 
     let runtime_dir = runtime_dir(&root);
     let out_dir = runtime_dir.join("out");
@@ -392,7 +411,7 @@ fn generate_paper(
         .arg("compact=1")
         .arg("--input")
         .arg("vert=26")
-        .arg("typst/paper.typ")
+        .arg(&template)
         .arg(&output_path)
         .output()
         .map_err(|e| format!("无法启动 typst（{}）：{e}", typst.display()))?;
@@ -427,7 +446,17 @@ fn generate_paper(
         .iter()
         .any(|warning| warning.contains("unknown font family"));
 
-    let layout = run_layout_check(&root, &output_path);
+    let layout = if template == "typst/paper.typ" {
+        run_layout_check(&root, &output_path)
+    } else {
+        // check-layout.py 只认识数学卷的分栏与留白，语文卷不做这项校验
+        LayoutCheck {
+            ok: false,
+            skipped: true,
+            elapsed_ms: 0,
+            output: format!("{template} 不是数学模板，跳过版面校验"),
+        }
+    };
 
     #[cfg(debug_assertions)]
     eprintln!(
