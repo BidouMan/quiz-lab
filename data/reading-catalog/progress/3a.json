@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "grade": "3A",
+  "updatedAt": "2026-11-09",
+  "stage": "done",
+  "stageOrder": ["harvest", "clean", "lock-text", "questions", "answers", "gate", "mount", "calibrate", "done", "blocked"],
+  "targetPages": 268,
+  "counts": {
+    "draftFiles": 268,
+    "gatePass": 268,
+    "gateFail": 0,
+    "mounted": 268,
+    "pending": 0,
+    "downlisted": 86,
+    "questions": 1340,
+    "questionsByType": { "choice": 445, "fill": 318, "short": 577 },
+    "shortWithAnswer": 577
+  },
+  "scanned": {
+    "szxuexiao": { "passages": 191, "intext": 60, "status": "exhausted" },
+    "21cnjy": { "passages": 155, "status": "partial" },
+    "local-export": { "status": "exhausted", "lastScanAt": "2026-11-07" },
+    "wechat-kids": { "status": "blocked", "note": "搜狗 antispider，需登录态路线" },
+    "chinafable": { "status": "pending" }
+  },
+  "nextBatch": null,
+  "lastCommit": "0471308",
+  "batchLog": [
+    {
+      "date": "2026-11-09",
+      "action": "三上全量收口",
+      "ids": "RD-301–RD-655",
+      "result": "268 pass / 86 rejected / 0 pending",
+      "commit": "0471308"
+    }
+  ],
+  "failures": [],
+  "blockers": [
+    {
+      "reason": "重复篇目未去重",
+      "detail": "20 字汉窗覆盖率 ≥0.5 的 9 对仍在正式题库：RD-566/633、RD-563/630、RD-554/644、RD-388/636（均 1.0）；RD-561/631（0.931）、RD-311/568（0.888）、RD-363/565（0.773）、RD-421/557（0.586）、RD-378/559（0.578）",
+      "needsHuman": true,
+      "since": "2026-11-09"
+    },
+    {
+      "reason": "SK7 覆盖不足",
+      "detail": "非连续性文本只有 20/268 篇（7.5%），低于 T5 的 ≥20% 目标；素材池非连续材料已用尽",
+      "needsHuman": true,
+      "since": "2026-11-09"
+    }
+  ],
+  "notes": [
+    "目标篇数原计划 300，实际 268；差额 32 不再补，属素材池枯竭停止条件。",
+    "268 篇全部 5 题；主观题 577 道全部有参考答案。",
+    "难度分布：易 82 / 中 96 / 难 90（30.6% / 35.8% / 33.6%），难略高于 30/50/20 目标。",
+    "quality-gate.jsonl 的 needs_human_review 为 268/268，因 R12 无条件加入 flags，该字段当前不具区分度。",
+    "断点续跑以本文件为准，不以对话记忆为准。"
+  ]
+}

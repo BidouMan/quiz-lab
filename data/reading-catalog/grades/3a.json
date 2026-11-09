@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "grade": "3A",
+  "gradeName": "三年级上册",
+  "sop": "docs/reading-bank-sop-finalize-3a.md",
+  "skillsDoc": "docs/reading-skills-3a.md",
+  "minHanzi": 250,
+  "collectMinHanzi": 150,
+  "maxHanziHint": 600,
+  "questionsPerPassage": [3, 5],
+  "questionsPerPassageDefault": 5,
+  "objectivePerPassage": [2, 4],
+  "subjectivePerPassage": [1, 3],
+  "skillsVersion": "SK1-SK7-v1",
+  "skills": [
+    "SK1 提取信息",
+    "SK2 梳理概括",
+    "SK3 词句理解",
+    "SK4 推断体会",
+    "SK5 主旨情感",
+    "SK6 写法结构",
+    "SK7 非连续性文本"
+  ],
+  "requiredSkillAny": ["SK2", "SK4"],
+  "requiredSubjectiveAny": ["SK3", "SK5"],
+  "themes": ["写人", "写景", "写事", "状物", "寓言", "科普", "非连续", "童话", "记事"],
+  "batchSize": 20,
+  "dedup": {
+    "windowHanzi": 20,
+    "coverThreshold": 0.9,
+    "reviewThreshold": 0.5,
+    "longestRunCheck": 20
+  },
+  "sources": [
+    {
+      "id": "local-export",
+      "name": "公众号 · 本地导出目录",
+      "priority": 1,
+      "status": "active",
+      "note": "首选。导出工具不限，支持 html/pdf/txt/md；scan --local 入库。"
+    },
+    {
+      "id": "wechat-kids",
+      "name": "公众号 · 搜狗微信索引",
+      "priority": 1,
+      "status": "blocked",
+      "note": "实测 50 条仅成功 2 条，第 3 条起 antispider，本机 IP 限流；需登录态历史列表路线。"
+    },
+    {
+      "id": "szxuexiao",
+      "name": "小学试卷网（第三方转载）",
+      "priority": 2,
+      "status": "active",
+      "note": "三上主力来源，191 篇课外 + 60 篇课内；正文页 https://appsj.szxuexiao.com/html/{id}.html。"
+    },
+    {
+      "id": "21cnjy",
+      "name": "二一世纪教育网",
+      "priority": 3,
+      "status": "active",
+      "note": "155 篇入池，去重口径 sha256 + 20 字汉窗覆盖率 ≥0.9。"
+    },
+    {
+      "id": "chinafable",
+      "name": "中国寓言网 · 现代寓言",
+      "priority": 4,
+      "status": "pending",
+      "note": "GBK 页面，作品页可下载；版权仅作本地教研自测。"
+    },
+    {
+      "id": "gutenberg-zh",
+      "name": "Project Gutenberg 中文公版书",
+      "priority": 9,
+      "status": "excluded",
+      "note": "整本文言或古典白话，与 300–500 字现代短文口径不符。"
+    },
+    {
+      "id": "pep-samples",
+      "name": "人民教育出版社样章",
+      "priority": 9,
+      "status": "excluded",
+      "note": "书目异步加载，无稳定样章正文直链。"
+    },
+    {
+      "id": "moe-gov",
+      "name": "教育部官网",
+      "priority": 9,
+      "status": "excluded",
+      "note": "只有政策与新闻，无学生短文。"
+    }
+  ],
+  "targetPages": 268,
+  "targetPagesNote": "原计划 300；素材池用尽后按 SOP §9 停在 268，差额 32 不再扩量。",
+  "difficultyTarget": {
+    "易": 0.3,
+    "中": 0.5,
+    "难": 0.2,
+    "tolerance": 0.05
+  },
+  "mountedWhitelist": {
+    "top": ["id", "title", "theme", "paragraphs", "status", "sources", "questions", "skills", "difficulty", "review"],
+    "source": ["label", "locator", "url"],
+    "choice": ["type", "stem", "options", "answer", "explain", "skill"],
+    "fill": ["type", "stem", "blanks", "explain", "skill"],
+    "short": ["type", "stem", "scoring", "skill", "answer"],
+    "dropped": ["score", "origin", "answerSource", "sourceSeq", "sourceId", "sourceCharCount", "charCount", "kind", "scope", "term"]
+  }
+}
