@@ -4,6 +4,7 @@
 - 复现：`python3 tools/reading-intake/compare_origin.py`；机器可读结果写入 `tools/reading-intake/work/compare-origin.json`（该文件由脚本生成，不提交）
 - 统计范围：正式题库 268 篇（`quality_gate.pass` 且未下架）、1230 道题、无抽样
 - 统计时间：2026-11-09
+- **本报告是整改前基线**：此后已按第 7 节建议开始修复（选项位置重排已完成），重跑脚本可看到最新数字
 
 ---
 
