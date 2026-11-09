@@ -284,8 +284,13 @@ def analyze(groups, page_groups, mounted, gate, drafts, downlisted):
         src = Counter(q.get("answerSource") or "未标注" for q in qs)
         block["answerSource"] = {k: {"n": v, "pct": pct(v, n)} for k, v in src.most_common()}
 
-        # 9 超纲术语
-        hits = [(key, term) for _, q, key, _ in rows for term in TERMS if term in q["stem"]]
+        # 9 超纲术语（题干 + 选项；术语常藏在选项里）
+        hits = []
+        for _, q, key, _ in rows:
+            text = q["stem"] + "".join(q.get("options") or [])
+            for term in TERMS:
+                if term in text:
+                    hits.append((key, term))
         by_term = Counter(t for _, t in hits)
         block["terms"] = {
             "n": len({k for k, _ in hits}),
@@ -293,6 +298,15 @@ def analyze(groups, page_groups, mounted, gate, drafts, downlisted):
             "byTerm": dict(by_term),
             "keys": sorted({k for k, _ in hits}),
         }
+        # 正确答案本身就是术语的题（必须认识术语才能答对）
+        term_answer = []
+        for _, q, key, _ in rows:
+            if q["type"] != "choice":
+                continue
+            if any(t in q["options"][q["answer"]] for t in TERMS):
+                term_answer.append(key)
+        block["termAnswer"] = {"n": len(term_answer), "keys": term_answer}
+
 
         # 10 难度（页级，题目继承所在篇）
         diff = Counter(gate[d["id"]].get("difficulty", "中") for d, _, _, _ in rows)
@@ -485,8 +499,9 @@ def main():
         ("source-missing（原卷缺答案）", lambda b: f"{b['answerSource'].get('source-missing', {}).get('n', 0)}"),
         ("未标注", lambda b: f"{b['answerSource'].get('未标注', {}).get('n', 0)}"),
     ])
-    fmt_table("9 超纲术语命中", [
+    fmt_table("9 超纲术语命中（题干+选项）", [
         ("命中题数（去重）", lambda b: pctcell({"n": b["terms"]["n"], "pct": b["terms"]["pct"]})),
+        ("正确答案本身就是术语", lambda b: f"{b['termAnswer']['n']}"),
         ("命中词表", lambda b: "、".join(f"{k}×{v}" for k, v in b["terms"]["byTerm"].items()) or "—"),
     ])
     fmt_table("10 难度（页级，题目继承）", [
