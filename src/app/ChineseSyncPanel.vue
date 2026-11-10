@@ -43,7 +43,7 @@ const DEFAULT_COUNTS: Record<ChinesePaperTypeId, number> = {
   lianmian: 0,
 }
 
-/** 综合卷：全册混合，基础题 + 阅读 + 习作一次配齐 */
+/** 综合练习：基础题 + 阅读 + 习作一次配齐，教材题按所选单元出 */
 const FULL_COUNTS: Record<ChinesePaperTypeId, number> = {
   kanpinyin: 10,
   zhuyin: 6,
@@ -144,8 +144,19 @@ function changeCount(typeId: ChinesePaperTypeId, delta: number) {
   counts.value[typeId] = Math.min(Math.max(counts.value[typeId] + delta, 0), max)
 }
 
+/** 直接输入题量：回车或失焦时夹到 0–可出数，非法输入保留原值 */
+function setCount(typeId: ChinesePaperTypeId, event: Event) {
+  const input = event.target as HTMLInputElement
+  const parsed = Number.parseInt(input.value, 10)
+  const current = counts.value[typeId]
+  const next = Number.isNaN(parsed) ? current : Math.min(Math.max(parsed, 0), maxCount(typeId))
+  counts.value[typeId] = next
+  if (input.value !== String(next)) input.value = String(next)
+}
+
 function submit() {
   emit('generate', {
+    mode: props.mode,
     unitIds: selectedUnits.value,
     levels: levels.value,
     includeAnswers: includeAnswers.value,
@@ -163,7 +174,7 @@ function submit() {
 <template>
   <div class="sync">
     <div class="sync-scroll">
-      <section v-if="mode === 'unit'">
+      <section>
         <div class="section-head">
           <h2>单元</h2>
           <div class="head-actions">
@@ -182,12 +193,7 @@ function submit() {
             {{ unit.unitName }}
           </button>
         </div>
-        <p class="hint">只收窄教材字词、古诗、园地题；句子和阅读为全册通用题。</p>
-      </section>
-
-      <section v-else>
-        <h2>范围</h2>
-        <p class="hint full-hint">全册混合：字词积累 + 句子 + 课外阅读 + 习作，可直接当一份完整练习。</p>
+        <p class="hint">教材字词、古诗、日积月累和习作按所选单元出；句子题全册通用，课外阅读随机抽取。</p>
       </section>
 
       <section>
@@ -221,7 +227,18 @@ function submit() {
               >
                 −
               </button>
-              <b>{{ counts[row.typeId] }}</b>
+              <input
+                class="count-input"
+                type="number"
+                min="0"
+                :max="maxCount(row.typeId)"
+                step="1"
+                inputmode="numeric"
+                :aria-label="`${row.meta.label}题量`"
+                :value="counts[row.typeId]"
+                @change="setCount(row.typeId, $event)"
+                @blur="setCount(row.typeId, $event)"
+              />
               <button
                 :aria-label="`增加${row.meta.label}`"
                 :disabled="counts[row.typeId] >= maxCount(row.typeId)"
@@ -249,7 +266,7 @@ function submit() {
         :disabled="selectedUnits.length === 0 || totalItems === 0"
         @click="submit"
       >
-        生成{{ mode === 'full' ? '综合卷' : '同步卷' }}
+        生成{{ mode === 'full' ? '综合练习' : '同步卷' }}
       </button>
     </div>
   </div>
@@ -355,11 +372,6 @@ h2 {
   line-height: 1.5;
   color: #777;
 }
-.full-hint {
-  margin-top: 0;
-  font-size: 12px;
-  color: #555;
-}
 .type-list {
   border-top: 1px solid #eee;
 }
@@ -407,10 +419,29 @@ h2 {
   color: #ccc;
   cursor: default;
 }
-.stepper b {
-  min-width: 28px;
-  text-align: center;
+.stepper input {
+  width: 40px;
+  height: 26px;
+  padding: 0 3px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  color: #111;
+  font: inherit;
   font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stepper input:focus {
+  outline: none;
+  border-color: #111;
 }
 .check {
   display: flex;

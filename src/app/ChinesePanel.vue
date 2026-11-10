@@ -47,6 +47,15 @@ function changeCount(delta: number) {
   count.value = Math.min(20, Math.max(1, count.value + delta))
 }
 
+/** 直接输入篇数：回车或失焦时夹到 1–20，非法输入保留原值 */
+function setCount(event: Event) {
+  const input = event.target as HTMLInputElement
+  const parsed = Number.parseInt(input.value, 10)
+  const next = Number.isNaN(parsed) ? count.value : Math.min(20, Math.max(1, parsed))
+  count.value = next
+  if (input.value !== String(next)) input.value = String(next)
+}
+
 const levelText = computed(() =>
   levels.value.length > 0 ? levels.value.map((level) => LEVELS.find((item) => item.value === level)!.label).join('/') : '混合',
 )
@@ -83,7 +92,7 @@ function onSync(selection: ChineseSyncSelection) {
   <div class="params">
     <div class="tabs">
       <button :aria-pressed="mode === 'sync'" @click="mode = 'sync'">校内同步</button>
-      <button :aria-pressed="mode === 'full'" @click="mode = 'full'">综合卷</button>
+      <button :aria-pressed="mode === 'full'" @click="mode = 'full'">综合练习</button>
       <button :aria-pressed="mode === 'reading'" @click="mode = 'reading'">阅读专项</button>
     </div>
 
@@ -149,7 +158,18 @@ function onSync(selection: ChineseSyncSelection) {
         <div class="count-row">
           <div class="stepper">
             <button aria-label="减少一篇" :disabled="count <= 1" @click="changeCount(-1)">−</button>
-            <b>{{ count }}</b>
+            <input
+              class="count-input"
+              type="number"
+              min="1"
+              max="20"
+              step="1"
+              inputmode="numeric"
+              aria-label="篇数"
+              :value="count"
+              @change="setCount"
+              @blur="setCount"
+            />
             <button aria-label="增加一篇" :disabled="count >= 20" @click="changeCount(1)">+</button>
           </div>
           <span class="count-total">共 {{ totalScore }} 分</span>
@@ -303,10 +323,29 @@ h2 {
   color: #bbb;
   cursor: default;
 }
-.stepper b {
-  min-width: 34px;
-  text-align: center;
+.stepper input {
+  width: 48px;
+  height: 30px;
+  padding: 0 4px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font: inherit;
   font-size: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stepper input:focus {
+  outline: none;
+  border-color: #111;
 }
 .count-total {
   font-size: 12px;

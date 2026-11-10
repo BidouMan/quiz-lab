@@ -120,6 +120,18 @@ function changeCount(type: AppType, delta: number) {
   emit('touch')
 }
 
+/** 直接输入题量：回车或失焦时夹到 1–200，非法输入保留原值 */
+function setCount(type: AppType, event: Event) {
+  const input = event.target as HTMLInputElement
+  const parsed = Number.parseInt(input.value, 10)
+  const current = props.config.counts?.[type] ?? 0
+  const next = Number.isNaN(parsed) ? current : Math.max(1, clampTypeCount(parsed))
+  props.config.counts = { ...(props.config.counts ?? {}), [type]: next }
+  props.config.count = TYPE_ORDER.reduce((sum, item) => sum + (props.config.counts?.[item] ?? 0), 0)
+  emit('touch')
+  if (input.value !== String(next)) input.value = String(next)
+}
+
 const panelOpen = ref(false)
 const draft = ref<Set<AppType>>(new Set())
 const groupOpen = ref<Record<string, boolean>>(
@@ -250,7 +262,18 @@ function toggleDraft(type: AppType) {
               <span class="type-name">{{ row.label }}</span>
               <div class="stepper">
                 <button :aria-label="`减少${row.label}题量`" :disabled="row.count <= 1" @click="changeCount(row.type, -1)">−</button>
-                <b>{{ row.count }}</b>
+                <input
+                  class="count-input"
+                  type="number"
+                  min="1"
+                  max="200"
+                  step="1"
+                  inputmode="numeric"
+                  :aria-label="`${row.label}题量`"
+                  :value="row.count"
+                  @change="setCount(row.type, $event)"
+                  @blur="setCount(row.type, $event)"
+                />
                 <button :aria-label="`增加${row.label}题量`" @click="changeCount(row.type, 1)">+</button>
               </div>
             </div>
@@ -542,11 +565,29 @@ h2.head-collapsed {
   border-color: #eee;
   cursor: default;
 }
-.stepper b {
-  min-width: 28px;
-  text-align: center;
+.stepper input {
+  width: 44px;
+  height: 24px;
+  padding: 0 3px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  font: inherit;
   font-size: 13px;
+  text-align: center;
   font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stepper input:focus {
+  outline: none;
+  border-color: #111;
 }
 .type-warn {
   margin: 4px 0 0;

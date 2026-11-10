@@ -16,7 +16,7 @@
 // 字号：卷面所有题目文字统一 11pt（题干、选项、材料正文、出处、字库、提示、要求），
 //   不再按题型另设小一号；标题保持层级——题型标题 12pt 加粗、阅读文章标题 14pt 加粗、
 //   材料小标题【】11.5pt 加粗；另有注音题词组 13pt、田字格上方拼音 8pt。
-// 标题：12pt 加粗；上方距上一题固定 8mm（head-above），下方距第一行 6.2mm（head-below）。
+// 标题：12pt 加粗；上方距上一题固定 8mm（head-above），下方距第一行 8mm（head-below），与上方等距。
 // 小题行距：全卷统一 5.5mm（item-gap），字词、古诗、病句、标点、扩写、阅读各小题同值，
 //   表格类（看拼音、注音、多音字、形近字）的行间距也用这个值；古诗句与其书写带固定 2mm。
 //   若标题被包进首块防页底孤行，该块的 above 必须写 head-above；题型分支末尾不得留 v()。
@@ -30,9 +30,13 @@
 // 看拼音写词语：10mm 田字格，拼音 8pt，拼音与格子 1.6mm，5 列，行距 6mm。
 // 修改病句：「改为：」与横线同基线（grid align bottom，标签列 auto）。
 // 扩写、仿写：各 1 行书写线。阅读简答：按参考答案长度给 2–6 行。
+// 答案页（参考答案与解析）：同样只有三档字号——页标题 16pt、题型标题 12pt 加粗、
+//   篇名 11pt 加粗，其余正文一律 10pt（ans-size）；说明性文字不缩字号，只降灰（ans-note-fill）。
+//   小题一律（n）起头、间距 ans-gap 2.2mm；评分要点用 ①②③ 同行并列、分号隔开；
+//   小题型整块不跨页，阅读/习作允许跨页，篇名 sticky 跟随首题。
 // ==============================================================
 #let head-above = 8mm
-#let head-below = 6.2mm
+#let head-below = 8mm
 // 小题与小节之间的行距：全卷所有题型共用一个值，不再各分支各写一套
 #let item-gap = 5.5mm
 #let qhead(no, title) = block(sticky: true, above: head-above, below: head-below)[
@@ -323,49 +327,48 @@
   }
 ]
 
-/// 答案页标签：黑底=对错可判，空心=给参考答案
-#let answer-tag(mode) = {
-  if mode == "objective" {
-    box(
-      fill: luma(45),
-      radius: 1mm,
-      inset: (x: 1.6mm, y: 0.5mm),
-    )[#text(size: 7.5pt, fill: white)[对错可判]]
-  } else if mode == "subjective" {
-    box(
-      fill: luma(248),
-      stroke: (paint: luma(130), thickness: 0.5pt),
-      radius: 1mm,
-      inset: (x: 1.6mm, y: 0.5mm),
-    )[#text(size: 7.5pt, fill: luma(60))[参考答案]]
-  } else {
-    box(
-      fill: luma(248),
-      stroke: (paint: luma(130), thickness: 0.5pt),
-      radius: 1mm,
-      inset: (x: 1.6mm, y: 0.5mm),
-    )[#text(size: 7.5pt, fill: luma(60))[客观题可判 · 简答给参考]]
-  }
-}
+// ---------- 答案页统一版式 ----------
+// 全页只有三档字号：题型标题 12pt 加粗、篇名 11pt 加粗、其余正文一律 10pt；
+// 说明性文字（答案不唯一、评分规则等）不缩小字号，只降为灰字。
+// 所有题型都按「课外阅读」的答案解析样式排：（n）答案与解析同一段，评分要点用 ①②③ 同行并列。
+#let ans-size = 10pt
+#let ans-note-fill = luma(100)
+#let ans-gap = 2.2mm
 
-/// 答案页小节标题
-#let anshead(no, title, mode: "objective") = block(sticky: true, above: 3mm, below: 2mm)[
-  #text(size: 12pt, weight: "bold")[#no．#title]
+/// 灰色说明文字（字号与正文相同）
+#let ans-note(body) = text(size: ans-size, fill: ans-note-fill)[#body]
+
+/// 一条答案：（题号）正文。小题间距统一 ans-gap
+#let ans-item(no, body) = block(above: ans-gap, breakable: false)[
+  #text(size: ans-size)[（#no）]#body
 ]
 
-/// 取评分要点；字段缺失或为空时统一回退，避免答案页留空
-#let scoring-points(value) = {
+/// 评分要点：①②③ 同行并列，用分号分隔；无要点时统一回退，避免答案页留空
+#let scoring-line(value) = {
   let points = if value == none { () } else { value }
-  if points.len() > 0 {
-    for (i, point) in points.slice(0, calc.min(3, points.len())).enumerate() {
-      text(size: 9pt)[#(i + 1)）#point]
-      linebreak()
-    }
+  let marks = ("①", "②", "③", "④", "⑤")
+  if points.len() == 0 {
+    ans-note[本题未提供评分要点。]
   } else {
-    text(size: 9pt, fill: luma(105))[本题未提供评分要点。]
-    linebreak()
+    let shown = points.slice(0, calc.min(5, points.len()))
+    for (i, point) in shown.enumerate() {
+      if i > 0 { text(size: ans-size)[；] }
+      text(size: ans-size)[#marks.at(i)#point]
+      if i == shown.len() - 1 { text(size: ans-size)[。] }
+    }
   }
 }
+
+/// 答案页小节标题：12pt 加粗；上 6mm、下 3.5mm（首个不出上间距）
+#let anshead(no, title, first: false) = block(
+  sticky: true,
+  above: if first { 0mm } else { 6mm },
+  below: 3.5mm,
+)[
+  #text(size: 12pt, weight: "bold")[
+    #if no == "" [#title] else [#no．#title]
+  ]
+]
 
 /// 素材缺口占位块：写清需要多少、现有多少
 #let gap-block(s) = block(
@@ -577,168 +580,177 @@
   }
 }
 
-/// 答案页题型正文
+/// 答案页题型正文：整段统一 ans-size，题型之间只靠 anshead 与 ans-gap 拉开层次
 #let answer-body(s) = {
+  set text(size: ans-size)
   if s.typeId == "kanpinyin" {
+    // 只按顺序给出正确写法，不再重复拼音（题目已给拼音）
     grid(
-      columns: (1fr,) * 4,
-      row-gutter: 2.6mm,
-      ..s.items.map(i => box[#py(i.pinyin, size: 8pt)　#han(i.word, size: 10.5pt)]),
+      columns: (1fr,) * 6,
+      column-gutter: 4mm,
+      row-gutter: ans-gap,
+      ..s.items.map(i => box[#han(i.word, size: ans-size)]),
     )
   } else if s.typeId == "zhuyin" {
     for row in chunked(s.items, 9) {
-      annotate-word(row.map(i => i.pinyin), row.map(i => i.char), w: 14mm)
-      v(1mm)
+      annotate-word(row.map(i => i.pinyin), row.map(i => i.char), w: 13mm, ch-size: ans-size, py-size: 8pt)
+      v(ans-gap)
     }
-    text(size: 8.5pt, fill: luma(105))[语境：#s.items.map(i => i.context).join("、")。多音字按语境定音。]
+    v(0.8mm)
+    ans-note[语境：#s.items.map(i => i.context).join("、")。多音字按语境定音。]
   } else if s.typeId == "duoyin" {
     grid(
       columns: (1fr,) * 2,
-      row-gutter: 2.6mm,
+      column-gutter: 8mm,
+      row-gutter: ans-gap,
       ..s.items.map(i => box[
-        #han(i.char, size: 11pt)　#i.readings.map(r => [#r.pinyin： #r.word]).join("　")
+        #text(size: ans-size)[#i.char]　#i.readings.map(r => [#r.pinyin： #r.word]).join("　")
       ]),
     )
-    v(0.5mm)
-    text(size: 8.5pt, fill: luma(105))[组词答案不唯一，读音正确、词语成立都算对。]
+    v(0.8mm)
+    ans-note[组词答案不唯一，读音正确、词语成立都算对。]
   } else if s.typeId in ("cipu", "jinayi", "xuanzi", "riji") {
     for (j, g) in s.items.enumerate() {
-      text(size: 9.5pt)[（#(j + 1)）#apply-blanks(g.text, g.answers)]
-      if g.at("bank", default: none) != none {
-        text(size: 8.5pt, fill: luma(105))[（字库：#g.bank.join("、")）]
-      }
-      linebreak()
+      ans-item(j + 1)[
+        #apply-blanks(g.text, g.answers)
+        #if g.at("bank", default: none) != none {
+          ans-note[（字库：#g.bank.join("、")）]
+        }
+      ]
     }
-    if s.typeId == "cipu" {
-      text(size: 8.5pt, fill: luma(105))[量词、四字词语按教材词语表核对，课文原句搭配按原文核对；错字、漏字需订正。]
+    v(0.8mm)
+    let note = if s.typeId == "cipu" {
+      "量词、四字词语按教材词语表核对，课文原句搭配按原文核对；错字、漏字需订正。"
     } else if s.typeId == "jinayi" {
-      text(size: 8.5pt, fill: luma(105))[近义词、反义词答案不唯一，意思相近或相反即可。]
+      "近义词、反义词答案不唯一，意思相近或相反即可。"
     } else if s.typeId == "riji" {
-      text(size: 8.5pt, fill: luma(105))[日积月累按教材原文核对，错字、漏字需订正。]
-    } else if s.typeId == "xuanzi" {
-      text(size: 8.5pt, fill: luma(105))[选字填空按字库选字，每个字都要用上。]
+      "日积月累按教材原文核对，错字、漏字需订正。"
+    } else {
+      "选字填空按字库选字，每个字都要用上。"
     }
+    ans-note[#note]
   } else if s.typeId == "xingjin" {
     grid(
-      columns: (1fr,) * 3,
-      row-gutter: 2.6mm,
+      columns: (1fr,) * 2,
+      column-gutter: 10mm,
+      row-gutter: ans-gap,
       ..s.items.map(i => box[
-        #han(i.a, size: 11pt)（#text(size: 10pt)[#i.aAnswer]）　#han(i.b, size: 11pt)（#text(size: 10pt)[#i.bAnswer]）
+        #text(size: ans-size)[#i.a]（#i.aAnswer）　#text(size: ans-size)[#i.b]（#i.bAnswer）
       ]),
     )
-    v(0.5mm)
-    text(size: 8.5pt, fill: luma(105))[组词答案不唯一，意思通顺、词语成立都算对。]
+    v(0.8mm)
+    ans-note[组词答案不唯一，意思通顺、词语成立都算对。]
   } else if s.typeId == "gushi-fill" {
     for i in s.items {
-      text(size: 9.5pt)[《#i.title》（#i.dynasty#h(0.4mm)·#h(0.4mm)#i.author）　#i.prompt#i.answer]
-      linebreak()
+      block(above: ans-gap, breakable: false)[
+        #text(size: ans-size, weight: "bold")[《#i.title》]
+        #text(size: ans-size, fill: ans-note-fill)[（#(i.dynasty)·#(i.author)）]　#i.prompt#text(weight: "bold")[#i.answer]
+      ]
     }
   } else if s.typeId == "gushi-dimo" {
     for i in s.items {
-      text(size: 9.5pt)[《#i.title》（#i.dynasty#h(0.4mm)·#h(0.4mm)#i.author）　#i.lines.join("")]
-      linebreak()
+      block(above: ans-gap, breakable: false)[
+        #text(size: ans-size, weight: "bold")[《#i.title》]
+        #text(size: ans-size, fill: ans-note-fill)[（#(i.dynasty)·#(i.author)）]　#i.lines.join("")
+      ]
     }
   } else if s.typeId == "gaibing" {
     for (j, g) in s.items.enumerate() {
-      text(size: 9.5pt)[（#(j + 1)）#g.broken → #g.fixed]
-      if g.acceptable.len() > 0 {
-        text(size: 9pt, fill: luma(105))[（也可改为：#g.acceptable.join("；")）]
-      }
-      linebreak()
+      ans-item(j + 1)[
+        #g.broken → #g.fixed
+        #if g.acceptable.len() > 0 {
+          ans-note[（也可改为：#g.acceptable.join("；")）]
+        }
+      ]
     }
   } else if s.typeId == "guanlian" {
     for (j, g) in s.items.enumerate() {
-      text(size: 9.5pt)[（#(j + 1)）主答案：#g.pair]
-      linebreak()
-      text(size: 9pt, fill: luma(105))[可填组合：#g.answers.map(a => a.join("／")).join("；")]
-      linebreak()
+      ans-item(j + 1)[
+        主答案：#g.pair　#ans-note[（可填：#g.answers.map(a => a.join("／")).join("；")）]
+      ]
     }
-    text(size: 8.5pt, fill: luma(105))[同义关联词都算对；先把句子读通，再判断关系。]
+    v(0.8mm)
+    ans-note[同义关联词都算对；先把句子读通，再判断关系。]
   } else if s.typeId == "biaodian" {
     for (j, g) in s.items.enumerate() {
-      text(size: 9.5pt)[（#(j + 1)）#apply-blanks(g.text, g.answers.at(0))]
-      linebreak()
-      if g.answers.len() > 1 {
-        text(size: 9pt, fill: luma(105))[也可写作：#g.answers.slice(1).map(a => apply-blanks(g.text, a)).join("；")]
-        linebreak()
+      ans-item(j + 1)[
+        #apply-blanks(g.text, g.answers.at(0))
+        #if g.answers.len() > 1 {
+          ans-note[（也可写作：#g.answers.slice(1).map(a => apply-blanks(g.text, a)).join("；")）]
+        }
+      ]
+    }
+    v(0.8mm)
+    ans-note[规则：#s.items.map(g => g.rule).join("；")。]
+  } else if s.typeId in ("kuoxie", "fangxie") {
+    // 各小题评分要点完全相同时只写一次，避免整段重复
+    let rubrics = s.items.map(g => g.at("rubric", default: none))
+    let uniform = rubrics.len() > 1 and rubrics.all(r => r == rubrics.first())
+    if uniform {
+      block(above: ans-gap, breakable: false)[
+        #text(weight: "bold")[各题评分要点相同：]#scoring-line(rubrics.first())
+      ]
+    } else {
+      for (j, g) in s.items.enumerate() {
+        ans-item(j + 1)[评分要点：#scoring-line(g.at("rubric", default: none))]
       }
-    }
-    text(size: 8.5pt, fill: luma(105))[规则：#s.items.map(g => g.rule).join("；")。]
-  } else if s.typeId == "kuoxie" {
-    for (j, g) in s.items.enumerate() {
-      text(size: 9.5pt, weight: "bold")[（#(j + 1)）评分要点]
-      linebreak()
-      scoring-points(g.at("rubric", default: none))
-      v(0.8mm)
-    }
-  } else if s.typeId == "fangxie" {
-    for (j, g) in s.items.enumerate() {
-      text(size: 9.5pt, weight: "bold")[（#(j + 1)）评分要点]
-      linebreak()
-      scoring-points(g.at("rubric", default: none))
-      v(0.8mm)
     }
   } else if s.typeId == "reading" {
     for (k, r) in s.items.enumerate() {
-      if k > 0 { v(7mm) }
-      text(size: 10.5pt, weight: "bold")[《#r.title》]
-      linebreak()
+      block(above: if k == 0 { 0mm } else { 6mm }, sticky: true)[
+        #text(size: 11pt, weight: "bold")[《#r.title》]
+      ]
       for (j, q) in r.questions.enumerate() {
         if q.type == "choice" {
-          text(size: 9.5pt)[（#(j + 1)）答案 #("A", "B", "C", "D").at(q.answer)。#q.explain]
-          linebreak()
+          ans-item(j + 1)[答案 #("A", "B", "C", "D").at(q.answer)。#q.explain]
         } else if q.type == "fill" {
-          text(size: 9.5pt)[（#(j + 1)）答案：#q.blanks.join("；")]
-          linebreak()
+          ans-item(j + 1)[答案：#q.blanks.join("；")]
         } else {
           let ref = q.at("answer", default: none)
           if ref != none and ref.trim() != "" {
-            text(size: 9.5pt)[（#(j + 1)）参考：#ref]
-            linebreak()
+            ans-item(j + 1)[参考：#ref]
           } else {
-            text(size: 9.5pt, weight: "bold")[（#(j + 1)）评分要点（暂无参考答案）]
-            linebreak()
-            scoring-points(q.at("scoring", default: none))
+            ans-item(j + 1)[评分要点：#scoring-line(q.at("scoring", default: none))]
           }
         }
       }
-      v(1mm)
     }
   } else if s.typeId == "writing" {
     for w in s.items {
       let scoring = w.at("scoring", default: none)
-      if scoring == none {
-        text(size: 9.5pt)[*#w.id《#w.title》*（#w.unitName）。本题未提供评分要点。]
+      block(above: 0mm, breakable: false)[
+        #text(size: 11pt, weight: "bold")[《#w.title》]
+        #text(size: ans-size, fill: ans-note-fill)[（#w.unitName）]　本题按分项评分，不给范文。
+      ]
+      let rows = if scoring == none { () } else { scoring.at("rows", default: ()) }
+      let bands = if scoring == none { () } else { scoring.at("bands", default: ()) }
+      if rows.len() == 0 {
+        block(above: ans-gap)[#ans-note[本题未提供评分要点。]]
       } else {
-        let rows = scoring.at("rows", default: ())
-        let bands = scoring.at("bands", default: ())
-        if rows.len() == 0 {
-          text(size: 9.5pt)[*#w.id《#w.title》*（#w.unitName）。本题未提供评分要点。]
-        } else {
-          text(size: 9pt)[*#w.id《#w.title》*（#w.unitName）。按下列分项评分，不给范文。]
-          v(0.8mm)
-          block[
-            #set text(size: 9pt)
-            #grid(
-              columns: (25mm, 14mm, 1fr),
-              stroke: (thickness: 0.5pt, paint: luma(170)),
-              inset: (x: 2.5mm, y: 1mm),
-              align: (center + horizon, center + horizon, left + horizon),
-              ..([*分项*], [*分值*], [*评分要点*]),
-              ..rows.map(r => ([#r.aspect], [#r.points], [#r.description])).flatten(),
-            )
+        v(ans-gap)
+        block[
+          #set text(size: ans-size)
+          #grid(
+            columns: (30mm, 16mm, 1fr),
+            stroke: (thickness: 0.5pt, paint: luma(170)),
+            inset: (x: 2.5mm, y: 1.2mm),
+            align: (center + horizon, center + horizon, left + horizon),
+            ..([*分项*], [*分值*], [*评分要点*]),
+            ..rows.map(r => ([#r.aspect], [#r.points], [#r.description])).flatten(),
+          )
+        ]
+        for b in bands {
+          block(above: ans-gap)[
+            #text(size: ans-size)[#text(weight: "bold")[#b.label]：#b.description]
           ]
-          v(1mm)
-          for b in bands {
-            text(size: 9pt)[#text(weight: "bold")[#b.label]：#b.description]
-            v(0.4mm)
-          }
         }
       }
     }
   } else if s.typeId == "lianmian" {
     for item in s.items {
-      text(size: 9.5pt)[#item.note 无固定答案，按书写工整、卷面整洁程度评分。]
+      block(above: ans-gap, breakable: false)[
+        #text(size: ans-size)[#item.note 无固定答案，按书写工整、卷面整洁程度评分。]
+      ]
     }
   }
 }
@@ -766,26 +778,31 @@
   pagebreak()
 
   align(center, text(size: 16pt, weight: "bold")[参考答案与解析])
-  v(1.5mm)
-  set par(leading: 3.8mm)
+  v(6mm)
+  set par(leading: 0.82em)
 
-  for s in p.sections {
-    anshead(s.no, s.label, mode: s.answerMode)
+  for (i, s) in p.sections.enumerate() {
+    anshead(s.no, s.label, first: i == 0)
     if s.selected > 0 {
-      answer-body(s)
+      // 只有阅读篇幅长允许跨页；其余题型整块不拆页，避免标题、说明或表格被分到两页
+      if s.typeId == "reading" {
+        answer-body(s)
+      } else {
+        block(breakable: false)[#answer-body(s)]
+      }
     } else {
-      text(size: 9.5pt)[本卷未排此题：#s.gap.message]
-      linebreak()
+      block(above: ans-gap)[
+        #text(size: ans-size, fill: ans-note-fill)[本卷未排此题：#s.gap.message]
+      ]
     }
   }
 
   if p.gaps.len() > 0 {
-    v(2mm)
-    text(size: 10pt, weight: "bold")[素材缺口汇总]
-    v(0.5mm)
+    anshead("", "素材缺口汇总")
     for gap in p.gaps {
-      text(size: 8.5pt)[· #text(weight: "bold")[#gap.label：]需 #gap.needed，现有 #gap.available，缺 #gap.missing。]
-      linebreak()
+      block(above: ans-gap)[
+        #text(size: ans-size)[· #text(weight: "bold")[#gap.label：]需 #gap.needed，现有 #gap.available，缺 #gap.missing。]
+      ]
     }
   }
 }

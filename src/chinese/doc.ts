@@ -197,6 +197,7 @@ export function buildReadingPaperConfig(
 
 /** 校内同步卷选择：单元 + 题型题量 + 难度 */
 export interface ChineseSyncSelection {
+  mode?: 'unit' | 'full'
   unitIds: string[]
   levels: ChineseLevel[]
   sections: { typeId: ChinesePaperTypeId; count: number; perItemScore: number }[]
@@ -223,10 +224,10 @@ export function buildSyncPaperConfig(
   }
 
   const title =
-    unitIds.length === 1
-      ? `${findChineseUnit(unitIds[0]!)?.unitName ?? '三年级语文上册'}同步练习`
-      : unitIds.length === 8
-        ? '三年级语文上册 综合练习'
+    selection.mode === 'full' || unitIds.length === 8
+      ? '三年级语文上册 综合练习'
+      : unitIds.length === 1
+        ? `${findChineseUnit(unitIds[0]!)?.unitName ?? '三年级语文上册'}同步练习`
         : '三年级语文上册 同步练习'
 
   return {

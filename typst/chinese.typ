@@ -61,11 +61,11 @@
 ]
 
 /// 一整串的字上注音（用于课内词语）
-#let annotate-word(pinyins, chars, w: 11mm) = {
+#let annotate-word(pinyins, chars, w: 11mm, ch-size: 14pt, py-size: 8pt) = {
   grid(
     columns: (w,) * chars.len(),
     inset: 0pt,
-    ..chars.enumerate().map(((i, ch)) => annotate(if i < pinyins.len() { pinyins.at(i) } else { "" }, ch, w: w)),
+    ..chars.enumerate().map(((i, ch)) => annotate(if i < pinyins.len() { pinyins.at(i) } else { "" }, ch, w: w, ch-size: ch-size, py-size: py-size)),
   )
 }
 
