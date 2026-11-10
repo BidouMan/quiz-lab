@@ -13,19 +13,28 @@
 // 避免标题或诗名落在页脚、正文跑到下一页。
 // ============ 版式规则（全题型统一，新增题型必须沿用）============
 // 页面：A4，左右边距 18mm，上 18mm、下 16mm；正文 11pt，leading 0.82em（约 1.55 倍），左对齐。
+// 字号：卷面所有题目文字统一 11pt（题干、选项、材料正文、出处、字库、提示、要求），
+//   不再按题型另设小一号；标题保持层级——题型标题 12pt 加粗、阅读文章标题 14pt 加粗、
+//   材料小标题【】11.5pt 加粗；另有注音题词组 13pt、田字格上方拼音 8pt。
 // 标题：12pt 加粗；上方距上一题固定 8mm（head-above），下方距第一行 6.2mm（head-below）。
+// 小题行距：全卷统一 5.5mm（item-gap），字词、古诗、病句、标点、扩写、阅读各小题同值，
+//   表格类（看拼音、注音、多音字、形近字）的行间距也用这个值；古诗句与其书写带固定 2mm。
 //   若标题被包进首块防页底孤行，该块的 above 必须写 head-above；题型分支末尾不得留 v()。
 // 填空横线宽度（gen-chinese-paper.mjs 统一计算，不在此处写死）：
 //   宽 = 答案字数 × 7mm（三年级手写单字宽度），下限 14mm、上限 105mm；所有题型同字同宽。
-// 诗句补全、古诗默写：诗名用《》加粗 11pt + 9pt 灰「朝代·作者」；每联一行，
+//   空线前留白 1.5mm（否则横线紧贴左侧文字最后一笔），空线后 1.4mm。
+// 诗句补全、古诗默写：诗名用《》加粗 11pt + 11pt 灰「朝代·作者」；每联一行，
 //   分句各一条定宽横线，分句间打印全角逗号（5mm 格，逗号落在横线上）；书写带高 6.5mm。
-// 给加点字注音：词组 13pt，被注音字下加点；横线按拼音长度取宽并居中，线与词组 4mm。
+// 给加点字注音：词组 13pt，被注音字下加点；横线按拼音长度取宽，与整个词组居中对齐
+//   （格宽取词组与横线的较大者），线与词组 4mm。
 // 看拼音写词语：10mm 田字格，拼音 8pt，拼音与格子 1.6mm，5 列，行距 6mm。
 // 修改病句：「改为：」与横线同基线（grid align bottom，标签列 auto）。
 // 扩写、仿写：各 1 行书写线。阅读简答：按参考答案长度给 2–6 行。
 // ==============================================================
 #let head-above = 8mm
 #let head-below = 6.2mm
+// 小题与小节之间的行距：全卷所有题型共用一个值，不再各分支各写一套
+#let item-gap = 5.5mm
 #let qhead(no, title) = block(sticky: true, above: head-above, below: head-below)[
   #text(size: 12pt, weight: "bold")[#no．#title]
 ]
@@ -53,11 +62,11 @@
 #let poem-blank(no, title, author, dynasty, lineWidths, above: 0mm) = block(above: above, below: 0mm)[
   #text(size: 11pt, weight: "bold")[#(no)．《#title》]
   #h(3mm)
-  #text(size: 9pt, fill: luma(115))[#(dynasty)·#(author)]
+  #text(size: 11pt, fill: luma(115))[#(dynasty)·#(author)]
   #v(1.6mm)
   #for (i, widths) in lineWidths.enumerate() {
     if i > 0 { v(4.5mm) }
-    write-band(widths)
+    block(above: 0pt, below: 0pt)[#write-band(widths)]
   }
 ]
 
@@ -94,16 +103,17 @@
   out
 }
 
-/// 古诗补全：题号 + 诗名（加粗，篇名加书名号）+ 朝代·作者（小字灰），
+/// 古诗补全：题号 + 诗名（加粗，篇名加书名号）+ 朝代·作者（灰字），
 /// 给出的诗句与待补的横线都排在同一行，一次只补整联；诗名行与诗句左对齐。
 #let poem-fill(no, title, dynasty, author, verse, widths, blankFirst: false, above: 0mm) = block(above: above, below: 0mm)[
-  // 诗名行：题号与诗名加粗，出处用更小的灰字，和诗句拉开层次
+  // 诗名行：题号与诗名加粗，出处用灰字区分层次（字号与正文统一）
   #text(size: 11pt, weight: "bold")[#(no)．《#title》]
   #h(3mm)
-  #text(size: 9pt, fill: luma(115))[#(dynasty)·#(author)]
+  #text(size: 11pt, fill: luma(115))[#(dynasty)·#(author)]
   #v(1.6mm)
   // 书写带：每个分句一条横线，分句之间打印逗号；线距本方诗句比距下一题更近
-  #let band = write-band(widths)
+  // 用 block 包住，去掉 grid 自带的段落间距，否则诗句与横线之间会多空出近 5mm
+  #let band = block(above: 0pt, below: 0pt)[#write-band(widths)]
   #if blankFirst {
     band
     v(3mm)
@@ -120,17 +130,19 @@
   let chars = word.clusters()
   let idx = if target in chars { chars.position(c => c == target) } else { 0 }
   let unit = size
-  // 左右各留出横线超出字宽的部分，保证横线不越出本词边界
-  let side = calc.max((bw - unit) / 2, 0mm)
-  let total = chars.len() * unit + 2 * side
-  // 被注音字的中心位置（相对整块左边缘）
-  let cx = side + idx * unit + unit / 2
+  // 单元格宽度取「词组宽」与「横线宽」的较大者：横线按拼音长度定宽，
+  // 词组与横线都以整格居中对齐，横线不再只对准被注音的单字。
+  let wordWidth = chars.len() * unit
+  let total = calc.max(wordWidth, bw)
+  // 词组在整格里的左偏移，以及被注音字中心（相对整格左边缘）
+  let wordLeft = (total - wordWidth) / 2
+  let cx = wordLeft + idx * unit + unit / 2
   stack(
     dir: ttb,
     spacing: 4mm,
-    // 拼音横线：与整词居中对齐，上方 2.4mm 供书写
+    // 拼音横线：与整个词组居中对齐，左右两端落在同一格内
     box(width: total, height: 2.4mm)[
-      #place(top + center, box(
+      #place(top + left, dx: (total - bw) / 2, box(
         width: bw,
         height: 2.4mm,
         stroke: (bottom: (thickness: 0.5pt, paint: luma(140))),
@@ -139,7 +151,7 @@
     ],
     // 词组：逐字等宽排（保证圆点对准字的中心）；被注音字下方加点
     box(width: total)[
-      #pad(left: side, grid(
+      #pad(left: wordLeft, grid(
         columns: (unit,) * chars.len(),
         align: center,
         ..chars.map(c => text(size: size)[#c]),
@@ -169,7 +181,7 @@
     columns: (1fr,) * n,
     align: center,
     column-gutter: gap,
-    row-gutter: 6mm,
+    row-gutter: item-gap,
     ..blocks,
   )
 }
@@ -185,7 +197,34 @@
   grid(
     columns: (auto,) * cols,
     column-gutter: 8mm,
-    row-gutter: 6mm,
+    row-gutter: item-gap,
+    ..cells,
+  )
+}
+
+/// 多音字组词：每个读音后面给一条横线，两列排布
+#let duoyin-line(items) = {
+  let cells = items.map(i => block[
+    #text(size: 11pt, weight: "bold")[#i.char]　
+    #for (k, r) in i.readings.enumerate() {
+      h(0.6mm)
+      text(size: 11pt)[#r.pinyin]
+      // 横线按组词答案字数取宽（同全卷规则），并留出与拼音的间距；
+      // 定宽过大时「应 yīng＿ yìng＿」会在右列放不下，横线掉到下一行
+      h(1.2mm)
+      box(
+        width: calc.min(calc.max(r.word.clusters().len() * 7mm, 14mm), 21mm),
+        stroke: (bottom: (thickness: 0.5pt, paint: luma(140))),
+        inset: 0pt,
+      )[]
+      if k < i.readings.len() - 1 { h(3.5mm) }
+    }
+  ])
+  if calc.rem(cells.len(), 2) != 0 { cells.push(box()) }
+  grid(
+    columns: (1fr,) * 2,
+    column-gutter: 10mm,
+    row-gutter: item-gap,
     ..cells,
   )
 }
@@ -196,6 +235,8 @@
   for (i, part) in parts.enumerate() {
     [#part]
     if i < parts.len() - 1 {
+      // 空线前留白：否则横线会紧贴左侧文字的最后一笔，看起来要重叠
+      if part.trim() != "" { h(1.5mm) }
       box(
         width: widths.at(i),
         stroke: (bottom: (thickness: 0.5pt, paint: luma(140))),
@@ -261,7 +302,7 @@
 
 /// 阅读题：选择 / 填空 / 简答三种版式分开排；整题不可断页
 #let reading-question(no, q) = block(
-  above: 6.6mm,
+  above: item-gap,
   below: 0.6mm,
   breakable: false,
 )[
@@ -334,7 +375,7 @@
   radius: 1.5mm,
   inset: (x: 4.5mm, y: 3mm),
 )[
-  #set text(size: 10.5pt)
+  #set text(size: 11pt)
   #text(weight: "bold")[素材缺口：]#s.gap.message
 ]
 
@@ -346,13 +387,33 @@
     kanpinyin-line(s.items.map(i => (i.word, i.pinyin)), size: 10mm, gap: 5mm, cols: 5)
   } else if s.typeId == "zhuyin" {
     zhuyin-line(s.items)
+  } else if s.typeId == "duoyin" {
+    duoyin-line(s.items)
+  } else if s.typeId in ("cipu", "jinayi", "xuanzi", "riji") {
+    for (j, g) in s.items.enumerate() {
+      // 同一题型内的小节：量词 / 四字词语 / 课文原句中的搭配，各段独立起头
+      let gname = g.at("group", default: none)
+      let new-group = gname != none and (j == 0 or s.items.at(j - 1).at("group", default: none) != gname)
+      if new-group {
+        block(sticky: true, above: if j == 0 { 0mm } else { item-gap }, below: 2.2mm)[
+          #text(size: 11pt, weight: "bold")[#gname]
+        ]
+      }
+      block(breakable: false, above: if new-group { 0mm } else { item-gap })[
+        #text(size: 11pt)[（#(j + 1)）]
+        #if g.at("bank", default: none) != none {
+          text(size: 11pt, fill: luma(95))[字库：#g.bank.join("　")]　
+        }
+        #fill-inline(g.text, g.blankWidthsMm.map(w => w * 1mm), size: 11pt)
+      ]
+    }
   } else if s.typeId == "xingjin" {
     block(breakable: false)[
-      #xingjin-line(s.items.map(i => (i.a, i.b)))
+      #xingjin-line(s.items.map(i => (i.a, i.b)), row-gap: item-gap)
     ]
   } else if s.typeId == "gushi-fill" {
     for (k, i) in s.items.enumerate() {
-      block(breakable: false, above: if k == 0 { head-above } else { 12mm })[
+      block(breakable: false, above: if k == 0 { head-above } else { item-gap })[
         #if k == 0 {
           head
         }
@@ -369,7 +430,7 @@
     }
   } else if s.typeId == "gushi-dimo" {
     for (k, i) in s.items.enumerate() {
-      block(breakable: false, above: if k == 0 { head-above } else { 8mm })[
+      block(breakable: false, above: if k == 0 { head-above } else { item-gap })[
         #if k == 0 {
           head
         }
@@ -384,12 +445,13 @@
     }
   } else if s.typeId == "gaibing" {
     for (j, g) in s.items.enumerate() {
-      block(breakable: false, above: if j == 0 { 0mm } else { 6mm })[
+      block(breakable: false, above: if j == 0 { 0mm } else { item-gap })[
         #text(size: 11pt)[（#(j + 1)）#g.broken]
         #v(0.3mm)
         #grid(
           columns: (auto, 1fr),
           align: bottom,
+          column-gutter: 2mm,
           text(size: 11pt)[改为：],
           write-line(h: 6.5mm),
         )
@@ -397,26 +459,26 @@
     }
   } else if s.typeId == "guanlian" {
     for (j, g) in s.items.enumerate() {
-      if j > 0 { v(2.6mm) }
+      if j > 0 { v(item-gap) }
       text(size: 11pt)[（#(j + 1)）]
       fill-inline(g.text, g.blankWidthsMm.map(w => w * 1mm), size: 11pt)
     }
   } else if s.typeId == "biaodian" {
     for (j, g) in s.items.enumerate() {
-      if j > 0 { v(2.6mm) }
+      if j > 0 { v(item-gap) }
       text(size: 11pt)[（#(j + 1)）#g.text]
     }
   } else if s.typeId == "kuoxie" {
     for (j, g) in s.items.enumerate() {
-      block(breakable: false, above: 2.4mm)[
+      block(breakable: false, above: item-gap)[
         #text(size: 11pt)[（#(j + 1)）#g.base]
-        #text(size: 10.5pt, fill: luma(105))[　提示：#g.hints.join("　/　")]
+        #text(size: 11pt, fill: luma(105))[　提示：#g.hints.join("　/　")]
         #for _ in range(g.blankLines) { write-line(h: 8mm) }
       ]
     }
   } else if s.typeId == "fangxie" {
     for (j, g) in s.items.enumerate() {
-      block(breakable: false, above: 2.4mm)[
+      block(breakable: false, above: item-gap)[
         #text(size: 11pt)[（#(j + 1)）例：#g.example　#g.prompt]
         #for _ in range(g.blankLines) { write-line(h: 8mm) }
       ]
@@ -448,7 +510,7 @@
             v(0.8mm)
             pi += 1
           } else if para.starts-with("【注") {
-            text(size: 9.5pt, fill: luma(95))[#para]
+            text(size: 11pt, fill: luma(95))[#para]
             v(1mm)
             pi += 1
           } else if para.starts-with("【") {
@@ -457,7 +519,7 @@
             v(0.8mm)
             pi += 1
           } else if para.starts-with("（选自") or para.starts-with("(选自") {
-            text(size: 9pt, fill: luma(105))[#para]
+            text(size: 11pt, fill: luma(105))[#para]
             v(1mm)
             pi += 1
           } else if reading-list-marks.any(m => para.starts-with(m)) or (para.split("：").len() > 1 and para.split("：").at(0).clusters().len() <= 8) {
@@ -479,7 +541,7 @@
     }
   } else if s.typeId == "writing" {
     for (k, w) in s.items.enumerate() {
-      block(breakable: false, above: if k == 0 { head-above } else { 8mm })[
+      block(breakable: false, above: if k == 0 { head-above } else { item-gap })[
         #if k == 0 { head }
         #text(size: 11pt, weight: "bold")[题目：#w.title]
         #v(1mm)
@@ -529,6 +591,33 @@
       v(1mm)
     }
     text(size: 8.5pt, fill: luma(105))[语境：#s.items.map(i => i.context).join("、")。多音字按语境定音。]
+  } else if s.typeId == "duoyin" {
+    grid(
+      columns: (1fr,) * 2,
+      row-gutter: 2.6mm,
+      ..s.items.map(i => box[
+        #han(i.char, size: 11pt)　#i.readings.map(r => [#r.pinyin： #r.word]).join("　")
+      ]),
+    )
+    v(0.5mm)
+    text(size: 8.5pt, fill: luma(105))[组词答案不唯一，读音正确、词语成立都算对。]
+  } else if s.typeId in ("cipu", "jinayi", "xuanzi", "riji") {
+    for (j, g) in s.items.enumerate() {
+      text(size: 9.5pt)[（#(j + 1)）#apply-blanks(g.text, g.answers)]
+      if g.at("bank", default: none) != none {
+        text(size: 8.5pt, fill: luma(105))[（字库：#g.bank.join("、")）]
+      }
+      linebreak()
+    }
+    if s.typeId == "cipu" {
+      text(size: 8.5pt, fill: luma(105))[量词、四字词语按教材词语表核对，课文原句搭配按原文核对；错字、漏字需订正。]
+    } else if s.typeId == "jinayi" {
+      text(size: 8.5pt, fill: luma(105))[近义词、反义词答案不唯一，意思相近或相反即可。]
+    } else if s.typeId == "riji" {
+      text(size: 8.5pt, fill: luma(105))[日积月累按教材原文核对，错字、漏字需订正。]
+    } else if s.typeId == "xuanzi" {
+      text(size: 8.5pt, fill: luma(105))[选字填空按字库选字，每个字都要用上。]
+    }
   } else if s.typeId == "xingjin" {
     grid(
       columns: (1fr,) * 3,
@@ -659,7 +748,12 @@
 #paper-title(p.meta.title)
 
 #for s in p.sections {
-  section-body(s, qhead(s.no, s.label))
+  if s.selected > 0 {
+    section-body(s, qhead(s.no, s.label))
+  } else {
+    // 空题型也要有题号与标题，避免学生看到无标题的缺口框
+    qhead(s.no, s.label)
+  }
   if s.gap != none {
     v(1mm)
     gap-block(s)

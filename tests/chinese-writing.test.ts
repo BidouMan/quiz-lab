@@ -13,12 +13,19 @@ const EXPECTED = [
   ['3A-U8', '那次经历真难忘'],
 ] as const
 
-test('习作：8 个单元各一条，篇目与方案 §1.2 一致', () => {
-  assert.equal(WRITING_PROMPTS.length, 8)
+test('习作：8 个单元各两条（正题 + 备选），正题篇目与方案 §1.2 一致', () => {
+  assert.equal(WRITING_PROMPTS.length, 16)
   EXPECTED.forEach(([unitId, title], index) => {
     const prompt = WRITING_PROMPTS[index]
     assert.equal(prompt.unitId, unitId, `第 ${index + 1} 条单元不符`)
     assert.equal(prompt.title, title, `${unitId} 篇目不符`)
+
+    const backup = WRITING_PROMPTS[index + 8]
+    assert.ok(backup, `${unitId} 缺备选题目`)
+    assert.equal(backup.unitId, unitId, `${unitId} 备选题单元不符`)
+    assert.equal(backup.title, `${title}（备选）`, `${unitId} 备选题应加“（备选）”后缀`)
+    const sameUnit = WRITING_PROMPTS.filter((item) => item.unitId === unitId)
+    assert.equal(sameUnit.length, 2, `${unitId} 应各两条（正题 + 备选）`)
   })
 })
 

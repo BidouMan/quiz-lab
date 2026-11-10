@@ -19,8 +19,8 @@ import ParamsPanel from './ParamsPanel.vue'
 import ChinesePanel from './ChinesePanel.vue'
 import PdfPreview from './PdfPreview.vue'
 import { buildPaper, defaultUnitIds, migrateCounts, migrateLegacyCounts, panelUnits, typeVisibleInGrade } from './paperBuilder'
-import { buildChinesePaperDoc, buildReadingPaperConfig, type ReadingPaperSelection } from '../chinese/doc.ts'
-import type { ReadingPaperItem } from '../chinese/types.ts'
+import { buildChinesePaperDoc, buildReadingPaperConfig, buildSyncPaperConfig, type ChineseSyncSelection, type ReadingPaperSelection } from '../chinese/doc.ts'
+import type { ChinesePaperMemory, ReadingPaperItem } from '../chinese/types.ts'
 import {
   LEVEL_LABELS,
   PRESETS,
@@ -46,6 +46,7 @@ import {
 import { readableNotes, shortageNote } from './wording'
 
 const MEMORY_KEY = 'quizlab:quiz-memory.v1'
+const CHINESE_MEMORY_KEY = 'quizlab:chinese-memory.v1'
 const HISTORY_KEY = 'quizlab:history.v1'
 const APP_VERSION = '0.7.0-beta.2'
 
@@ -53,10 +54,11 @@ const APP_VERSION = '0.7.0-beta.2'
 const isDevBuild = import.meta.env.DEV
 const DevTools = isDevBuild ? defineAsyncComponent(() => import('./DevToolsEntry.vue')) : null
 
-function loadMemory(): { store: MemoryStore; notice: string } {
+/** 读一份出题记忆；结构与损坏恢复规则两边共用，只是存储键不同 */
+function loadMemoryStore(key: string): { store: MemoryStore; notice: string } {
   let raw: string | null = null
   try {
-    raw = localStorage.getItem(MEMORY_KEY)
+    raw = localStorage.getItem(key)
   } catch {
     return { store: new MemoryStore(), notice: '' }
   }
@@ -66,7 +68,7 @@ function loadMemory(): { store: MemoryStore; notice: string } {
   if (parsed.status === 'ok') return { store: parsed.store, notice: '' }
 
   // 损坏：先把原文另存一份备份，再重建可用状态，绝不静默清空
-  const backupKey = `${MEMORY_KEY}.corrupt-${corruptTimestamp()}`
+  const backupKey = `${key}.corrupt-${corruptTimestamp()}`
   try {
     localStorage.setItem(backupKey, raw)
   } catch {
@@ -74,19 +76,27 @@ function loadMemory(): { store: MemoryStore; notice: string } {
   }
   const store = new MemoryStore()
   try {
-    localStorage.setItem(MEMORY_KEY, store.toJSON())
+    localStorage.setItem(key, store.toJSON())
   } catch {
     // localStorage 不可用时仅本进程生效
   }
-  return { store, notice: memoryRecoveryNotice(backupKey.replace(`${MEMORY_KEY}.`, '')) }
+  return { store, notice: memoryRecoveryNotice(backupKey.replace(`${key}.`, '')) }
+}
+
+function persistMemoryStore(key: string, store: MemoryStore) {
+  try {
+    localStorage.setItem(key, store.toJSON())
+  } catch {
+    // localStorage 不可用时仅本进程生效
+  }
+}
+
+function loadMemory(): { store: MemoryStore; notice: string } {
+  return loadMemoryStore(MEMORY_KEY)
 }
 
 function persistMemory(store: MemoryStore) {
-  try {
-    localStorage.setItem(MEMORY_KEY, store.toJSON())
-  } catch {
-    // localStorage 不可用时仅本进程生效
-  }
+  persistMemoryStore(MEMORY_KEY, store)
 }
 
 const DAILY = PRESETS[0]
@@ -107,6 +117,8 @@ const config = reactive<AppConfig>(initialConfig())
 
 const loadedMemory = loadMemory()
 let memory = loadedMemory.store
+const loadedChineseMemory = loadMemoryStore(CHINESE_MEMORY_KEY)
+let chineseMemory = loadedChineseMemory.store
 const lastBuild = ref<BuildResult | null>(null)
 const template = ref<TemplateInfo | null>(null)
 const typst = ref<TypstInfo | null>(null)
@@ -120,7 +132,9 @@ const pdfData = ref<Uint8Array | null>(null)
 const actualPages = ref(0)
 const errorMessage = ref('')
 const notice = ref('')
-const memoryNotice = ref(loadedMemory.notice)
+const memoryNotice = ref(
+  [loadedMemory.notice, loadedChineseMemory.notice].filter(Boolean).join('；'),
+)
 /** 设置备份 / 导入导出的提示；与出卷提示分开，避免被下一次生成清掉 */
 const configNotice = ref('')
 const showLayoutDetail = ref(false)
@@ -139,6 +153,7 @@ const chineseBusy = ref(false)
 const chineseResult = ref<GenerateResult | null>(null)
 const chinesePdfData = ref<Uint8Array | null>(null)
 const chinesePages = ref(0)
+const chineseMode = ref<'reading' | 'sync' | 'full'>('sync')
 const chineseFigures = ref({ pieces: 0, questions: 0, score: 0 })
 const subjectMeta = computed(() => SUBJECTS.find((item) => item.id === subject.value) ?? SUBJECTS[0])
 
@@ -149,25 +164,50 @@ function switchSubject(id: SubjectId) {
 }
 
 /** 语文出卷：面板只给筛选条件，配置与模板数据都在 src/chinese/doc.ts 里装配 */
-async function onChineseGenerate(selection: ReadingPaperSelection) {
+async function onChineseGenerate(
+  payload:
+    | { mode: 'reading'; selection: ReadingPaperSelection }
+    | { mode: 'sync'; selection: ChineseSyncSelection }
+    | { mode: 'full'; selection: ChineseSyncSelection },
+) {
   if (chineseBusy.value) return
   chineseBusy.value = true
   chineseError.value = ''
   chineseNotice.value = ''
   try {
     seed += 1
-    const paperConfig = buildReadingPaperConfig(selection, seed)
+    const isReading = payload.mode === 'reading'
+    const isFull = payload.mode === 'full'
+    chineseMode.value = payload.mode
+    // 出卷前先领本卷号：排题按「没出过的题优先」走，卷子生成成功后再写回记忆
+    const chineseMemoryInput: ChinesePaperMemory = {
+      paper: chineseMemory.beginPaper(),
+      entries: chineseMemory.data.entries,
+    }
+    const paperConfig = isReading
+      ? buildReadingPaperConfig(payload.selection as ReadingPaperSelection, seed, chineseMemoryInput)
+      : buildSyncPaperConfig(payload.selection as ChineseSyncSelection, seed, chineseMemoryInput)
     const { doc, paper } = buildChinesePaperDoc(paperConfig)
-    const readings = paper.items.filter(
-      (item): item is ReadingPaperItem => item.typeId === 'reading',
-    )
-    if (readings.length === 0) {
-      chineseError.value = '当前筛选下没有可用篇目，请放宽考点、主题或难度。'
+
+    let pieces = paper.items.length
+    let questions = 0
+    if (isReading) {
+      const readings = paper.items.filter(
+        (item): item is ReadingPaperItem => item.typeId === 'reading',
+      )
+      if (readings.length === 0) {
+        chineseError.value = '当前筛选下没有可用篇目，请放宽考点、主题或难度。'
+        return
+      }
+      pieces = readings.length
+      questions = readings.reduce((sum, item) => sum + item.questions.length, 0)
+    } else if (paper.items.length === 0) {
+      chineseError.value = '当前单元与题型下没有可用题目，请增加题型或放宽单元。'
       return
     }
-    const questions = readings.reduce((sum, item) => sum + item.questions.length, 0)
+
     chineseFigures.value = {
-      pieces: readings.length,
+      pieces,
       questions,
       score: paper.score.total,
     }
@@ -176,16 +216,30 @@ async function onChineseGenerate(selection: ReadingPaperSelection) {
       doc,
       config.typstPath,
       'typst/chinese-paper-3a.typ',
-      joinPath(saveRoot(), `三年级语文-课外阅读-${stamp()}.pdf`),
+      joinPath(
+        saveRoot(),
+        isReading
+          ? `三年级语文-课外阅读-${stamp()}.pdf`
+          : isFull
+            ? `三年级语文-综合练习-${stamp()}.pdf`
+            : `三年级语文-同步练习-${stamp()}.pdf`,
+      ),
     )
     chineseResult.value = generated
     chinesePdfData.value = base64ToBytes(generated.pdfBase64)
     chinesePages.value = 0
+    // 卷子确实生成了才记账：下次出卷优先排剩下的新题
+    for (const key of paper.usedKeys) chineseMemory.record(key)
+    persistMemoryStore(CHINESE_MEMORY_KEY, chineseMemory)
     chineseNotice.value = [...notes, ...generated.warnings].filter(Boolean).join('；')
     addHistory({
-      title: `语文 · 课外阅读（${readings.length} 篇）`,
+      title: isReading
+        ? `语文 · 课外阅读（${pieces} 篇）`
+        : isFull
+          ? `语文 · 综合练习（${pieces} 题）`
+          : `语文 · 同步练习（${pieces} 题）`,
       at: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-      count: questions,
+      count: isReading ? questions : pieces,
       pages: 0,
       path: generated.savedPath ?? generated.outputPath,
       subject: 'chinese',
@@ -664,6 +718,8 @@ function resetSaveDir() {
 function clearMemory() {
   memory = new MemoryStore()
   persistMemory(memory)
+  chineseMemory = new MemoryStore()
+  persistMemoryStore(CHINESE_MEMORY_KEY, chineseMemory)
   memoryNotice.value = '出题记忆已清空，新卷可能和旧卷重复'
 }
 
@@ -834,7 +890,7 @@ onBeforeUnmount(() => {
       <template v-else>
         <div v-if="chineseBusy" class="status">
           <i class="dot" />
-          <span class="status-text">正在生成语文阅读卷…</span>
+          <span class="status-text">正在生成语文{{ chineseMode === 'reading' ? '阅读' : chineseMode === 'full' ? '综合' : '同步' }}卷…</span>
         </div>
         <div v-if="chineseError" class="status err">
           <i class="dot" />
@@ -849,15 +905,22 @@ onBeforeUnmount(() => {
         <section v-if="chineseResult" class="result-card">
           <div class="rc-top">
             <div class="figures">
-              <div class="figure"><b>{{ chineseFigures.pieces }}</b><small>篇文章</small></div>
-              <div class="figure"><b>{{ chineseFigures.questions }}</b><small>道题</small></div>
-              <div class="figure"><b>{{ chineseFigures.score }}</b><small>分</small></div>
+              <div class="figure">
+                <b>{{ chineseFigures.pieces }}</b>
+                <small>{{ chineseMode === 'reading' ? '篇文章' : '道题' }}</small>
+              </div>
+              <div v-if="chineseMode === 'reading'" class="figure">
+                <b>{{ chineseFigures.questions }}</b><small>道题</small>
+              </div>
+              <div v-if="chineseMode === 'reading'" class="figure">
+                <b>{{ chineseFigures.score }}</b><small>分</small>
+              </div>
             </div>
             <div class="row-actions">
               <button
                 class="secondary"
                 :disabled="chineseBusy"
-                @click="saveAs(chineseResult, '语文课外阅读专项.pdf')"
+                @click="saveAs(chineseResult, chineseMode === 'reading' ? '语文课外阅读专项.pdf' : chineseMode === 'full' ? '语文综合练习.pdf' : '语文校内同步练习.pdf')"
               >
                 保存 PDF
               </button>
@@ -878,8 +941,8 @@ onBeforeUnmount(() => {
         </div>
         <div v-else class="empty-stage">
           <div class="empty-card">
-            <h3>先出一份课外阅读专项</h3>
-            <p>在左侧勾选考点、主题或难度，不选就是全部；定好篇数后点「生成阅读卷」。</p>
+            <h3>先出一份语文练习</h3>
+            <p>「校内同步」按单元出基础题；「综合卷」全册混合基础、阅读和习作；「阅读专项」只出阅读。</p>
           </div>
         </div>
       </template>

@@ -31,6 +31,8 @@ export interface ChineseChar {
   table: CharTable
   status: VerifyStatus
   sources: SourceRef[]
+  /** 教材识字表蓝色字：本课作多音字学习，不计入生字总数 */
+  multi?: boolean
   note?: string
 }
 
@@ -90,6 +92,10 @@ export interface ChineseUnitGarden {
   label: string
   /** 日积月累等固定内容；未核实则留空 */
   items: string[]
+  /** 园地词语表（如园地三、四、六、八） */
+  words?: ChineseWord[]
+  /** 日积月累中的古诗，可进古诗补全/默写候选 */
+  poems?: ChinesePoem[]
   status: VerifyStatus
   sources: SourceRef[]
 }

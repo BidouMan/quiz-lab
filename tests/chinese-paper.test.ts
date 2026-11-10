@@ -2,10 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildChinesePaper, allocateReadingScores } from '../src/chinese/build.ts'
 import {
-  CHINESE_PAPER_PRESETS,
   DEFAULT_CHINESE_PAPER_CONFIG,
 } from '../src/chinese/presets.ts'
-import { CHINESE_ANSWER_MODE, CHINESE_PAPER_TYPE_IDS } from '../src/chinese/materials.ts'
+import { CHINESE_ANSWER_MODE, CHINESE_PAPER_TYPE_IDS, chineseMaterialInventory, fillTextCandidates } from '../src/chinese/materials.ts'
 import { buildChinesePaperDoc, buildReadingPaperConfig } from '../src/chinese/doc.ts'
 import type { ChinesePaperConfig } from '../src/chinese/types.ts'
 
@@ -34,16 +33,19 @@ test('默认卷：同一套卷内题目 key 与古诗都不重复', () => {
 })
 
 test('缺口卷：素材不足时只排现有题，卷面缺口写明需要与现有', () => {
-  const paper = buildChinesePaper(CHINESE_PAPER_PRESETS.gap)
-  assert.equal(paper.gaps.length, 3)
+  const paper = build({
+    totalItems: 12,
+    sections: [{ typeId: 'gushi-dimo', count: 12, perItemScore: 3 }],
+  })
+  assert.equal(paper.gaps.length, 1)
   assert.ok(paper.score.total < paper.score.requested)
 
-  const kanpinyin = paper.sections.find((section) => section.typeId === 'kanpinyin')
-  assert.ok(kanpinyin?.gap)
-  assert.equal(kanpinyin.selected, 12)
-  assert.equal(kanpinyin.gap.needed, 15)
-  assert.equal(kanpinyin.gap.available, 12)
-  assert.match(kanpinyin.gap.message, /需要 15 题，现有 12 题/)
+  const dimo = paper.sections[0]
+  assert.ok(dimo.gap)
+  assert.equal(dimo.selected, 10)
+  assert.equal(dimo.gap.needed, 12)
+  assert.equal(dimo.gap.available, 10)
+  assert.match(dimo.gap.message, /需要 12 首，现有 10 首/)
 
   const keys = paper.items.map((item) => item.key)
   assert.equal(new Set(keys).size, keys.length)
@@ -86,6 +88,102 @@ test('阅读分值分配：任意题量下都是整数且总和精确', () => {
     assert.equal(scores.reduce((sum, score) => sum + score, 0), total)
     assert.ok(scores.every((score) => Number.isInteger(score) && score >= 0))
   }
+})
+
+test('新增字词与日积月累题型：素材可出且答案结构完整', () => {
+  const inventory = chineseMaterialInventory()
+  const types = ['duoyin', 'cipu', 'jinayi', 'xuanzi', 'riji'] as const
+  for (const typeId of types) {
+    assert.ok(inventory[typeId] >= 10, `${typeId} 库存不足：${inventory[typeId]}`)
+    const { paper } = buildChinesePaperDoc({
+      ...DEFAULT_CHINESE_PAPER_CONFIG,
+      totalItems: 3,
+      sections: [{ typeId, count: 3, perItemScore: 1 }],
+    })
+    assert.equal(paper.gaps.length, 0, `${typeId} 出现缺口`)
+    assert.equal(paper.items.length, 3)
+    for (const item of paper.items) {
+      if (item.typeId === 'duoyin') {
+        assert.equal(item.readings.length, 2)
+        assert.notEqual(item.readings[0]!.pinyin, item.readings[1]!.pinyin)
+      } else if (
+        item.typeId === 'cipu' ||
+        item.typeId === 'jinayi' ||
+        item.typeId === 'xuanzi' ||
+        item.typeId === 'riji'
+      ) {
+        assert.equal(
+          item.text.split('（ ）').length - 1,
+          item.answers.length,
+          `${typeId} 空位与答案数不一致：${item.text}`,
+        )
+        assert.deepEqual(item.blankWidthsMm?.length, item.answers.length)
+      }
+    }
+  }
+})
+
+test('单元卷：教材题只取所选单元，句子题按全册通用', () => {
+  const paper = build({
+    unitIds: ['3A-U2'],
+    totalItems: 5,
+    sections: [
+      { typeId: 'kanpinyin', count: 3, perItemScore: 1 },
+      { typeId: 'gaibing', count: 2, perItemScore: 2 },
+    ],
+  })
+  const words = paper.items.filter((item) => item.typeId === 'kanpinyin')
+  assert.equal(words.length, 3)
+  for (const item of words) {
+    if (item.typeId === 'kanpinyin') assert.equal(item.unitId, '3A-U2')
+  }
+  assert.equal(paper.items.filter((item) => item.typeId === 'gaibing').length, 2)
+})
+
+test('单元卷：习作按所选单元匹配', () => {
+  const paper = build({
+    unitIds: ['3A-U2'],
+    totalItems: 1,
+    sections: [{ typeId: 'writing', count: 1, perItemScore: 30 }],
+  })
+  const writing = paper.items[0]
+  assert.equal(writing?.typeId, 'writing')
+  if (writing?.typeId === 'writing') assert.equal(writing.unitId, '3A-U2')
+})
+
+test('选字填空：每题 4 空，答案全部来自字库且字库每个字都用上', () => {
+  const items = fillTextCandidates('xuanzi')
+  assert.ok(items.length >= 30, `选字填空题量不足：${items.length}`)
+  for (const item of items) {
+    assert.equal(item.text.split('（ ）').length - 1, 4, item.text)
+    assert.equal(item.answers.length, 4, item.text)
+    assert.ok(item.bank && item.bank.length >= 2, item.text)
+    for (const answer of item.answers) {
+      assert.ok(item.bank!.includes(answer), `${item.text} 的答案 ${answer} 不在字库`)
+    }
+    assert.equal(new Set(item.answers).size, item.bank!.length, `${item.text} 有字库字未用到`)
+  }
+})
+
+test('近反义词同词去重：同一套卷内一个词只出现一次', () => {
+  const paper = build({
+    unitIds: ['3A-U4'],
+    totalItems: 4,
+    sections: [{ typeId: 'jinayi', count: 4, perItemScore: 1 }],
+  })
+  const stems = paper.items.map((item) =>
+    item.typeId === 'jinayi' ? (item.dedupeKey ?? item.key) : item.key,
+  )
+  assert.equal(new Set(stems).size, stems.length)
+  assert.equal(paper.items.length, 3)
+  assert.equal(paper.gaps.length, 1)
+})
+
+test('配置校验：unitIds 出现未知单元直接报错', () => {
+  assert.throws(
+    () => build({ unitIds: ['3A-U9'], totalItems: 1, sections: [{ typeId: 'kanpinyin', count: 1, perItemScore: 1 }] }),
+    /未知单元：3A-U9/,
+  )
 })
 
 test('答案页判分方式：客观题给答案，主观题只给评分要点', () => {

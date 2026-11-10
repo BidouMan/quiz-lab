@@ -26,9 +26,14 @@ import type {
 export type ChinesePaperTypeId =
   | 'kanpinyin'
   | 'zhuyin'
+  | 'duoyin'
   | 'xingjin'
+  | 'cipu'
+  | 'jinayi'
+  | 'xuanzi'
   | 'gushi-fill'
   | 'gushi-dimo'
+  | 'riji'
   | 'gaibing'
   | 'guanlian'
   | 'biaodian'
@@ -64,6 +69,17 @@ export interface ChineseSectionConfig {
   skills?: ReadingSkillCode[]
 }
 
+/**
+ * 跨卷出题记忆（只读输入）：界面把上次出过的题传进来，buildChinesePaper 据此优先排新题。
+ * 缺省时不排队列，按原来的随机抽题，保证旧调用与测试可复现。
+ */
+export interface ChinesePaperMemory {
+  /** 当前卷号，从 1 起；由界面在出卷前递增 */
+  paper: number
+  /** 记忆键 → 出现次数与最近出过的卷号；lastPaper 为 0 表示没出过 */
+  entries: Record<string, { count: number; lastPaper: number }>
+}
+
 /** 出卷配置：整份可 JSON 序列化，界面只需要构造它 */
 export interface ChinesePaperConfig {
   version: 1
@@ -75,11 +91,21 @@ export interface ChinesePaperConfig {
   difficulty: ChineseDifficulty
   /** 期望总题量，必须等于各题型 count 之和；不一致直接报错，不静默改数 */
   totalItems: number
+  /**
+   * 单元卷筛选：只影响教材类字词、古诗、园地题；留空表示全册。
+   * 句子、阅读、习作、卷面题为全册通用技能题，不随单元收窄。
+   */
+  unitIds?: string[]
   sections: ChineseSectionConfig[]
   /** 是否附答案页；false 时答案页整页不排 */
   includeAnswers: boolean
   /** 建议用时（分钟），只用于卷首说明 */
   timeMinutes?: number
+  /**
+   * 跨卷出题记忆：给出时按「优先没出过的题 + 小比例重复巩固」排题；
+   * 省略时退化为纯随机抽题。只影响排题顺序，不影响配置可复现性。
+   */
+  memory?: ChinesePaperMemory
 }
 
 /** 素材/卷面出处标注 */
@@ -98,6 +124,8 @@ export interface KanpinyinItem extends ChineseItemMeta {
   typeId: 'kanpinyin'
   word: string
   pinyin: string
+  /** 所属单元，用于单元卷筛选 */
+  unitId: string
   lessonNo: number
   lessonTitle: string
 }
@@ -108,6 +136,9 @@ export interface ZhuyinItem extends ChineseItemMeta {
   pinyin: string
   /** 语境词，用于区分多音字，例：放假 */
   context: string
+  /** 注音横线宽度（doc 层按拼音长度计算） */
+  blankWidthMm?: number
+  unitId: string
   lessonNo: number
   lessonTitle: string
 }
@@ -118,6 +149,33 @@ export interface XingjinItem extends ChineseItemMeta {
   b: string
   aAnswer: string
   bAnswer: string
+  /** 所属单元；跨单元组词取题面字所在单元 */
+  unitId?: string
+}
+
+/** 多音字组词：给字与两个读音，各写一个词 */
+export interface DuoyinItem extends ChineseItemMeta {
+  typeId: 'duoyin'
+  char: string
+  readings: { pinyin: string; word: string }[]
+  unitId?: string
+}
+
+/** 填空类字词题：题干里用「（ ）」标空，answers 按顺序对应 */
+export interface FillTextItem extends ChineseItemMeta {
+  typeId: 'cipu' | 'jinayi' | 'xuanzi' | 'riji'
+  text: string
+  answers: string[]
+  /** 选字填空的字库 */
+  bank?: string[]
+  /** 卷面小节名：同一题型内按 group 分段排版 */
+  group?: string
+  note?: string
+  /** 每个空的横线宽度（doc 层按答案字数计算） */
+  blankWidthsMm?: number[]
+  /** 同卷去重键：近义词/反义词按词头去重，避免同一词出两次 */
+  dedupeKey?: string
+  unitId?: string
 }
 
 export interface GushiFillItem extends ChineseItemMeta {
@@ -132,6 +190,12 @@ export interface GushiFillItem extends ChineseItemMeta {
   /** true 表示空线在提示句之前（给下句补上句） */
   blankFirst: boolean
   poemTitle: string
+  /** 每个分句的横线宽度与整题宽度（doc 层计算） */
+  clauseWidthsMm?: number[]
+  answerLines?: string[]
+  blankWidthMm?: number
+  /** 出自哪一单元（课文或语文园地） */
+  unitId?: string
 }
 
 export interface GushiDimoItem extends ChineseItemMeta {
@@ -141,17 +205,23 @@ export interface GushiDimoItem extends ChineseItemMeta {
   author: string
   lines: string[]
   poemTitle: string
+  /** 每联每个分句的横线宽度（doc 层计算） */
+  blankWidthsPerLineMm?: number[][]
+  unitId?: string
 }
 
 export type GaibingPaperItem = GaibingItem & ChineseItemMeta & { typeId: 'gaibing' }
 
-export type GuanlianPaperItem = GuanlianItem & ChineseItemMeta & { typeId: 'guanlian' }
+export type GuanlianPaperItem = GuanlianItem &
+  ChineseItemMeta & { typeId: 'guanlian'; blankWidthsMm?: number[] }
 
 export type BiaodianPaperItem = BiaodianItem & ChineseItemMeta & { typeId: 'biaodian' }
 
-export type KuoxiePaperItem = KuoxieItem & ChineseItemMeta & { typeId: 'kuoxie' }
+export type KuoxiePaperItem = KuoxieItem &
+  ChineseItemMeta & { typeId: 'kuoxie'; blankLines?: number }
 
-export type FangxiePaperItem = FangxieItem & ChineseItemMeta & { typeId: 'fangxie' }
+export type FangxiePaperItem = FangxieItem &
+  ChineseItemMeta & { typeId: 'fangxie'; blankLines?: number }
 
 export type ChineseReadingPaperQuestion =
   | (ReadingChoiceQuestion & { score: number })
@@ -194,7 +264,9 @@ export interface LianmianItem extends ChineseItemMeta {
 export type ChinesePaperItem =
   | KanpinyinItem
   | ZhuyinItem
+  | DuoyinItem
   | XingjinItem
+  | FillTextItem
   | GushiFillItem
   | GushiDimoItem
   | GaibingPaperItem
@@ -253,13 +325,17 @@ export interface ChinesePaperResult {
   gaps: ChinesePaperGap[]
   /** 难度口径等需要写进卷面/摘要的说明 */
   notes: string[]
+  /**
+   * 本卷实际排入的记忆键，供调用方写回跨卷记忆。
+   * 不含 memory 入参时为全部选中题的 key，同样可用于记录。
+   */
+  usedKeys: string[]
 }
 
 /**
  * 预留扩展点（本版不实现）：
- * - 跨卷冷却：需要「最近 N 套已用 key」的历史，落在 `ChinesePaperConfig` 之外，
- *   由界面/存储层传入下一次的排除集合；
  * - 复习调度与错题回流：需要掌握度与到期套号，属选卷前的候选池排序；
  * - 历史卷管理：需要套号递增与卷面快照。
- * 这些都不属于「按配置出卷」，本版只保证 `buildChinesePaper(config)` 纯函数可复现。
+ * 跨卷出题记忆已实现为只读入参 `ChinesePaperConfig.memory`：排题顺序由它决定，
+ * 写回由调用方负责（`buildChinesePaper(config).usedKeys`），保证纯函数可复现。
  */

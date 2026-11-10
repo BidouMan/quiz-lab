@@ -10,7 +10,9 @@ import type {
   ChineseDifficulty,
   ChinesePaperConfig,
   ChinesePaperGap,
+  ChinesePaperMemory,
   ChinesePaperResult,
+  ChinesePaperTypeId,
   ChineseSectionConfig,
   ChineseSectionResult,
 } from './types.ts'
@@ -19,7 +21,17 @@ import type {
   ReadingSkillCode,
   ReadingTheme,
 } from '../data/chinese/types.ts'
+import { findChineseUnit } from '../data/chinese/curriculum.ts'
 import type { ReadingPaperItem } from './types.ts'
+import type {
+  FillTextItem,
+  GushiDimoItem,
+  GushiFillItem,
+  GuanlianPaperItem,
+  KuoxiePaperItem,
+  FangxiePaperItem,
+  ZhuyinItem,
+} from './types.ts'
 
 /** 课外阅读专项：每篇分值 */
 export const READING_PAPER_SCORE = 12
@@ -29,9 +41,30 @@ const HANDWRITE_MM_PER_CHAR = 7
 const BLANK_MIN_MM = 14
 const BLANK_MAX_MM = 105
 const SHORT_ANSWER_CHARS_PER_LINE = 25
+const PT_TO_MM = 25.4 / 72
+const PINYIN_LETTER_EM = 0.55
+
+const round1 = (value: number): number => Math.round(value * 10) / 10
 
 const charCount = (text: unknown): number =>
   [...String(text ?? '')].filter((ch) => !/\s/.test(ch)).length
+
+const blankWidthMm = (chars: number): number =>
+  round1(Math.min(Math.max(chars * HANDWRITE_MM_PER_CHAR, BLANK_MIN_MM), BLANK_MAX_MM))
+
+/** 注音横线：按拼音字母宽度估算，与 CLI 排版同口径 */
+const pinyinWidthMm = (pinyin: string, sizePt = 10): number => {
+  const em = sizePt * PT_TO_MM
+  const raw = (charCount(pinyin) * PINYIN_LETTER_EM + 0.6) * em
+  return round1(Math.min(Math.max(raw, 3 * em), 20 * em))
+}
+
+const medianChars = (answers: string[]): number => {
+  const lengths = answers.map(charCount).sort((a, b) => a - b)
+  if (lengths.length === 0) return 0
+  const mid = Math.floor(lengths.length / 2)
+  return lengths.length % 2 ? lengths[mid]! : Math.round((lengths[mid - 1]! + lengths[mid]!) / 2)
+}
 
 const clampLines = (chars: number): number =>
   Math.min(Math.max(Math.ceil(chars / SHORT_ANSWER_CHARS_PER_LINE), 2), 6)
@@ -50,22 +83,73 @@ function coreAnswer(answer: unknown): string {
   return parts.join('。')
 }
 
-/** 给阅读题的填空横线宽度、简答书写行数补齐版式字段 */
-function applyReadingMetrics(doc: ChinesePaperDoc): void {
+/** 给全部题型的填空横线、书写行数补齐版式字段（桌面端直接调 typst，必须在这里算） */
+function applyLayoutMetrics(doc: ChinesePaperDoc): void {
   for (const section of doc.sections) {
-    if (section.typeId !== 'reading' || section.selected <= 0) continue
-    const items = section.items as ReadingPaperItem[]
-    for (const reading of items) {
-      for (const question of reading.questions) {
-        if (question.type === 'fill') {
-          const target = question as typeof question & { blankWidthsMm?: number[] }
-          target.blankWidthsMm = question.blanks.map((blank) =>
-            Math.min(Math.max(charCount(blank) * HANDWRITE_MM_PER_CHAR, BLANK_MIN_MM), BLANK_MAX_MM),
-          )
-        } else if (question.type === 'short') {
-          const target = question as typeof question & { blankLines?: number }
-          target.blankLines = clampLines(charCount(coreAnswer(question.answer)))
+    if (section.selected <= 0) continue
+
+    if (section.typeId === 'reading') {
+      const items = section.items as ReadingPaperItem[]
+      for (const reading of items) {
+        for (const question of reading.questions) {
+          if (question.type === 'fill') {
+            const target = question as typeof question & { blankWidthsMm?: number[] }
+            target.blankWidthsMm = question.blanks.map((blank) => blankWidthMm(charCount(blank)))
+          } else if (question.type === 'short') {
+            const target = question as typeof question & { blankLines?: number }
+            target.blankLines = clampLines(charCount(coreAnswer(question.answer)))
+          }
         }
+      }
+    } else if (section.typeId === 'zhuyin') {
+      for (const item of section.items as ZhuyinItem[]) {
+        item.blankWidthMm = pinyinWidthMm(item.pinyin, 10)
+      }
+    } else if (section.typeId === 'guanlian') {
+      for (const item of section.items as GuanlianPaperItem[]) {
+        const slots: string[][] = []
+        for (const variant of item.answers) {
+          variant.forEach((answer, index) => {
+            if (!slots[index]) slots[index] = []
+            slots[index]!.push(answer)
+          })
+        }
+        item.blankWidthsMm = slots.map((answers) => blankWidthMm(medianChars(answers)))
+      }
+    } else if (section.typeId === 'gushi-fill') {
+      for (const item of section.items as GushiFillItem[]) {
+        const clauses = item.answer.split('，')
+        item.answerLines = clauses.map((clause, index) =>
+          index < clauses.length - 1 ? `${clause}，` : clause,
+        )
+        item.clauseWidthsMm = clauses.map((clause) =>
+          blankWidthMm(charCount(clause.replace(/[，。？！；：、]$/, ''))),
+        )
+        item.blankWidthMm = round1(
+          item.clauseWidthsMm.reduce((total, width) => total + width, 0) +
+            (clauses.length - 1) * 5,
+        )
+      }
+    } else if (section.typeId === 'gushi-dimo') {
+      for (const item of section.items as GushiDimoItem[]) {
+        item.blankWidthsPerLineMm = item.lines.map((line) =>
+          line
+            .split('，')
+            .map((clause) => blankWidthMm(charCount(clause.replace(/[，。？！；：、]$/, '')))),
+        )
+      }
+    } else if (section.typeId === 'kuoxie' || section.typeId === 'fangxie') {
+      for (const item of section.items as (KuoxiePaperItem | FangxiePaperItem)[]) {
+        item.blankLines = 1
+      }
+    } else if (
+      section.typeId === 'cipu' ||
+      section.typeId === 'jinayi' ||
+      section.typeId === 'xuanzi' ||
+      section.typeId === 'riji'
+    ) {
+      for (const item of section.items as FillTextItem[]) {
+        item.blankWidthsMm = item.answers.map((answer) => blankWidthMm(charCount(answer)))
       }
     }
   }
@@ -83,6 +167,7 @@ export interface ReadingPaperSelection {
 export function buildReadingPaperConfig(
   selection: ReadingPaperSelection,
   seed: number,
+  memory?: ChinesePaperMemory,
 ): ChinesePaperConfig {
   const count = Math.min(20, Math.max(1, Math.round(selection.count) || 1))
   const section: ChineseSectionConfig = {
@@ -106,6 +191,55 @@ export function buildReadingPaperConfig(
     totalItems: count,
     includeAnswers: true,
     sections: [section],
+    ...(memory ? { memory } : {}),
+  }
+}
+
+/** 校内同步卷选择：单元 + 题型题量 + 难度 */
+export interface ChineseSyncSelection {
+  unitIds: string[]
+  levels: ChineseLevel[]
+  sections: { typeId: ChinesePaperTypeId; count: number; perItemScore: number }[]
+  includeAnswers: boolean
+}
+
+/** 校内同步卷配置：单元筛选落在 config.unitIds，教材题按单元收窄 */
+export function buildSyncPaperConfig(
+  selection: ChineseSyncSelection,
+  seed: number,
+  memory?: ChinesePaperMemory,
+): ChinesePaperConfig {
+  const unitIds = [...new Set(selection.unitIds)].sort()
+  if (unitIds.length === 0) throw new Error('请至少选择一个单元')
+  const sections: ChineseSectionConfig[] = selection.sections
+    .filter((section) => section.count > 0)
+    .map((section) => ({ ...section }))
+  if (sections.length === 0) throw new Error('请至少选择一个题型')
+
+  const levels = [...new Set(selection.levels)].sort()
+  const difficulty: ChineseDifficulty = levels.length === 1 ? levels[0]! : 'mixed'
+  if (levels.length > 1 && levels.length < 3) {
+    for (const section of sections) section.levels = levels
+  }
+
+  const title =
+    unitIds.length === 1
+      ? `${findChineseUnit(unitIds[0]!)?.unitName ?? '三年级语文上册'}同步练习`
+      : unitIds.length === 8
+        ? '三年级语文上册 综合练习'
+        : '三年级语文上册 同步练习'
+
+  return {
+    version: 1,
+    grade: '3A',
+    title,
+    seed,
+    difficulty,
+    totalItems: sections.reduce((total, section) => total + section.count, 0),
+    unitIds,
+    sections,
+    includeAnswers: selection.includeAnswers,
+    ...(memory ? { memory } : {}),
   }
 }
 
@@ -137,13 +271,19 @@ export function buildChinesePaperDoc(config: ChinesePaperConfig): {
   const totalItems = paper.items.length
   const requestedItems = config.totalItems
   const time = config.timeMinutes ? `建议 ${config.timeMinutes} 分钟` : ''
+  // 校内同步卷只做日常练习，不展示分数；阅读专项保留分值说明
+  const isPractice = Boolean(config.unitIds?.length)
   const shortage =
     paper.score.total < paper.score.requested
-      ? `；素材不足，实排 ${totalItems}/${requestedItems} 题，配置分值 ${paper.score.requested} 分`
+      ? isPractice
+        ? `；素材不足，实排 ${totalItems}/${requestedItems} 题`
+        : `；素材不足，实排 ${totalItems}/${requestedItems} 题，配置分值 ${paper.score.requested} 分`
       : ''
   const subtitle =
     config.subtitle ??
-    `统编版·五四学制 2025 年秋修订版　｜　满分 ${paper.score.total} 分　｜　${totalItems} 题${time ? `　｜　${time}` : ''}${shortage}`
+    (isPractice
+      ? `统编版·五四学制 2025 年秋修订版　｜　${totalItems} 题${time ? `　｜　${time}` : ''}${shortage}`
+      : `统编版·五四学制 2025 年秋修订版　｜　满分 ${paper.score.total} 分　｜　${totalItems} 题${time ? `　｜　${time}` : ''}${shortage}`)
 
   const doc: ChinesePaperDoc = {
     meta: {
@@ -162,6 +302,6 @@ export function buildChinesePaperDoc(config: ChinesePaperConfig): {
     gaps: paper.gaps,
     notes: paper.notes,
   }
-  applyReadingMetrics(doc)
+  applyLayoutMetrics(doc)
   return { paper, doc }
 }

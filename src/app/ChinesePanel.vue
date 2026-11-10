@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { CHINESE_SKILLS, CHINESE_THEMES } from './subjects'
-import { READING_PAPER_SCORE, type ReadingPaperSelection } from '../chinese/doc.ts'
+import ChineseSyncPanel from './ChineseSyncPanel.vue'
+import { READING_PAPER_SCORE, type ChineseSyncSelection, type ReadingPaperSelection } from '../chinese/doc.ts'
 import type { ChineseLevel, ReadingSkillCode, ReadingTheme } from '../data/chinese/types.ts'
 
-const emit = defineEmits<{ generate: [selection: ReadingPaperSelection] }>()
+const emit = defineEmits<{
+  generate: [
+    payload:
+      | { mode: 'reading'; selection: ReadingPaperSelection }
+      | { mode: 'sync'; selection: ChineseSyncSelection }
+      | { mode: 'full'; selection: ChineseSyncSelection },
+  ]
+}>()
+
+const mode = ref<'sync' | 'full' | 'reading'>('sync')
 
 const skills = ref<ReadingSkillCode[]>([])
 const themes = ref<ReadingTheme[]>([])
@@ -51,17 +61,41 @@ const totalScore = computed(() => count.value * READING_PAPER_SCORE)
 
 function submit() {
   emit('generate', {
-    skills: skills.value,
-    themes: themes.value,
-    levels: levels.value,
-    count: count.value,
+    mode: 'reading',
+    selection: {
+      skills: skills.value,
+      themes: themes.value,
+      levels: levels.value,
+      count: count.value,
+    },
+  })
+}
+
+function onSync(selection: ChineseSyncSelection) {
+  emit('generate', {
+    mode: mode.value === 'full' ? 'full' : 'sync',
+    selection,
   })
 }
 </script>
 
 <template>
   <div class="params">
-    <div class="params-scroll">
+    <div class="tabs">
+      <button :aria-pressed="mode === 'sync'" @click="mode = 'sync'">校内同步</button>
+      <button :aria-pressed="mode === 'full'" @click="mode = 'full'">综合卷</button>
+      <button :aria-pressed="mode === 'reading'" @click="mode = 'reading'">阅读专项</button>
+    </div>
+
+    <ChineseSyncPanel
+      v-if="mode !== 'reading'"
+      :key="mode"
+      :mode="mode === 'full' ? 'full' : 'unit'"
+      @generate="onSync"
+    />
+
+    <template v-else>
+      <div class="params-scroll">
       <section>
         <h2>考点</h2>
         <div class="chip-grid">
@@ -127,6 +161,7 @@ function submit() {
       <div class="summary">{{ filterText }}</div>
       <button class="generate" @click="submit">生成阅读卷</button>
     </div>
+    </template>
   </div>
 </template>
 
@@ -136,6 +171,31 @@ function submit() {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+}
+.tabs {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 12px 16px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.tabs button {
+  font: inherit;
+  font-size: 13px;
+  height: 32px;
+  border: none;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+}
+.tabs button + button {
+  border-left: 1px solid #ccc;
+}
+.tabs button[aria-pressed='true'] {
+  background: #111;
+  color: #fff;
 }
 .params-scroll {
   flex: 1;

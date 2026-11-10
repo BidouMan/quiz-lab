@@ -78,12 +78,21 @@ const balanced = (combo: string[], open: string, close: string): boolean => {
   return depth === 0
 }
 
-test('句子题库：五类题量均在 30–50 条，总数与分项统计一致', () => {
+test('句子题库：五类题量在各自上限内，总数与分项统计一致', () => {
   const counts = sentenceCounts()
-  for (const [kind, count] of Object.entries(counts)) {
-    assert.ok(count >= 30 && count <= 50, `${kind} 题量 ${count} 不在 30–50`)
+  // 扩写、仿写是开放题，可支撑专项高频练，上限给得更高
+  const MAX: Record<string, number> = {
+    gaibing: 60,
+    kuoxie: 120,
+    guanlian: 60,
+    biaodian: 60,
+    fangxie: 100,
   }
-  assert.equal(SENTENCE_BANK.length, 184, '题库总数应为 40+36×4')
+  for (const [kind, count] of Object.entries(counts)) {
+    assert.ok(count >= 30, `${kind} 题量 ${count} 少于 30`)
+    assert.ok(count <= MAX[kind]!, `${kind} 题量 ${count} 超过上限 ${MAX[kind]}`)
+  }
+  assert.equal(SENTENCE_BANK.length, 308, '题库总数应为 48+100+44+44+72')
   assert.equal(
     counts.gaibing + counts.kuoxie + counts.guanlian + counts.biaodian + counts.fangxie,
     SENTENCE_BANK.length,
@@ -126,10 +135,10 @@ test('句子题库：每类覆盖 A/B/C，A 档比例降到真实基础题范围
   assert.ok(aTotal <= 40, `A 档共 ${aTotal} 条，占比仍偏高`)
 })
 
-test('修改病句：四类各 10 条，答案可机械复核，开放题明确标注', () => {
+test('修改病句：四类各 12 条，答案可机械复核，开放题明确标注', () => {
   const subtypes = ['成分残缺', '搭配不当', '语序颠倒', '重复啰嗦'] as const
   for (const sub of subtypes) {
-    assert.equal(GAIBING_ITEMS.filter((item) => item.subkind === sub).length, 10, `${sub} 条数`)
+    assert.equal(GAIBING_ITEMS.filter((item) => item.subkind === sub).length, 12, `${sub} 条数`)
   }
 
   for (const item of GAIBING_ITEMS) {
