@@ -3211,6 +3211,19 @@ export function advancedStructureKey(categoryId: string, params: AdvParams): str
   return `${categoryId}:${String(params.variant ?? '')}`
 }
 
+/** 单元轮换键：最近哪一卷在拓展题里覆盖过该单元，用于跨卷轮换出题单元 */
+export function advancedUnitKey(unitId: string): string {
+  return `advanced-unit:${unitId}`
+}
+
+/** 类别轮换键：最近哪一卷出过这个类别，用于跨卷避开刚出过的题型 */
+export function advancedCategoryKey(categoryId: string): string {
+  return `advanced-category:${categoryId}`
+}
+
+/** 类别跨卷避让窗口：最近 3 卷出过的类别先让位，池子不够时再放开 */
+const CATEGORY_RECENT_WINDOW = 3
+
 // ---------- 单题结构与双路径复核 ----------
 
 export interface AdvancedRecord {
@@ -3581,6 +3594,9 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     unitCounts.set(candidate.unitId, (unitCounts.get(candidate.unitId) ?? 0) + 1)
     options.sourceUsed?.add(candidate.key)
     memory?.record(candidate.key)
+    // 单元/类别轮换用独立键：只记“哪卷出过”，与具体题目参数无关
+    memory?.record(advancedUnitKey(candidate.unitId))
+    memory?.record(advancedCategoryKey(category.id))
     if (reused) crossReused++
   }
 
@@ -3595,13 +3611,17 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     )
   }
 
+  /** beta 阶段：算式谜、抽屉原理每卷最多 1 道；轮转复用也必须守这个上限 */
+  const categoryAtLimit = (category: AdvancedCategory): boolean => {
+    const limit = category.maxPerPaper ?? Number.POSITIVE_INFINITY
+    const used = questions.reduce((count, question) => count + (question.categoryId === category.id ? 1 : 0), 0)
+    return used >= limit
+  }
+
   const pickCategory = (category: AdvancedCategory, preferredUnit?: string): number => {
     const eligible = category.units.filter((unitId) => unitIds.includes(unitId))
     if (eligible.length === 0) return 0
-    // beta 阶段：算式谜、抽屉原理每卷最多 1 道
-    const limit = category.maxPerPaper ?? Number.POSITIVE_INFINITY
-    const used = questions.reduce((count, question) => count + (question.categoryId === category.id ? 1 : 0), 0)
-    if (used >= limit) return 0
+    if (categoryAtLimit(category)) return 0
     const budget = 1
     let added = 0
     let misses = 0
@@ -3648,14 +3668,30 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
   const ordered = [...primary, ...supplement]
 
   // 第 0 轮：每个被选单元至少落 1 题（有可用类别时）
-  for (const unitId of unitIds) {
+  // 单元顺序按“最久没出过拓展题的单元优先”轮换：按固定顺序取的话，题量小于单元数时
+  // 永远只轮到前两个单元，拓展题会每卷都落在同一两个单元、同一批类别上。
+  const unitOrder = shuffle(rng, unitIds).sort(
+    (a, b) =>
+      (memory?.lastPaper(advancedUnitKey(a)) ?? 0) - (memory?.lastPaper(advancedUnitKey(b)) ?? 0),
+  )
+  /** 先避开最近几卷出过的类别；都被避让光了再放开，保证题量不因轮换而缩水 */
+  const pickForUnit = (unitId: string): number => {
+    for (const avoidRecent of [true, false]) {
+      for (const category of ordered) {
+        if (questions.length >= count) break
+        if (!category.units.includes(unitId)) continue
+        if (avoidRecent && memory?.recentlyUsed(advancedCategoryKey(category.id), CATEGORY_RECENT_WINDOW)) {
+          continue
+        }
+        if (pickCategory(category, unitId) > 0) return 1
+      }
+    }
+    return 0
+  }
+  for (const unitId of unitOrder) {
     if (questions.length >= count) break
     if ((unitCounts.get(unitId) ?? 0) > 0) continue
-    for (const category of ordered) {
-      if (questions.length >= count) break
-      if (!category.units.includes(unitId)) continue
-      if (pickCategory(category, unitId) > 0) break
-    }
+    pickForUnit(unitId)
   }
 
   // 第一轮：主力档位每个类别先出 1 题；低档类别排在其后，只用来补缺口
@@ -3678,6 +3714,7 @@ export function generateAdvanced(options: GenerateAdvancedOptions): AdvancedResu
     if (questions.length >= count) break
     if (seen.has(candidate.key)) continue
     if (structureSeen.has(advancedStructureKey(candidate.category.id, candidate.params))) continue
+    if (categoryAtLimit(candidate.category)) continue
     accept(candidate, true)
   }
 

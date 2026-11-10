@@ -175,7 +175,9 @@ async function onChineseGenerate(
   chineseError.value = ''
   chineseNotice.value = ''
   try {
-    seed += 1
+    // 出题种子取当前时间：重启应用后不会回到同一串随机数。
+    // 语文的跨卷去重主要靠 chineseMemory，但种子固定会让「清空记忆/记忆写失败」后的第一张卷完全照旧。
+    const seed = Date.now() >>> 0
     const isReading = payload.mode === 'reading'
     const isFull = payload.mode === 'full'
     chineseMode.value = payload.mode
@@ -339,7 +341,6 @@ function openHistory(): void {
 watch(history, persistHistory, { deep: true })
 watch(() => config.historyLimit, trimHistory)
 
-let seed = 0
 let saveTimer: number | undefined
 
 const typeLabels = new Map<AppType, string>(TYPE_OPTIONS.map((item) => [item.type, item.label]))
@@ -506,11 +507,12 @@ async function generate() {
   try {
     await refreshTemplate()
 
-    seed++
+    // 出题种子取当前时间：应用重启后不会回到同一串随机数，
+    // 否则每天第一次出卷都会命中同一批骨架/结构，只换数字。
     const built = buildPaper({
       config,
       template: template.value,
-      seed,
+      seed: Date.now() >>> 0,
       memory,
       mode: 'practice',
     })
@@ -890,7 +892,7 @@ onBeforeUnmount(() => {
       <template v-else>
         <div v-if="chineseBusy" class="status">
           <i class="dot" />
-          <span class="status-text">正在生成语文{{ chineseMode === 'reading' ? '阅读' : chineseMode === 'full' ? '综合' : '同步' }}卷…</span>
+          <span class="status-text">正在生成语文{{ chineseMode === 'reading' ? '阅读专项' : chineseMode === 'full' ? '综合练习' : '同步卷' }}…</span>
         </div>
         <div v-if="chineseError" class="status err">
           <i class="dot" />
@@ -942,7 +944,7 @@ onBeforeUnmount(() => {
         <div v-else class="empty-stage">
           <div class="empty-card">
             <h3>先出一份语文练习</h3>
-            <p>「校内同步」按单元出基础题；「综合卷」全册混合基础、阅读和习作；「阅读专项」只出阅读。</p>
+            <p>「校内同步」按单元出基础题；「综合练习」可按单元出综合卷，课外阅读随机抽取；「阅读专项」只出阅读。</p>
           </div>
         </div>
       </template>
